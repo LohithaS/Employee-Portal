@@ -50,7 +50,9 @@ export default function Dashboard() {
         <Card className="shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
+            <div className="p-2 bg-emerald-100 rounded-lg">
+              <DollarSign className="h-4 w-4 text-emerald-600" />
+            </div>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">$45,231.89</div>
@@ -62,7 +64,9 @@ export default function Dashboard() {
         <Card className="shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Active Clients</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+            <div className="p-2 bg-blue-100 rounded-lg">
+              <Users className="h-4 w-4 text-blue-600" />
+            </div>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">+2350</div>
@@ -74,7 +78,9 @@ export default function Dashboard() {
         <Card className="shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Pending Tasks</CardTitle>
-            <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
+            <div className="p-2 bg-amber-100 rounded-lg">
+              <CheckCircle2 className="h-4 w-4 text-amber-600" />
+            </div>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">12</div>
@@ -86,7 +92,9 @@ export default function Dashboard() {
         <Card className="shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Target Reached</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            <div className="p-2 bg-purple-100 rounded-lg">
+              <TrendingUp className="h-4 w-4 text-purple-600" />
+            </div>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">84%</div>

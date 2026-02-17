@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import AuthPage from "@/pages/auth-page";
 import Dashboard from "@/pages/dashboard";
+import TaskManagement from "@/pages/tasks";
 import DashboardLayout from "@/components/layout/dashboard-layout";
 import { AuthProvider } from "@/hooks/use-auth";
 import { ProtectedRoute } from "@/lib/protected-route";
@@ -22,6 +23,7 @@ function Router() {
           </DashboardLayout>
         )} 
       />
+      <ProtectedRoute path="/tasks" component={TaskManagement} />
       {/* Fallback routes for demo purposes that redirect to dashboard or show not found */}
       <ProtectedRoute 
         path="/:any*" 

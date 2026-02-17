@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import DashboardLayout from "@/components/layout/dashboard-layout";
 import {
   Table,
@@ -29,8 +29,15 @@ import {
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Paperclip, MessageSquare } from "lucide-react";
+import { Plus, Paperclip, MessageSquare, Search, Filter, MoreVertical, FileUp } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuTrigger 
+} from "@/components/ui/dropdown-menu";
+import { useToast } from "@/hooks/use-toast";
 
 type Task = {
   id: number;
@@ -71,148 +78,369 @@ const initialTasks: Task[] = [
 
 export default function TaskManagement() {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [tasks, setTasks] = useState<Task[]>(initialTasks);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [isRemarksOpen, setIsRemarksOpen] = useState(false);
+  const [tempRemarks, setTempRemarks] = useState("");
   
-  // Mock check for manager role - in a real app this would come from user object
+  // Form state for new task
+  const [newTask, setNewTask] = useState({
+    description: "",
+    assignedTo: "",
+    deadline: "",
+    backupPlan: "",
+    remarks: "",
+    priority: "Medium" as const,
+  });
+
   const isManager = user?.username === "manager" || false;
+
+  const filteredTasks = useMemo(() => {
+    return tasks.filter(task => 
+      task.description.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  }, [tasks, searchQuery]);
+
+  const handleAddTask = () => {
+    if (!newTask.description || !newTask.deadline) {
+      toast({
+        title: "Missing Information",
+        description: "Please fill in all required fields.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const task: Task = {
+      id: tasks.length + 1,
+      description: newTask.description,
+      assignedBy: user?.name || "System",
+      assignedTo: newTask.assignedTo || "Unassigned",
+      deadline: newTask.deadline,
+      backupPlan: newTask.backupPlan,
+      priority: newTask.priority,
+      status: "New",
+      remarks: newTask.remarks,
+    };
+
+    setTasks([...tasks, task]);
+    setIsDialogOpen(false);
+    setNewTask({
+      description: "",
+      assignedTo: "",
+      deadline: "",
+      backupPlan: "",
+      remarks: "",
+      priority: "Medium",
+    });
+    
+    toast({
+      title: "Task Created",
+      description: "Successfully added the new task."
+    });
+  };
 
   const handleStatusChange = (taskId: number, newStatus: Task["status"]) => {
     setTasks(tasks.map(t => t.id === taskId ? { ...t, status: newStatus } : t));
+    toast({
+      title: "Status Updated",
+      description: `Task marked as ${newStatus}`
+    });
   };
 
   const handlePriorityChange = (taskId: number, newPriority: Task["priority"]) => {
     setTasks(tasks.map(t => t.id === taskId ? { ...t, priority: newPriority } : t));
   };
 
+  const openRemarks = (task: Task) => {
+    setSelectedTask(task);
+    setTempRemarks(task.remarks);
+    setIsRemarksOpen(true);
+  };
+
+  const saveRemarks = () => {
+    if (selectedTask) {
+      setTasks(tasks.map(t => t.id === selectedTask.id ? { ...t, remarks: tempRemarks } : t));
+      setIsRemarksOpen(false);
+      toast({
+        title: "Remarks Saved",
+        description: "Task notes updated successfully."
+      });
+    }
+  };
+
   return (
     <DashboardLayout>
       <div className="flex flex-col gap-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Task Management</h1>
-            <p className="text-muted-foreground">Manage and track your project responsibilities.</p>
+            <p className="text-muted-foreground">Search, monitor and update project progress.</p>
           </div>
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="mr-2 h-4 w-4" />
-                Add New Task
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[525px]">
-              <DialogHeader>
-                <DialogTitle>Create New Task</DialogTitle>
-                <DialogDescription>
-                  Fill in the details to assign a new task.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="description">Task Description</Label>
-                  <Input id="description" placeholder="Describe the task..." />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search tasks..."
+                className="pl-8 w-full md:w-[250px] bg-background shadow-sm"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button className="shadow-sm">
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add Task
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[525px]">
+                <DialogHeader>
+                  <DialogTitle>Add New Task</DialogTitle>
+                  <DialogDescription>
+                    Assign a new responsibility to the team.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
                   <div className="grid gap-2">
-                    <Label htmlFor="assignee">Assign To</Label>
-                    <Input id="assignee" placeholder="Employee Name" />
+                    <Label htmlFor="description">Task Description *</Label>
+                    <Input 
+                      id="description" 
+                      placeholder="e.g. Monthly Revenue Report" 
+                      value={newTask.description}
+                      onChange={(e) => setNewTask({...newTask, description: e.target.value})}
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="grid gap-2">
+                      <Label htmlFor="assignee">Assign To</Label>
+                      <Input 
+                        id="assignee" 
+                        placeholder="Employee Name" 
+                        value={newTask.assignedTo}
+                        onChange={(e) => setNewTask({...newTask, assignedTo: e.target.value})}
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="deadline">Deadline *</Label>
+                      <Input 
+                        id="deadline" 
+                        type="date" 
+                        value={newTask.deadline}
+                        onChange={(e) => setNewTask({...newTask, deadline: e.target.value})}
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="grid gap-2">
+                      <Label htmlFor="priority">Initial Priority</Label>
+                      <Select 
+                        value={newTask.priority}
+                        onValueChange={(v: any) => setNewTask({...newTask, priority: v})}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="High">High</SelectItem>
+                          <SelectItem value="Medium">Medium</SelectItem>
+                          <SelectItem value="Low">Low</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="backup">Backup Plan</Label>
+                      <Input 
+                        id="backup" 
+                        placeholder="Fallback plan..." 
+                        value={newTask.backupPlan}
+                        onChange={(e) => setNewTask({...newTask, backupPlan: e.target.value})}
+                      />
+                    </div>
                   </div>
                   <div className="grid gap-2">
-                    <Label htmlFor="deadline">Deadline</Label>
-                    <Input id="deadline" type="date" />
+                    <Label htmlFor="remarks">Notes / Remarks</Label>
+                    <Textarea 
+                      id="remarks" 
+                      placeholder="Initial context for the task..." 
+                      value={newTask.remarks}
+                      onChange={(e) => setNewTask({...newTask, remarks: e.target.value})}
+                    />
                   </div>
                 </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="backup">Backup Plan</Label>
-                  <Input id="backup" placeholder="What if the primary plan fails?" />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="remarks">Initial Remarks</Label>
-                  <Textarea id="remarks" placeholder="Any additional notes..." />
-                </div>
-              </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
-                <Button onClick={() => setIsDialogOpen(false)}>Save Task</Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
+                  <Button onClick={handleAddTask}>Create Task</Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
 
-        <div className="rounded-md border bg-card">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[80px]">S.No</TableHead>
-                <TableHead className="min-w-[200px]">Task Description</TableHead>
-                <TableHead>{isManager ? "Assigned To" : "Assigned By"}</TableHead>
-                <TableHead>Deadline</TableHead>
-                <TableHead>Backup Plan</TableHead>
-                <TableHead>Priority</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {tasks.map((task, index) => (
-                <TableRow key={task.id}>
-                  <TableCell className="font-medium">{index + 1}</TableCell>
-                  <TableCell>{task.description}</TableCell>
-                  <TableCell>{isManager ? task.assignedTo : task.assignedBy}</TableCell>
-                  <TableCell>{task.deadline}</TableCell>
-                  <TableCell className="text-muted-foreground italic text-sm">{task.backupPlan}</TableCell>
-                  <TableCell>
-                    <Select 
-                      defaultValue={task.priority} 
-                      onValueChange={(value: any) => handlePriorityChange(task.id, value)}
-                    >
-                      <SelectTrigger className="h-8 w-[110px]">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="High">
-                          <Badge variant="destructive" className="bg-red-500">High</Badge>
-                        </SelectItem>
-                        <SelectItem value="Medium">
-                          <Badge variant="secondary" className="bg-amber-500 text-white">Medium</Badge>
-                        </SelectItem>
-                        <SelectItem value="Low">
-                          <Badge variant="outline">Low</Badge>
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </TableCell>
-                  <TableCell>
-                    <Select 
-                      defaultValue={task.status} 
-                      onValueChange={(value: any) => handleStatusChange(task.id, value)}
-                    >
-                      <SelectTrigger className="h-8 w-[130px]">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="New">New</SelectItem>
-                        <SelectItem value="In Progress">In Progress</SelectItem>
-                        <SelectItem value="Completed">Completed</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
-                        <Paperclip className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
-                        <MessageSquare className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
+        <div className="rounded-xl border bg-card shadow-sm overflow-hidden">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader className="bg-muted/50">
+                <TableRow>
+                  <TableHead className="w-[60px] text-center">#</TableHead>
+                  <TableHead className="min-w-[250px]">Task Description</TableHead>
+                  <TableHead>{isManager ? "Assigned To" : "Assigned By"}</TableHead>
+                  <TableHead>Deadline</TableHead>
+                  <TableHead className="hidden lg:table-cell">Backup Plan</TableHead>
+                  <TableHead>Priority</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right pr-6">Actions</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {filteredTasks.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={8} className="h-32 text-center text-muted-foreground">
+                      No tasks found matching your search.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filteredTasks.map((task, index) => (
+                    <TableRow key={task.id} className="hover:bg-muted/30 transition-colors">
+                      <TableCell className="text-center font-mono text-xs text-muted-foreground">{index + 1}</TableCell>
+                      <TableCell>
+                        <div className="flex flex-col">
+                          <span className="font-medium text-sm">{task.description}</span>
+                          {task.remarks && (
+                            <span className="text-[11px] text-muted-foreground flex items-center gap-1 mt-0.5">
+                              <MessageSquare className="h-3 w-3" />
+                              {task.remarks.length > 40 ? task.remarks.substring(0, 40) + "..." : task.remarks}
+                            </span>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <div className="h-6 w-6 rounded-full bg-primary/10 flex items-center justify-center text-[10px] font-bold text-primary">
+                            {(isManager ? task.assignedTo : task.assignedBy)?.[0] || "?"}
+                          </div>
+                          <span className="text-sm">{isManager ? task.assignedTo : task.assignedBy}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1.5 text-sm">
+                          <Plus className="h-3 w-3 text-muted-foreground rotate-45" />
+                          {task.deadline}
+                        </div>
+                      </TableCell>
+                      <TableCell className="hidden lg:table-cell">
+                        <span className="text-xs text-muted-foreground truncate max-w-[150px] inline-block">
+                          {task.backupPlan || "None"}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <Select 
+                          defaultValue={task.priority} 
+                          onValueChange={(value: any) => handlePriorityChange(task.id, value)}
+                        >
+                          <SelectTrigger className="h-8 w-[100px] text-xs">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="High">
+                              <div className="flex items-center gap-2">
+                                <div className="h-2 w-2 rounded-full bg-red-500" />
+                                <span>High</span>
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="Medium">
+                              <div className="flex items-center gap-2">
+                                <div className="h-2 w-2 rounded-full bg-amber-500" />
+                                <span>Medium</span>
+                              </div>
+                            </SelectItem>
+                            <SelectItem value="Low">
+                              <div className="flex items-center gap-2">
+                                <div className="h-2 w-2 rounded-full bg-blue-500" />
+                                <span>Low</span>
+                              </div>
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
+                      <TableCell>
+                        <Select 
+                          defaultValue={task.status} 
+                          onValueChange={(value: any) => handleStatusChange(task.id, value)}
+                        >
+                          <SelectTrigger className={cn(
+                            "h-8 w-[120px] text-xs font-medium",
+                            task.status === "Completed" ? "text-emerald-600 bg-emerald-50" : 
+                            task.status === "In Progress" ? "text-blue-600 bg-blue-50" : "text-slate-600 bg-slate-50"
+                          )}>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="New">New</SelectItem>
+                            <SelectItem value="In Progress">In Progress</SelectItem>
+                            <SelectItem value="Completed">Completed</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
+                      <TableCell className="text-right pr-6">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => openRemarks(task)}>
+                              <MessageSquare className="mr-2 h-4 w-4" />
+                              Add Remarks
+                            </DropdownMenuItem>
+                            <DropdownMenuItem>
+                              <Paperclip className="mr-2 h-4 w-4" />
+                              Attach File
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </div>
+
+        {/* Remarks Dialog */}
+        <Dialog open={isRemarksOpen} onOpenChange={setIsRemarksOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Task Remarks</DialogTitle>
+              <DialogDescription>
+                Update the progress notes for this task.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="py-4">
+              <Textarea 
+                placeholder="Write your update here..."
+                value={tempRemarks}
+                onChange={(e) => setTempRemarks(e.target.value)}
+                className="min-h-[120px]"
+              />
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsRemarksOpen(false)}>Cancel</Button>
+              <Button onClick={saveRemarks}>Save Updates</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </DashboardLayout>
   );
 }
+
+function cn(...classes: any[]) {
+  return classes.filter(Boolean).join(" ");
+}
+

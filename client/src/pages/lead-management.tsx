@@ -53,12 +53,22 @@ export default function LeadManagement() {
     lead: "",
     stage: "inquiry"
   });
+  
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const validateLead = () => {
+    const newErrors: Record<string, string> = {};
+    if (!newLead.customerName) newErrors.customerName = "Customer name is required";
+    if (!newLead.lead) newErrors.lead = "Lead owner is required";
+    if (!newLead.stage) newErrors.stage = "Stage is required";
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleAddLead = () => {
-    if (!newLead.customerName || !newLead.lead || !newLead.stage) {
-      alert("Please fill in all fields.");
-      return;
-    }
+    if (!validateLead()) return;
+
     const lead = {
       ...newLead,
       id: leads.length + 1
@@ -70,6 +80,7 @@ export default function LeadManagement() {
       lead: "",
       stage: "inquiry"
     });
+    setErrors({});
   };
 
   const openUpdateDialog = (lead: typeof initialLeads[0]) => {
@@ -102,36 +113,39 @@ export default function LeadManagement() {
               </DialogHeader>
               <div className="grid gap-4 py-4">
                 <div className="grid gap-2">
-                  <Label htmlFor="customer">Customer Name</Label>
+                  <Label htmlFor="customer">Customer Name <span className="text-red-500">*</span></Label>
                   <Input 
                     id="customer" 
-                    className="border-input bg-background" 
+                    className={`border-input bg-background ${errors.customerName ? "border-red-500" : ""}`}
                     value={newLead.customerName}
                     onChange={(e) => setNewLead({...newLead, customerName: e.target.value})}
                   />
+                  {errors.customerName && <span className="text-xs text-red-500">{errors.customerName}</span>}
                 </div>
                 <div className="grid gap-2">
-                  <Label htmlFor="lead">Lead Owner</Label>
+                  <Label htmlFor="lead">Lead Owner <span className="text-red-500">*</span></Label>
                   <Input 
                     id="lead" 
-                    className="border-input bg-background" 
+                    className={`border-input bg-background ${errors.lead ? "border-red-500" : ""}`}
                     value={newLead.lead}
                     onChange={(e) => setNewLead({...newLead, lead: e.target.value})}
                   />
+                  {errors.lead && <span className="text-xs text-red-500">{errors.lead}</span>}
                 </div>
                 <div className="grid gap-2">
-                  <Label>Sales Stage</Label>
+                  <Label>Sales Stage <span className="text-red-500">*</span></Label>
                   <Select 
                     value={newLead.stage} 
                     onValueChange={(v) => setNewLead({...newLead, stage: v})}
                   >
-                    <SelectTrigger className="border-input bg-background">
+                    <SelectTrigger className={`border-input bg-background ${errors.stage ? "border-red-500" : ""}`}>
                       <SelectValue placeholder="Select stage" />
                     </SelectTrigger>
                     <SelectContent>
                       {stages.map(s => <SelectItem key={s} value={s}>{s.replace(/_/g, " ").toUpperCase()}</SelectItem>)}
                     </SelectContent>
                   </Select>
+                  {errors.stage && <span className="text-xs text-red-500">{errors.stage}</span>}
                 </div>
               </div>
               <DialogFooter>

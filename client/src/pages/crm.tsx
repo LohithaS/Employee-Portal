@@ -58,12 +58,25 @@ export default function CRM() {
     region: "N",
     accountHolder: ""
   });
+  
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const validateClient = () => {
+    const newErrors: Record<string, string> = {};
+    if (!newClient.name) newErrors.name = "Company name is required";
+    if (!newClient.type) newErrors.type = "Type is required";
+    if (!newClient.category) newErrors.category = "Category is required";
+    if (!newClient.product) newErrors.product = "Product is required";
+    if (!newClient.region) newErrors.region = "Region is required";
+    if (!newClient.accountHolder) newErrors.accountHolder = "Account holder is required";
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleAddClient = () => {
-    if (!newClient.name || !newClient.type || !newClient.category || !newClient.product || !newClient.region || !newClient.accountHolder) {
-      alert("Please fill in all fields.");
-      return;
-    }
+    if (!validateClient()) return;
+
     const client = {
       ...newClient,
       id: clients.length + 1
@@ -78,6 +91,7 @@ export default function CRM() {
       region: "N",
       accountHolder: ""
     });
+    setErrors({});
   };
 
   const filteredClients = useMemo(() => {
@@ -103,81 +117,99 @@ export default function CRM() {
               </DialogHeader>
               <div className="grid gap-4 py-4">
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="name" className="text-right">Company</Label>
-                  <Input 
-                    id="name" 
-                    className="col-span-3 border-input bg-background" 
-                    value={newClient.name}
-                    onChange={(e) => setNewClient({...newClient, name: e.target.value})}
-                  />
+                  <Label htmlFor="name" className="text-right">Company <span className="text-red-500">*</span></Label>
+                  <div className="col-span-3">
+                    <Input 
+                      id="name" 
+                      className={`border-input bg-background ${errors.name ? "border-red-500" : ""}`}
+                      value={newClient.name}
+                      onChange={(e) => setNewClient({...newClient, name: e.target.value})}
+                    />
+                    {errors.name && <span className="text-xs text-red-500 absolute">{errors.name}</span>}
+                  </div>
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="type" className="text-right">Type</Label>
-                  <Select 
-                    value={newClient.type} 
-                    onValueChange={(v) => setNewClient({...newClient, type: v})}
-                  >
-                    <SelectTrigger className="col-span-3 border-input bg-background">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="tyre1">Tyre 1</SelectItem>
-                      <SelectItem value="tyre2">Tyre 2</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <Label htmlFor="type" className="text-right">Type <span className="text-red-500">*</span></Label>
+                  <div className="col-span-3">
+                    <Select 
+                      value={newClient.type} 
+                      onValueChange={(v) => setNewClient({...newClient, type: v})}
+                    >
+                      <SelectTrigger className={`border-input bg-background ${errors.type ? "border-red-500" : ""}`}>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="tyre1">Tyre 1</SelectItem>
+                        <SelectItem value="tyre2">Tyre 2</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    {errors.type && <span className="text-xs text-red-500 absolute">{errors.type}</span>}
+                  </div>
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="category" className="text-right">Category</Label>
-                  <Select 
-                    value={newClient.category} 
-                    onValueChange={(v) => setNewClient({...newClient, category: v})}
-                  >
-                    <SelectTrigger className="col-span-3 border-input bg-background">
-                      <SelectValue placeholder="Select category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Automotive">Automotive</SelectItem>
-                      <SelectItem value="White goods">White goods</SelectItem>
-                      <SelectItem value="Medical">Medical</SelectItem>
-                      <SelectItem value="Defence">Defence</SelectItem>
-                      <SelectItem value="Energy sector">Energy sector</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <Label htmlFor="category" className="text-right">Category <span className="text-red-500">*</span></Label>
+                  <div className="col-span-3">
+                    <Select 
+                      value={newClient.category} 
+                      onValueChange={(v) => setNewClient({...newClient, category: v})}
+                    >
+                      <SelectTrigger className={`border-input bg-background ${errors.category ? "border-red-500" : ""}`}>
+                        <SelectValue placeholder="Select category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Automotive">Automotive</SelectItem>
+                        <SelectItem value="White goods">White goods</SelectItem>
+                        <SelectItem value="Medical">Medical</SelectItem>
+                        <SelectItem value="Defence">Defence</SelectItem>
+                        <SelectItem value="Energy sector">Energy sector</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    {errors.category && <span className="text-xs text-red-500 absolute">{errors.category}</span>}
+                  </div>
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="product" className="text-right">Product</Label>
-                  <Input 
-                    id="product" 
-                    className="col-span-3 border-input bg-background" 
-                    value={newClient.product}
-                    onChange={(e) => setNewClient({...newClient, product: e.target.value})}
-                  />
+                  <Label htmlFor="product" className="text-right">Product <span className="text-red-500">*</span></Label>
+                  <div className="col-span-3">
+                    <Input 
+                      id="product" 
+                      className={`border-input bg-background ${errors.product ? "border-red-500" : ""}`}
+                      value={newClient.product}
+                      onChange={(e) => setNewClient({...newClient, product: e.target.value})}
+                    />
+                    {errors.product && <span className="text-xs text-red-500 absolute">{errors.product}</span>}
+                  </div>
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="region" className="text-right">Region</Label>
-                  <Select 
-                    value={newClient.region} 
-                    onValueChange={(v) => setNewClient({...newClient, region: v})}
-                  >
-                    <SelectTrigger className="col-span-3 border-input bg-background">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="N">North (N)</SelectItem>
-                      <SelectItem value="E">East (E)</SelectItem>
-                      <SelectItem value="W">West (W)</SelectItem>
-                      <SelectItem value="S">South (S)</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <Label htmlFor="region" className="text-right">Region <span className="text-red-500">*</span></Label>
+                  <div className="col-span-3">
+                    <Select 
+                      value={newClient.region} 
+                      onValueChange={(v) => setNewClient({...newClient, region: v})}
+                    >
+                      <SelectTrigger className={`border-input bg-background ${errors.region ? "border-red-500" : ""}`}>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="N">North (N)</SelectItem>
+                        <SelectItem value="E">East (E)</SelectItem>
+                        <SelectItem value="W">West (W)</SelectItem>
+                        <SelectItem value="S">South (S)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    {errors.region && <span className="text-xs text-red-500 absolute">{errors.region}</span>}
+                  </div>
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="holder" className="text-right">Holder</Label>
-                  <Input 
-                    id="holder" 
-                    className="col-span-3 border-input bg-background" 
-                    value={newClient.accountHolder}
-                    onChange={(e) => setNewClient({...newClient, accountHolder: e.target.value})}
-                  />
+                  <Label htmlFor="holder" className="text-right">Holder <span className="text-red-500">*</span></Label>
+                  <div className="col-span-3">
+                    <Input 
+                      id="holder" 
+                      className={`border-input bg-background ${errors.accountHolder ? "border-red-500" : ""}`}
+                      value={newClient.accountHolder}
+                      onChange={(e) => setNewClient({...newClient, accountHolder: e.target.value})}
+                    />
+                    {errors.accountHolder && <span className="text-xs text-red-500 absolute">{errors.accountHolder}</span>}
+                  </div>
                 </div>
               </div>
               <DialogFooter>

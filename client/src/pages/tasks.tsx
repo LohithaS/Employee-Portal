@@ -96,6 +96,8 @@ export default function TaskManagement() {
     priority: "Medium" as const,
   });
 
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
   const isManager = user?.username === "manager" || false;
 
   const filteredTasks = useMemo(() => {
@@ -104,15 +106,17 @@ export default function TaskManagement() {
     );
   }, [tasks, searchQuery]);
 
+  const validateTask = () => {
+    const newErrors: Record<string, string> = {};
+    if (!newTask.description) newErrors.description = "Description is required";
+    if (!newTask.deadline) newErrors.deadline = "Deadline is required";
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleAddTask = () => {
-    if (!newTask.description || !newTask.deadline) {
-      toast({
-        title: "Missing Information",
-        description: "Please fill in all required fields.",
-        variant: "destructive"
-      });
-      return;
-    }
+    if (!validateTask()) return;
 
     const task: Task = {
       id: tasks.length + 1,
@@ -136,6 +140,7 @@ export default function TaskManagement() {
       remarks: "",
       priority: "Medium",
     });
+    setErrors({});
     
     toast({
       title: "Task Created",
@@ -206,13 +211,15 @@ export default function TaskManagement() {
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
                   <div className="grid gap-2">
-                    <Label htmlFor="description">Task Description *</Label>
+                    <Label htmlFor="description">Task Description <span className="text-red-500">*</span></Label>
                     <Input 
                       id="description" 
                       placeholder="e.g. Monthly Revenue Report" 
                       value={newTask.description}
                       onChange={(e) => setNewTask({...newTask, description: e.target.value})}
+                      className={errors.description ? "border-red-500" : ""}
                     />
+                    {errors.description && <span className="text-xs text-red-500">{errors.description}</span>}
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="grid gap-2">
@@ -225,13 +232,15 @@ export default function TaskManagement() {
                       />
                     </div>
                     <div className="grid gap-2">
-                      <Label htmlFor="deadline">Deadline *</Label>
+                      <Label htmlFor="deadline">Deadline <span className="text-red-500">*</span></Label>
                       <Input 
                         id="deadline" 
                         type="date" 
                         value={newTask.deadline}
                         onChange={(e) => setNewTask({...newTask, deadline: e.target.value})}
+                        className={errors.deadline ? "border-red-500" : ""}
                       />
+                      {errors.deadline && <span className="text-xs text-red-500">{errors.deadline}</span>}
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-4">

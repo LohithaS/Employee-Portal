@@ -30,6 +30,49 @@ const initialTrips = [
 export default function BusinessTripReports() {
   const [trips, setTrips] = useState(initialTrips);
   const [isAddOpen, setIsAddOpen] = useState(false);
+  
+  const [newTrip, setNewTrip] = useState({
+    purpose: "",
+    location: "",
+    dates: "",
+    outcome: ""
+  });
+  
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const validateTrip = () => {
+    const newErrors: Record<string, string> = {};
+    if (!newTrip.purpose) newErrors.purpose = "Purpose is required";
+    if (!newTrip.location) newErrors.location = "Location is required";
+    if (!newTrip.dates) newErrors.dates = "Dates are required";
+    if (!newTrip.outcome) newErrors.outcome = "Outcome is required";
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleAddTrip = () => {
+    if (!validateTrip()) return;
+
+    const trip = {
+      id: trips.length + 1,
+      purpose: newTrip.purpose,
+      location: newTrip.location,
+      dates: newTrip.dates,
+      outcome: newTrip.outcome,
+      status: "Pending"
+    };
+
+    setTrips([...trips, trip]);
+    setIsAddOpen(false);
+    setNewTrip({
+      purpose: "",
+      location: "",
+      dates: "",
+      outcome: ""
+    });
+    setErrors({});
+  };
 
   return (
     <DashboardLayout>
@@ -48,20 +91,44 @@ export default function BusinessTripReports() {
               </DialogHeader>
               <div className="grid gap-4 py-4">
                 <div className="grid gap-2">
-                  <Label>Purpose</Label>
-                  <Input placeholder="Trip Purpose" />
+                  <Label>Purpose <span className="text-red-500">*</span></Label>
+                  <Input 
+                    placeholder="Trip Purpose" 
+                    value={newTrip.purpose}
+                    onChange={(e) => setNewTrip({...newTrip, purpose: e.target.value})}
+                    className={errors.purpose ? "border-red-500" : ""}
+                  />
+                  {errors.purpose && <span className="text-xs text-red-500">{errors.purpose}</span>}
                 </div>
                 <div className="grid gap-2">
-                  <Label>Location</Label>
-                  <Input placeholder="City, Country" />
+                  <Label>Location <span className="text-red-500">*</span></Label>
+                  <Input 
+                    placeholder="City, Country" 
+                    value={newTrip.location}
+                    onChange={(e) => setNewTrip({...newTrip, location: e.target.value})}
+                    className={errors.location ? "border-red-500" : ""}
+                  />
+                  {errors.location && <span className="text-xs text-red-500">{errors.location}</span>}
                 </div>
                 <div className="grid gap-2">
-                  <Label>Dates</Label>
-                  <Input placeholder="e.g. March 1 - March 5" />
+                  <Label>Dates <span className="text-red-500">*</span></Label>
+                  <Input 
+                    placeholder="e.g. March 1 - March 5" 
+                    value={newTrip.dates}
+                    onChange={(e) => setNewTrip({...newTrip, dates: e.target.value})}
+                    className={errors.dates ? "border-red-500" : ""}
+                  />
+                  {errors.dates && <span className="text-xs text-red-500">{errors.dates}</span>}
                 </div>
                 <div className="grid gap-2">
-                  <Label>Outcome</Label>
-                  <Textarea placeholder="Key outcomes..." />
+                  <Label>Outcome <span className="text-red-500">*</span></Label>
+                  <Textarea 
+                    placeholder="Key outcomes..." 
+                    value={newTrip.outcome}
+                    onChange={(e) => setNewTrip({...newTrip, outcome: e.target.value})}
+                    className={errors.outcome ? "border-red-500" : ""}
+                  />
+                  {errors.outcome && <span className="text-xs text-red-500">{errors.outcome}</span>}
                 </div>
                 <div className="grid gap-2">
                   <Label>Attachments</Label>
@@ -69,7 +136,7 @@ export default function BusinessTripReports() {
                 </div>
               </div>
               <DialogFooter>
-                <Button onClick={() => setIsAddOpen(false)}>Submit for Approval</Button>
+                <Button onClick={handleAddTrip}>Submit for Approval</Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>

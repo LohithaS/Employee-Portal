@@ -292,13 +292,14 @@ export default function TaskManagement() {
                   <TableHead className="hidden lg:table-cell">Backup Plan</TableHead>
                   <TableHead>Priority</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead>Actions Entered</TableHead>
                   <TableHead className="text-right pr-6">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredTasks.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} className="h-32 text-center text-muted-foreground">
+                    <TableCell colSpan={9} className="h-32 text-center text-muted-foreground">
                       No tasks found matching your search.
                     </TableCell>
                   </TableRow>
@@ -309,12 +310,6 @@ export default function TaskManagement() {
                       <TableCell>
                         <div className="flex flex-col">
                           <span className="font-medium text-sm">{task.description}</span>
-                          {task.remarks && (
-                            <span className="text-[11px] text-muted-foreground flex items-center gap-1 mt-0.5">
-                              <MessageSquare className="h-3 w-3" />
-                              {task.remarks.length > 40 ? task.remarks.substring(0, 40) + "..." : task.remarks}
-                            </span>
-                          )}
                         </div>
                       </TableCell>
                       <TableCell>
@@ -384,6 +379,11 @@ export default function TaskManagement() {
                             <SelectItem value="Completed">Completed</SelectItem>
                           </SelectContent>
                         </Select>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-xs text-muted-foreground italic">
+                          {task.remarks || "No actions entered"}
+                        </span>
                       </TableCell>
                       <TableCell className="text-right pr-6">
                         <DropdownMenu>

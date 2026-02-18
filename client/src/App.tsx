@@ -7,6 +7,8 @@ import NotFound from "@/pages/not-found";
 import AuthPage from "@/pages/auth-page";
 import Dashboard from "@/pages/dashboard";
 import TaskManagement from "@/pages/tasks";
+import CRM from "@/pages/crm";
+import LeadManagement from "@/pages/lead-management";
 import DashboardLayout from "@/components/layout/dashboard-layout";
 import { AuthProvider } from "@/hooks/use-auth";
 import { ProtectedRoute } from "@/lib/protected-route";
@@ -24,6 +26,8 @@ function Router() {
         )} 
       />
       <ProtectedRoute path="/tasks" component={TaskManagement} />
+      <ProtectedRoute path="/crm" component={CRM} />
+      <ProtectedRoute path="/leads" component={LeadManagement} />
       {/* Fallback routes for demo purposes that redirect to dashboard or show not found */}
       <ProtectedRoute 
         path="/:any*" 

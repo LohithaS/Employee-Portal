@@ -1,5 +1,8 @@
 import { Link } from "wouter";
 import { useState } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 import DashboardLayout from "@/components/layout/dashboard-layout";
 import {
   Table,
@@ -24,15 +27,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Plus } from "lucide-react";
 
-const initialMeetings = [
-  { id: 1, title: "Weekly Sync", date: new Date(), time: "10:00", location: "Conference Room A" },
-  { id: 2, title: "Client Review", date: new Date(new Date().setDate(new Date().getDate() + 1)), time: "14:00", location: "Online" },
-];
-
 export default function MeetingManagement() {
   const [date, setDate] = useState<Date | undefined>(new Date());
-  const [meetings, setMeetings] = useState(initialMeetings);
   const [isAddOpen, setIsAddOpen] = useState(false);
+  const { toast } = useToast();
   
   const [newMeeting, setNewMeeting] = useState({
     title: "",
@@ -41,6 +39,22 @@ export default function MeetingManagement() {
   });
   
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const meetingsQuery = useQuery<any[]>({ queryKey: ["/api/meetings"] });
+  const meetings = meetingsQuery.data ?? [];
+
+  const addMeetingMutation = useMutation({
+    mutationFn: async (meetingData: any) => {
+      await apiRequest("POST", "/api/meetings", meetingData);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/meetings"] });
+      setIsAddOpen(false);
+      setNewMeeting({ title: "", time: "", location: "" });
+      setErrors({});
+      toast({ title: "Meeting scheduled successfully" });
+    },
+  });
 
   const validateMeeting = () => {
     const newErrors: Record<string, string> = {};
@@ -54,30 +68,29 @@ export default function MeetingManagement() {
 
   const handleAddMeeting = () => {
     if (!validateMeeting()) return;
-    
     if (!date) return;
 
-    const meeting = {
-      id: meetings.length + 1,
+    addMeetingMutation.mutate({
       title: newMeeting.title,
       time: newMeeting.time,
       location: newMeeting.location,
-      date: date
-    };
-
-    setMeetings([...meetings, meeting]);
-    setIsAddOpen(false);
-    setNewMeeting({
-      title: "",
-      time: "",
-      location: ""
+      date: date.toISOString()
     });
-    setErrors({});
   };
 
-  const filteredMeetings = meetings.filter(meeting => 
-    date && meeting.date.toDateString() === date.toDateString()
+  const filteredMeetings = meetings.filter((meeting: any) => 
+    date && new Date(meeting.date).toDateString() === date.toDateString()
   );
+
+  if (meetingsQuery.isLoading) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-64">
+          <p className="text-muted-foreground">Loading meetings...</p>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>
@@ -127,7 +140,7 @@ export default function MeetingManagement() {
                 </div>
               </div>
               <DialogFooter>
-                <Button onClick={handleAddMeeting}>Save</Button>
+                <Button onClick={handleAddMeeting} disabled={addMeetingMutation.isPending}>Save</Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
@@ -173,15 +186,15 @@ export default function MeetingManagement() {
                       </TableCell>
                     </TableRow>
                   ) : (
-                    filteredMeetings.map((meeting) => (
+                    filteredMeetings.map((meeting: any) => (
                       <TableRow key={meeting.id}>
                         <TableCell className="font-medium">{meeting.title}</TableCell>
-                        <TableCell>{meeting.date.toLocaleDateString()}</TableCell>
+                        <TableCell>{new Date(meeting.date).toLocaleDateString()}</TableCell>
                         <TableCell>{meeting.time}</TableCell>
                         <TableCell>{meeting.location}</TableCell>
                         <TableCell>
                           <Button variant="outline" size="sm" asChild>
-                             <Link href={`/mom?title=${encodeURIComponent(meeting.title)}&date=${encodeURIComponent(meeting.date.toISOString())}&time=${encodeURIComponent(meeting.time)}`}>
+                             <Link href={`/mom?title=${encodeURIComponent(meeting.title)}&date=${encodeURIComponent(meeting.date)}&time=${encodeURIComponent(meeting.time)}`}>
                                Create MOM
                              </Link>
                           </Button>

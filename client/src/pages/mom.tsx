@@ -1,4 +1,7 @@
 import { useState } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 import DashboardLayout from "@/components/layout/dashboard-layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,52 +19,71 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-type MOMPoint = {
-  id: number;
-  discussion: string;
-  decision: string;
-  actionItem: string;
-  responsibility: string;
-};
-
 export default function MinutesOfMeeting() {
-  const [points, setPoints] = useState<MOMPoint[]>([]);
   const [location, setLocation] = useLocation();
+  const { toast } = useToast();
   
-  // Parse query params manually
   const getQueryParams = () => {
     const search = window.location.search;
     const params = new URLSearchParams(search);
     return {
       title: params.get("title") || "",
       date: params.get("date") || "",
-      time: params.get("time") || ""
+      time: params.get("time") || "",
+      meetingId: params.get("meetingId") || ""
     };
   };
 
-  const { title, date, time } = getQueryParams();
+  const { title, date, time, meetingId } = getQueryParams();
   const formattedDate = date ? new Date(date).toLocaleDateString() : "";
 
-  const [newPoint, setNewPoint] = useState<MOMPoint>({
-    id: 0,
+  const pointsQuery = useQuery<any[]>({ queryKey: ["/api/mom-points"] });
+  const allPoints = pointsQuery.data ?? [];
+  const points = meetingId ? allPoints.filter((p: any) => String(p.meetingId) === meetingId) : allPoints;
+
+  const [newPoint, setNewPoint] = useState({
     discussion: "",
     decision: "",
     actionItem: "",
     responsibility: ""
   });
 
+  const addPointMutation = useMutation({
+    mutationFn: async (pointData: any) => {
+      await apiRequest("POST", "/api/mom-points", pointData);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/mom-points"] });
+      setNewPoint({ discussion: "", decision: "", actionItem: "", responsibility: "" });
+      toast({ title: "Point added successfully" });
+    },
+  });
+
   const handleAddPoint = () => {
     if (newPoint.discussion) {
-      setPoints([...points, { ...newPoint, id: points.length + 1 }]);
-      setNewPoint({ id: 0, discussion: "", decision: "", actionItem: "", responsibility: "" });
+      addPointMutation.mutate({
+        meetingId: meetingId ? Number(meetingId) : null,
+        discussion: newPoint.discussion,
+        decision: newPoint.decision,
+        actionItem: newPoint.actionItem,
+        responsibility: newPoint.responsibility
+      });
     }
   };
 
   const handleSubmit = () => {
-    // Submit logic
-    alert("MOM Submitted!");
     setLocation("/meeting-management");
   };
+
+  if (pointsQuery.isLoading) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-64">
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>
@@ -144,7 +166,7 @@ export default function MinutesOfMeeting() {
                   onChange={(e) => setNewPoint({...newPoint, responsibility: e.target.value})}
                   placeholder="Assigned to..."
                 />
-                <Button className="w-full mt-2" onClick={handleAddPoint}>
+                <Button className="w-full mt-2" onClick={handleAddPoint} disabled={addPointMutation.isPending}>
                   <Plus className="mr-2 h-4 w-4" /> Add Point
                 </Button>
               </div>
@@ -170,8 +192,8 @@ export default function MinutesOfMeeting() {
                   </TableCell>
                 </TableRow>
               ) : (
-                points.map((point, index) => (
-                  <TableRow key={index}>
+                points.map((point: any, index: number) => (
+                  <TableRow key={point.id || index}>
                     <TableCell>{point.discussion}</TableCell>
                     <TableCell>{point.decision}</TableCell>
                     <TableCell>{point.actionItem}</TableCell>

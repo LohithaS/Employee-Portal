@@ -1,16 +1,19 @@
-import { createContext, useContext, useState, ReactNode } from "react";
+import { createContext, useContext, ReactNode } from "react";
 import { useLocation } from "wouter";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { apiRequest, getQueryFn, queryClient } from "@/lib/queryClient";
 
 type User = {
-  id: string;
+  id: number;
   username: string;
   name: string;
   role: string;
-} | null;
+};
 
 type AuthContextType = {
-  user: User;
-  login: (username: string) => void;
+  user: User | null;
+  login: (credentials: { username: string; password: string }) => void;
+  register: (data: { username: string; password: string; name: string }) => void;
   logout: () => void;
   isLoading: boolean;
 };
@@ -18,32 +21,55 @@ type AuthContextType = {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User>(null);
-  const [isLoading, setIsLoading] = useState(false);
   const [, setLocation] = useLocation();
 
-  const login = (username: string) => {
-    setIsLoading(true);
-    // Mock login delay
-    setTimeout(() => {
-      setUser({
-        id: "1",
-        username,
-        name: "Alex Morgan",
-        role: "Employee",
-      });
-      setIsLoading(false);
-      setLocation("/");
-    }, 1000);
-  };
+  const { data: user, isLoading } = useQuery<User | null>({
+    queryKey: ["/api/auth/me"],
+    queryFn: getQueryFn<User | null>({ on401: "returnNull" }),
+  });
 
-  const logout = () => {
-    setUser(null);
-    setLocation("/auth");
-  };
+  const loginMutation = useMutation({
+    mutationFn: async (credentials: { username: string; password: string }) => {
+      const res = await apiRequest("POST", "/api/auth/login", credentials);
+      return await res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
+      setLocation("/");
+    },
+  });
+
+  const registerMutation = useMutation({
+    mutationFn: async (data: { username: string; password: string; name: string }) => {
+      const res = await apiRequest("POST", "/api/auth/register", data);
+      return await res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
+      setLocation("/");
+    },
+  });
+
+  const logoutMutation = useMutation({
+    mutationFn: async () => {
+      await apiRequest("POST", "/api/auth/logout");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
+      setLocation("/auth");
+    },
+  });
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, isLoading }}>
+    <AuthContext.Provider
+      value={{
+        user: user ?? null,
+        login: (credentials) => loginMutation.mutate(credentials),
+        register: (data) => registerMutation.mutate(data),
+        logout: () => logoutMutation.mutate(),
+        isLoading,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

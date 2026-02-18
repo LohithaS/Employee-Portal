@@ -30,16 +30,34 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
 import { Wrench, Plus, Ticket } from "lucide-react";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
-const initialMachines = [
-  { id: 1, client: "AutoCorp Solutions", model: "X-2000", type: "CNC", lastService: "2025-12-15", info: "Routine Maintenance", nextService: "2026-06-15", region: "North" },
-  { id: 2, client: "EcoEnergy Systems", model: "Solar-Max", type: "Inverter", lastService: "2026-01-10", info: "Firmware Update", nextService: "2026-07-10", region: "South" },
-  { id: 3, client: "HealthMed Devices", model: "Scan-Pro", type: "Scanner", lastService: "2026-02-01", info: "Calibration", nextService: "2026-05-01", region: "East" },
-];
+type Machine = {
+  id: number;
+  client: string;
+  model: string;
+  type: string;
+  lastService: string;
+  info: string;
+  nextService: string;
+  region: string;
+  userId?: number;
+};
 
-const initialTickets = [
-  { id: 1, customer: "AutoCorp Solutions", region: "North", model: "X-2000", complaint: "Overheating", assignedTo: "Mike Tech", created: "2026-02-15", deadline: "2026-02-18", status: "Open" },
-];
+type TicketType = {
+  id: number;
+  customer: string;
+  region: string;
+  model: string;
+  complaint: string;
+  assignedTo: string;
+  created: string;
+  deadline: string;
+  status: string;
+  userId?: number;
+};
 
 const regionData = [
   { name: "North", value: 35, color: "#3b82f6" },
@@ -49,8 +67,11 @@ const regionData = [
 ];
 
 export default function ServiceManagement() {
-  const [machines, setMachines] = useState(initialMachines);
-  const [tickets, setTickets] = useState(initialTickets);
+  const { toast } = useToast();
+  const machinesQuery = useQuery<Machine[]>({ queryKey: ["/api/machines"] });
+  const ticketsQuery = useQuery<TicketType[]>({ queryKey: ["/api/tickets"] });
+  const machines = machinesQuery.data ?? [];
+  const tickets = ticketsQuery.data ?? [];
   const [isAddMachineOpen, setIsAddMachineOpen] = useState(false);
   const [isAddTicketOpen, setIsAddTicketOpen] = useState(false);
   const [machineErrors, setMachineErrors] = useState<Record<string, string>>({});
@@ -122,52 +143,91 @@ export default function ServiceManagement() {
     return Object.keys(errors).length === 0;
   };
 
+  const addMachineMutation = useMutation({
+    mutationFn: async (machineData: typeof newMachine) => {
+      await apiRequest("POST", "/api/machines", machineData);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/machines"] });
+      setIsAddMachineOpen(false);
+      setNewMachine({
+        client: "",
+        model: "",
+        type: "",
+        lastService: "",
+        info: "",
+        nextService: "",
+        region: "North"
+      });
+      setMachineErrors({});
+      toast({
+        title: "Machine Added",
+        description: "Successfully added the new machine."
+      });
+    },
+  });
+
+  const addTicketMutation = useMutation({
+    mutationFn: async (ticketData: typeof newTicket) => {
+      await apiRequest("POST", "/api/tickets", ticketData);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/tickets"] });
+      setIsAddTicketOpen(false);
+      setNewTicket({
+        customer: "",
+        region: "North",
+        model: "",
+        complaint: "",
+        assignedTo: "",
+        created: new Date().toISOString().split('T')[0],
+        deadline: "",
+        status: "Open"
+      });
+      setTicketErrors({});
+      toast({
+        title: "Ticket Created",
+        description: "Successfully created the support ticket."
+      });
+    },
+  });
+
+  const updateTicketStatusMutation = useMutation({
+    mutationFn: async ({ id, status }: { id: number; status: string }) => {
+      await apiRequest("PATCH", `/api/tickets/${id}`, { status });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/tickets"] });
+      toast({
+        title: "Status Updated",
+        description: "Ticket status updated successfully."
+      });
+    },
+  });
+
   const handleAddMachine = () => {
     if (!validateMachine()) return;
-    
-    const machine = {
-      ...newMachine,
-      id: machines.length + 1
-    };
-    setMachines([...machines, machine]);
-    setIsAddMachineOpen(false);
-    setNewMachine({
-      client: "",
-      model: "",
-      type: "",
-      lastService: "",
-      info: "",
-      nextService: "",
-      region: "North"
-    });
-    setMachineErrors({});
+    addMachineMutation.mutate(newMachine);
   };
 
   const handleAddTicket = () => {
     if (!validateTicket()) return;
-
-    const ticket = {
-      ...newTicket,
-      id: tickets.length + 1
-    };
-    setTickets([...tickets, ticket]);
-    setIsAddTicketOpen(false);
-    setNewTicket({
-      customer: "",
-      region: "North",
-      model: "",
-      complaint: "",
-      assignedTo: "",
-      created: new Date().toISOString().split('T')[0],
-      deadline: "",
-      status: "Open"
-    });
-    setTicketErrors({});
+    addTicketMutation.mutate(newTicket);
   };
 
   const handleStatusChange = (id: number, newStatus: string) => {
-    setTickets(tickets.map(t => t.id === id ? { ...t, status: newStatus } : t));
+    updateTicketStatusMutation.mutate({ id, status: newStatus });
   };
+
+  if (machinesQuery.isLoading || ticketsQuery.isLoading) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-64">
+          <div className="text-muted-foreground">Loading service data...</div>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>

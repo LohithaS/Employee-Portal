@@ -30,14 +30,20 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
 import { Search, Plus, UserPlus } from "lucide-react";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
-const initialClients = [
-  { id: 1, name: "AutoCorp Solutions", type: "tyre1", category: "Automotive", product: "Engine Components", region: "N", accountHolder: "John Doe" },
-  { id: 2, name: "EcoEnergy Systems", type: "tyre2", category: "Energy sector", product: "Solar Panels", region: "S", accountHolder: "Jane Smith" },
-  { id: 3, name: "HealthMed Devices", type: "tyre1", category: "Medical", product: "Imaging Scanners", region: "E", accountHolder: "Mike Johnson" },
-  { id: 4, name: "DefendTech Industries", type: "tyre1", category: "Defence", product: "Communication Gear", region: "W", accountHolder: "Sarah Wilson" },
-  { id: 5, name: "HomeAppliance Co", type: "tyre2", category: "White goods", product: "Refrigerators", region: "N", accountHolder: "Robert Brown" },
-];
+type Client = {
+  id: number;
+  name: string;
+  type: string;
+  category: string;
+  product: string;
+  region: string;
+  accountHolder: string;
+  userId?: number;
+};
 
 const regionData = [
   { name: "North", value: 40, color: "#3b82f6" },
@@ -47,7 +53,9 @@ const regionData = [
 ];
 
 export default function CRM() {
-  const [clients, setClients] = useState(initialClients);
+  const { toast } = useToast();
+  const clientsQuery = useQuery<Client[]>({ queryKey: ["/api/clients"] });
+  const clients = clientsQuery.data ?? [];
   const [categoryFilter, setCategoryFilter] = useState("All");
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [newClient, setNewClient] = useState({
@@ -74,30 +82,48 @@ export default function CRM() {
     return Object.keys(newErrors).length === 0;
   };
 
+  const addClientMutation = useMutation({
+    mutationFn: async (clientData: typeof newClient) => {
+      await apiRequest("POST", "/api/clients", clientData);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/clients"] });
+      setIsAddOpen(false);
+      setNewClient({
+        name: "",
+        type: "tyre1",
+        category: "Automotive",
+        product: "",
+        region: "N",
+        accountHolder: ""
+      });
+      setErrors({});
+      toast({
+        title: "Client Added",
+        description: "Successfully added the new client."
+      });
+    },
+  });
+
   const handleAddClient = () => {
     if (!validateClient()) return;
-
-    const client = {
-      ...newClient,
-      id: clients.length + 1
-    };
-    setClients([...clients, client]);
-    setIsAddOpen(false);
-    setNewClient({
-      name: "",
-      type: "tyre1",
-      category: "Automotive",
-      product: "",
-      region: "N",
-      accountHolder: ""
-    });
-    setErrors({});
+    addClientMutation.mutate(newClient);
   };
 
   const filteredClients = useMemo(() => {
     if (categoryFilter === "All") return clients;
     return clients.filter(c => c.category === categoryFilter);
   }, [clients, categoryFilter]);
+
+  if (clientsQuery.isLoading) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-64">
+          <div className="text-muted-foreground">Loading clients...</div>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>

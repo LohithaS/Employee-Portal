@@ -29,12 +29,17 @@ import {
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { UserPlus, Filter } from "lucide-react";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
-const initialLeads = [
-  { id: 1, customerName: "Global Tech", lead: "Alex Rivera", stage: "quotation submission" },
-  { id: 2, customerName: "Zenith Corp", lead: "Sarah Chen", stage: "sample testing" },
-  { id: 3, customerName: "Peak Dynamics", lead: "Marcus Thorne", stage: "purchase order" },
-];
+type Lead = {
+  id: number;
+  customerName: string;
+  lead: string;
+  stage: string;
+  userId?: number;
+};
 
 const stages = [
   "inquiry", "RFQ", "quotation submission", "sample request", 
@@ -43,10 +48,12 @@ const stages = [
 ];
 
 export default function LeadManagement() {
-  const [leads, setLeads] = useState(initialLeads);
+  const { toast } = useToast();
+  const leadsQuery = useQuery<Lead[]>({ queryKey: ["/api/leads"] });
+  const leads = leadsQuery.data ?? [];
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isUpdateOpen, setIsUpdateOpen] = useState(false);
-  const [selectedLead, setSelectedLead] = useState<typeof initialLeads[0] | null>(null);
+  const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   
   const [newLead, setNewLead] = useState({
     customerName: "",
@@ -66,34 +73,72 @@ export default function LeadManagement() {
     return Object.keys(newErrors).length === 0;
   };
 
+  const addLeadMutation = useMutation({
+    mutationFn: async (leadData: typeof newLead) => {
+      await apiRequest("POST", "/api/leads", leadData);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/leads"] });
+      setIsAddOpen(false);
+      setNewLead({
+        customerName: "",
+        lead: "",
+        stage: "inquiry"
+      });
+      setErrors({});
+      toast({
+        title: "Lead Created",
+        description: "Successfully added the new lead."
+      });
+    },
+  });
+
+  const updateLeadMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: Partial<Lead> }) => {
+      await apiRequest("PATCH", `/api/leads/${id}`, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/leads"] });
+      setIsUpdateOpen(false);
+      setSelectedLead(null);
+      toast({
+        title: "Lead Updated",
+        description: "Successfully updated the lead."
+      });
+    },
+  });
+
   const handleAddLead = () => {
     if (!validateLead()) return;
-
-    const lead = {
-      ...newLead,
-      id: leads.length + 1
-    };
-    setLeads([...leads, lead]);
-    setIsAddOpen(false);
-    setNewLead({
-      customerName: "",
-      lead: "",
-      stage: "inquiry"
-    });
-    setErrors({});
+    addLeadMutation.mutate(newLead);
   };
 
-  const openUpdateDialog = (lead: typeof initialLeads[0]) => {
+  const openUpdateDialog = (lead: Lead) => {
     setSelectedLead(lead);
     setIsUpdateOpen(true);
   };
 
   const handleUpdateLead = () => {
     if (!selectedLead) return;
-    setLeads(leads.map(l => l.id === selectedLead.id ? selectedLead : l));
-    setIsUpdateOpen(false);
-    setSelectedLead(null);
+    updateLeadMutation.mutate({
+      id: selectedLead.id,
+      data: {
+        customerName: selectedLead.customerName,
+        lead: selectedLead.lead,
+        stage: selectedLead.stage,
+      },
+    });
   };
+
+  if (leadsQuery.isLoading) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-64">
+          <div className="text-muted-foreground">Loading leads...</div>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>

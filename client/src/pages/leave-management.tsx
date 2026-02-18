@@ -1,4 +1,7 @@
 import { useState } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 import DashboardLayout from "@/components/layout/dashboard-layout";
 import {
   Table,
@@ -30,14 +33,58 @@ const leaveTypes = [
   { id: "co", name: "Compensatory Off", balance: 2 },
 ];
 
-const initialRequests = [
-  { id: 1, type: "Sick Leave", dates: "Feb 15, 2026", days: 1, reason: "Viral Fever", status: "Approved" },
-];
-
 export default function LeaveManagement() {
-  const [requests, setRequests] = useState(initialRequests);
   const [selectedLeave, setSelectedLeave] = useState("");
-  const [leaveBalances, setLeaveBalances] = useState(leaveTypes);
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
+  const [reason, setReason] = useState("");
+  const [leaveBalances] = useState(leaveTypes);
+  const { toast } = useToast();
+
+  const requestsQuery = useQuery<any[]>({ queryKey: ["/api/leave-requests"] });
+  const requests = requestsQuery.data ?? [];
+
+  const addRequestMutation = useMutation({
+    mutationFn: async (requestData: any) => {
+      await apiRequest("POST", "/api/leave-requests", requestData);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/leave-requests"] });
+      setSelectedLeave("");
+      setFromDate("");
+      setToDate("");
+      setReason("");
+      toast({ title: "Leave request submitted successfully" });
+    },
+  });
+
+  const handleSubmitRequest = () => {
+    if (!selectedLeave || !fromDate || !toDate) return;
+
+    const leaveType = leaveBalances.find(l => l.id === selectedLeave);
+    const from = new Date(fromDate);
+    const to = new Date(toDate);
+    const days = Math.ceil((to.getTime() - from.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+
+    addRequestMutation.mutate({
+      type: leaveType?.name || selectedLeave,
+      fromDate,
+      toDate,
+      days,
+      reason,
+      status: "Pending"
+    });
+  };
+
+  if (requestsQuery.isLoading) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-64">
+          <p className="text-muted-foreground">Loading leave requests...</p>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>
@@ -78,17 +125,17 @@ export default function LeaveManagement() {
                     </div>
                     <div className="space-y-2">
                         <Label>From Date</Label>
-                        <Input type="date" />
+                        <Input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} />
                     </div>
                     <div className="space-y-2">
                         <Label>To Date</Label>
-                        <Input type="date" />
+                        <Input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} />
                     </div>
                     <div className="space-y-2">
                         <Label>Reason</Label>
-                        <Textarea placeholder="Reason for leave..." />
+                        <Textarea placeholder="Reason for leave..." value={reason} onChange={(e) => setReason(e.target.value)} />
                     </div>
-                    <Button className="w-full">Submit Request</Button>
+                    <Button className="w-full" onClick={handleSubmitRequest} disabled={addRequestMutation.isPending}>Submit Request</Button>
                 </CardContent>
             </Card>
 
@@ -108,10 +155,10 @@ export default function LeaveManagement() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {requests.map((req) => (
+                            {requests.map((req: any) => (
                                 <TableRow key={req.id}>
                                     <TableCell className="font-medium">{req.type}</TableCell>
-                                    <TableCell>{req.dates}</TableCell>
+                                    <TableCell>{req.fromDate} - {req.toDate}</TableCell>
                                     <TableCell>{req.days}</TableCell>
                                     <TableCell>{req.reason}</TableCell>
                                     <TableCell>

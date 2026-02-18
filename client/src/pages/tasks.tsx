@@ -38,6 +38,8 @@ import {
   DropdownMenuTrigger 
 } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 
 type Task = {
   id: number;
@@ -49,44 +51,20 @@ type Task = {
   priority: "High" | "Medium" | "Low";
   status: "New" | "In Progress" | "Completed";
   remarks: string;
+  userId?: number;
 };
-
-const initialTasks: Task[] = [
-  {
-    id: 1,
-    description: "Quarterly Financial Audit",
-    assignedBy: "John Director",
-    assignedTo: "Alex Morgan",
-    deadline: "2026-03-01",
-    backupPlan: "External consultant review",
-    priority: "High",
-    status: "In Progress",
-    remarks: "Awaiting bank statements",
-  },
-  {
-    id: 2,
-    description: "Client Presentation Deck",
-    assignedBy: "Sarah Manager",
-    assignedTo: "Alex Morgan",
-    deadline: "2026-02-25",
-    backupPlan: "Use previous template",
-    priority: "Medium",
-    status: "New",
-    remarks: "",
-  },
-];
 
 export default function TaskManagement() {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [tasks, setTasks] = useState<Task[]>(initialTasks);
+  const tasksQuery = useQuery<Task[]>({ queryKey: ["/api/tasks"] });
+  const tasks = tasksQuery.data ?? [];
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [isRemarksOpen, setIsRemarksOpen] = useState(false);
   const [tempRemarks, setTempRemarks] = useState("");
   
-  // Form state for new task
   const [newTask, setNewTask] = useState({
     description: "",
     assignedTo: "",
@@ -115,41 +93,54 @@ export default function TaskManagement() {
     return Object.keys(newErrors).length === 0;
   };
 
+  const addTaskMutation = useMutation({
+    mutationFn: async (taskData: typeof newTask) => {
+      await apiRequest("POST", "/api/tasks", {
+        description: taskData.description,
+        assignedBy: user?.name || "System",
+        assignedTo: taskData.assignedTo || "Unassigned",
+        deadline: taskData.deadline,
+        backupPlan: taskData.backupPlan,
+        priority: taskData.priority,
+        status: "New",
+        remarks: taskData.remarks,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
+      setIsDialogOpen(false);
+      setNewTask({
+        description: "",
+        assignedTo: "",
+        deadline: "",
+        backupPlan: "",
+        remarks: "",
+        priority: "Medium",
+      });
+      setErrors({});
+      toast({
+        title: "Task Created",
+        description: "Successfully added the new task."
+      });
+    },
+  });
+
+  const updateTaskMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: Record<string, unknown> }) => {
+      await apiRequest("PATCH", `/api/tasks/${id}`, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
+    },
+  });
+
   const handleAddTask = () => {
     if (!validateTask()) return;
-
-    const task: Task = {
-      id: tasks.length + 1,
-      description: newTask.description,
-      assignedBy: user?.name || "System",
-      assignedTo: newTask.assignedTo || "Unassigned",
-      deadline: newTask.deadline,
-      backupPlan: newTask.backupPlan,
-      priority: newTask.priority,
-      status: "New",
-      remarks: newTask.remarks,
-    };
-
-    setTasks([...tasks, task]);
-    setIsDialogOpen(false);
-    setNewTask({
-      description: "",
-      assignedTo: "",
-      deadline: "",
-      backupPlan: "",
-      remarks: "",
-      priority: "Medium",
-    });
-    setErrors({});
-    
-    toast({
-      title: "Task Created",
-      description: "Successfully added the new task."
-    });
+    addTaskMutation.mutate(newTask);
   };
 
   const handleStatusChange = (taskId: number, newStatus: Task["status"]) => {
-    setTasks(tasks.map(t => t.id === taskId ? { ...t, status: newStatus } : t));
+    updateTaskMutation.mutate({ id: taskId, data: { status: newStatus } });
     toast({
       title: "Status Updated",
       description: `Task marked as ${newStatus}`
@@ -157,7 +148,7 @@ export default function TaskManagement() {
   };
 
   const handlePriorityChange = (taskId: number, newPriority: Task["priority"]) => {
-    setTasks(tasks.map(t => t.id === taskId ? { ...t, priority: newPriority } : t));
+    updateTaskMutation.mutate({ id: taskId, data: { priority: newPriority } });
   };
 
   const openRemarks = (task: Task) => {
@@ -168,7 +159,7 @@ export default function TaskManagement() {
 
   const saveRemarks = () => {
     if (selectedTask) {
-      setTasks(tasks.map(t => t.id === selectedTask.id ? { ...t, remarks: tempRemarks } : t));
+      updateTaskMutation.mutate({ id: selectedTask.id, data: { remarks: tempRemarks } });
       setIsRemarksOpen(false);
       toast({
         title: "Remarks Saved",
@@ -176,6 +167,16 @@ export default function TaskManagement() {
       });
     }
   };
+
+  if (tasksQuery.isLoading) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-64">
+          <div className="text-muted-foreground">Loading tasks...</div>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>
@@ -452,4 +453,3 @@ export default function TaskManagement() {
 function cn(...classes: any[]) {
   return classes.filter(Boolean).join(" ");
 }
-

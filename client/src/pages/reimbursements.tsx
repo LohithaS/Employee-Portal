@@ -1,4 +1,7 @@
 import { useState } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 import DashboardLayout from "@/components/layout/dashboard-layout";
 import {
   Table,
@@ -23,14 +26,73 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, Upload } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-const initialClaims = [
-  { id: 1, type: "Travel", amount: "$350.00", date: "2026-02-10", status: "Pending", description: "Flight tickets to NYC" },
-  { id: 2, type: "Food", amount: "$120.00", date: "2026-02-11", status: "Approved", description: "Client Dinner" },
-];
-
 export default function Reimbursements() {
-  const [claims, setClaims] = useState(initialClaims);
   const [isAddOpen, setIsAddOpen] = useState(false);
+  const { toast } = useToast();
+
+  const [newClaim, setNewClaim] = useState({
+    type: "",
+    amount: "",
+    date: "",
+    description: ""
+  });
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const claimsQuery = useQuery<any[]>({ queryKey: ["/api/reimbursements"] });
+  const claims = claimsQuery.data ?? [];
+
+  const totalPending = claims
+    .filter((c: any) => c.status === "Pending")
+    .reduce((sum: number, c: any) => sum + Number(c.amount || 0), 0);
+  const totalApproved = claims
+    .filter((c: any) => c.status === "Approved")
+    .reduce((sum: number, c: any) => sum + Number(c.amount || 0), 0);
+  const totalRejected = claims
+    .filter((c: any) => c.status === "Rejected")
+    .reduce((sum: number, c: any) => sum + Number(c.amount || 0), 0);
+
+  const addClaimMutation = useMutation({
+    mutationFn: async (claimData: any) => {
+      await apiRequest("POST", "/api/reimbursements", claimData);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/reimbursements"] });
+      setIsAddOpen(false);
+      setNewClaim({ type: "", amount: "", date: "", description: "" });
+      setErrors({});
+      toast({ title: "Claim submitted successfully" });
+    },
+  });
+
+  const validateClaim = () => {
+    const newErrors: Record<string, string> = {};
+    if (!newClaim.type) newErrors.type = "Expense type is required";
+    if (!newClaim.amount) newErrors.amount = "Amount is required";
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmitClaim = () => {
+    if (!validateClaim()) return;
+
+    addClaimMutation.mutate({
+      type: newClaim.type,
+      amount: newClaim.amount,
+      date: newClaim.date,
+      description: newClaim.description,
+      status: "Pending"
+    });
+  };
+
+  if (claimsQuery.isLoading) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-64">
+          <p className="text-muted-foreground">Loading reimbursements...</p>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>
@@ -49,20 +111,40 @@ export default function Reimbursements() {
               </DialogHeader>
               <div className="grid gap-4 py-4">
                 <div className="grid gap-2">
-                  <Label>Expense Type</Label>
-                  <Input placeholder="e.g. Travel, Food" />
+                  <Label>Expense Type <span className="text-red-500">*</span></Label>
+                  <Input
+                    placeholder="e.g. Travel, Food"
+                    value={newClaim.type}
+                    onChange={(e) => setNewClaim({...newClaim, type: e.target.value})}
+                    className={errors.type ? "border-red-500" : ""}
+                  />
+                  {errors.type && <span className="text-xs text-red-500">{errors.type}</span>}
                 </div>
                 <div className="grid gap-2">
-                  <Label>Amount</Label>
-                  <Input placeholder="$0.00" />
+                  <Label>Amount <span className="text-red-500">*</span></Label>
+                  <Input
+                    placeholder="$0.00"
+                    value={newClaim.amount}
+                    onChange={(e) => setNewClaim({...newClaim, amount: e.target.value})}
+                    className={errors.amount ? "border-red-500" : ""}
+                  />
+                  {errors.amount && <span className="text-xs text-red-500">{errors.amount}</span>}
                 </div>
                 <div className="grid gap-2">
                   <Label>Date</Label>
-                  <Input type="date" />
+                  <Input
+                    type="date"
+                    value={newClaim.date}
+                    onChange={(e) => setNewClaim({...newClaim, date: e.target.value})}
+                  />
                 </div>
                 <div className="grid gap-2">
                   <Label>Description</Label>
-                  <Input placeholder="Details..." />
+                  <Input
+                    placeholder="Details..."
+                    value={newClaim.description}
+                    onChange={(e) => setNewClaim({...newClaim, description: e.target.value})}
+                  />
                 </div>
                 <div className="grid gap-2">
                   <Label>Upload Bills</Label>
@@ -73,7 +155,7 @@ export default function Reimbursements() {
                 </div>
               </div>
               <DialogFooter>
-                <Button onClick={() => setIsAddOpen(false)}>Submit Claim</Button>
+                <Button onClick={handleSubmitClaim} disabled={addClaimMutation.isPending}>Submit Claim</Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
@@ -85,7 +167,7 @@ export default function Reimbursements() {
                     <CardTitle className="text-sm font-medium">Total Pending</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">$350.00</div>
+                    <div className="text-2xl font-bold">${totalPending.toFixed(2)}</div>
                 </CardContent>
             </Card>
             <Card>
@@ -93,7 +175,7 @@ export default function Reimbursements() {
                     <CardTitle className="text-sm font-medium">Approved (This Month)</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold text-green-600">$120.00</div>
+                    <div className="text-2xl font-bold text-green-600">${totalApproved.toFixed(2)}</div>
                 </CardContent>
             </Card>
             <Card>
@@ -101,7 +183,7 @@ export default function Reimbursements() {
                     <CardTitle className="text-sm font-medium">Rejected</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold text-red-600">$0.00</div>
+                    <div className="text-2xl font-bold text-red-600">${totalRejected.toFixed(2)}</div>
                 </CardContent>
             </Card>
         </div>
@@ -118,12 +200,12 @@ export default function Reimbursements() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {claims.map((claim) => (
+              {claims.map((claim: any) => (
                 <TableRow key={claim.id}>
                   <TableCell className="font-medium">{claim.type}</TableCell>
                   <TableCell>{claim.description}</TableCell>
                   <TableCell>{claim.date}</TableCell>
-                  <TableCell>{claim.amount}</TableCell>
+                  <TableCell>${Number(claim.amount || 0).toFixed(2)}</TableCell>
                   <TableCell>
                     <Badge variant={claim.status === "Approved" ? "secondary" : "outline"} className={claim.status === "Approved" ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"}>
                         {claim.status}

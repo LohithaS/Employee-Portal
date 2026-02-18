@@ -1,4 +1,7 @@
 import { useState } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 import DashboardLayout from "@/components/layout/dashboard-layout";
 import {
   Table,
@@ -23,14 +26,13 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Plus, Paperclip } from "lucide-react";
 
-const initialTrips = [
-  { id: 1, purpose: "Client Visit - AutoCorp", location: "New York", dates: "Feb 10 - Feb 12, 2026", outcome: "Deal Signed", status: "Approved" },
-];
-
 export default function BusinessTripReports() {
-  const [trips, setTrips] = useState(initialTrips);
   const [isAddOpen, setIsAddOpen] = useState(false);
+  const { toast } = useToast();
   
+  const tripsQuery = useQuery<any[]>({ queryKey: ["/api/trips"] });
+  const trips = tripsQuery.data ?? [];
+
   const [newTrip, setNewTrip] = useState({
     purpose: "",
     location: "",
@@ -40,6 +42,19 @@ export default function BusinessTripReports() {
   });
   
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const addTripMutation = useMutation({
+    mutationFn: async (tripData: any) => {
+      await apiRequest("POST", "/api/trips", tripData);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/trips"] });
+      setIsAddOpen(false);
+      setNewTrip({ purpose: "", location: "", startDate: "", endDate: "", outcome: "" });
+      setErrors({});
+      toast({ title: "Trip report submitted successfully" });
+    },
+  });
 
   const validateTrip = () => {
     const newErrors: Record<string, string> = {};
@@ -59,26 +74,25 @@ export default function BusinessTripReports() {
   const handleAddTrip = () => {
     if (!validateTrip()) return;
 
-    const trip = {
-      id: trips.length + 1,
+    addTripMutation.mutate({
       purpose: newTrip.purpose,
       location: newTrip.location,
-      dates: `${newTrip.startDate} - ${newTrip.endDate}`,
+      startDate: newTrip.startDate,
+      endDate: newTrip.endDate,
       outcome: newTrip.outcome,
       status: "Pending"
-    };
-
-    setTrips([...trips, trip]);
-    setIsAddOpen(false);
-    setNewTrip({
-      purpose: "",
-      location: "",
-      startDate: "",
-      endDate: "",
-      outcome: ""
     });
-    setErrors({});
   };
+
+  if (tripsQuery.isLoading) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-64">
+          <p className="text-muted-foreground">Loading trips...</p>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>
@@ -154,7 +168,7 @@ export default function BusinessTripReports() {
                 </div>
               </div>
               <DialogFooter>
-                <Button onClick={handleAddTrip}>Submit for Approval</Button>
+                <Button onClick={handleAddTrip} disabled={addTripMutation.isPending}>Submit for Approval</Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
@@ -173,11 +187,11 @@ export default function BusinessTripReports() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {trips.map((trip) => (
+              {trips.map((trip: any) => (
                 <TableRow key={trip.id}>
                   <TableCell className="font-medium">{trip.purpose}</TableCell>
                   <TableCell>{trip.location}</TableCell>
-                  <TableCell>{trip.dates}</TableCell>
+                  <TableCell>{trip.startDate} - {trip.endDate}</TableCell>
                   <TableCell>{trip.outcome}</TableCell>
                   <TableCell><Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">{trip.status}</Badge></TableCell>
                   <TableCell>

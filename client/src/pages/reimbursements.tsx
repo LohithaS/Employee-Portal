@@ -68,6 +68,9 @@ export default function Reimbursements() {
     const newErrors: Record<string, string> = {};
     if (!newClaim.type) newErrors.type = "Expense type is required";
     if (!newClaim.amount) newErrors.amount = "Amount is required";
+    if (newClaim.date && newClaim.date > new Date().toISOString().split("T")[0]) {
+      newErrors.date = "Date cannot be in the future";
+    }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -134,9 +137,12 @@ export default function Reimbursements() {
                   <Label>Date</Label>
                   <Input
                     type="date"
+                    max={new Date().toISOString().split("T")[0]}
                     value={newClaim.date}
                     onChange={(e) => setNewClaim({...newClaim, date: e.target.value})}
+                    className={errors.date ? "border-red-500" : ""}
                   />
+                  {errors.date && <span className="text-xs text-red-500">{errors.date}</span>}
                 </div>
                 <div className="grid gap-2">
                   <Label>Description</Label>

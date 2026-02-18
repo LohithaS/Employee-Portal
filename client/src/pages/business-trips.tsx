@@ -58,12 +58,18 @@ export default function BusinessTripReports() {
 
   const validateTrip = () => {
     const newErrors: Record<string, string> = {};
+    const today = new Date().toISOString().split("T")[0];
     if (!newTrip.purpose) newErrors.purpose = "Purpose is required";
     if (!newTrip.location) newErrors.location = "Location is required";
-    if (!newTrip.startDate) newErrors.startDate = "Start date is required";
-    if (!newTrip.endDate) newErrors.endDate = "End date is required";
-    if (newTrip.startDate && newTrip.endDate && newTrip.startDate > newTrip.endDate) {
-       newErrors.endDate = "End date cannot be before start date";
+    if (!newTrip.startDate) {
+      newErrors.startDate = "Start date is required";
+    } else if (newTrip.startDate <= today) {
+      newErrors.startDate = "Start date must be a future date";
+    }
+    if (!newTrip.endDate) {
+      newErrors.endDate = "End date is required";
+    } else if (newTrip.startDate && newTrip.endDate && newTrip.endDate < newTrip.startDate) {
+      newErrors.endDate = "End date cannot be before start date";
     }
     if (!newTrip.outcome) newErrors.outcome = "Outcome is required";
     
@@ -135,6 +141,7 @@ export default function BusinessTripReports() {
                     <Label>Start Date <span className="text-red-500">*</span></Label>
                     <Input 
                       type="date"
+                      min={new Date(Date.now() + 86400000).toISOString().split("T")[0]}
                       value={newTrip.startDate}
                       onChange={(e) => setNewTrip({...newTrip, startDate: e.target.value})}
                       className={errors.startDate ? "border-red-500" : ""}
@@ -145,6 +152,7 @@ export default function BusinessTripReports() {
                     <Label>End Date <span className="text-red-500">*</span></Label>
                     <Input 
                       type="date"
+                      min={newTrip.startDate || new Date(Date.now() + 86400000).toISOString().split("T")[0]}
                       value={newTrip.endDate}
                       onChange={(e) => setNewTrip({...newTrip, endDate: e.target.value})}
                       className={errors.endDate ? "border-red-500" : ""}

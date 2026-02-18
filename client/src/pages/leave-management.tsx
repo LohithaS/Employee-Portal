@@ -61,6 +61,16 @@ export default function LeaveManagement() {
   const handleSubmitRequest = () => {
     if (!selectedLeave || !fromDate || !toDate) return;
 
+    const today = new Date().toISOString().split("T")[0];
+    if (fromDate <= today || toDate <= today) {
+      toast({ title: "Dates must be future dates", variant: "destructive" });
+      return;
+    }
+    if (toDate < fromDate) {
+      toast({ title: "To Date cannot be before From Date", variant: "destructive" });
+      return;
+    }
+
     const leaveType = leaveBalances.find(l => l.id === selectedLeave);
     const from = new Date(fromDate);
     const to = new Date(toDate);
@@ -125,11 +135,11 @@ export default function LeaveManagement() {
                     </div>
                     <div className="space-y-2">
                         <Label>From Date</Label>
-                        <Input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} />
+                        <Input type="date" min={new Date(Date.now() + 86400000).toISOString().split("T")[0]} value={fromDate} onChange={(e) => setFromDate(e.target.value)} />
                     </div>
                     <div className="space-y-2">
                         <Label>To Date</Label>
-                        <Input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} />
+                        <Input type="date" min={fromDate || new Date(Date.now() + 86400000).toISOString().split("T")[0]} value={toDate} onChange={(e) => setToDate(e.target.value)} />
                     </div>
                     <div className="space-y-2">
                         <Label>Reason</Label>

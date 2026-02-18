@@ -88,7 +88,11 @@ export default function TaskManagement() {
   const validateTask = () => {
     const newErrors: Record<string, string> = {};
     if (!newTask.description) newErrors.description = "Description is required";
-    if (!newTask.deadline) newErrors.deadline = "Deadline is required";
+    if (!newTask.deadline) {
+      newErrors.deadline = "Deadline is required";
+    } else if (newTask.deadline <= new Date().toISOString().split("T")[0]) {
+      newErrors.deadline = "Deadline must be a future date";
+    }
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -239,6 +243,7 @@ export default function TaskManagement() {
                       <Input 
                         id="deadline" 
                         type="date" 
+                        min={new Date(Date.now() + 86400000).toISOString().split("T")[0]}
                         value={newTask.deadline}
                         onChange={(e) => setNewTask({...newTask, deadline: e.target.value})}
                         className={errors.deadline ? "border-red-500" : ""}

@@ -280,6 +280,7 @@ export default function ServiceManagement() {
                     <Label>Last Service Date <span className="text-red-500">*</span></Label>
                     <Input 
                       type="date"
+                      max={new Date().toISOString().split("T")[0]}
                       value={newMachine.lastService}
                       onChange={(e) => setNewMachine({...newMachine, lastService: e.target.value})}
                       className={machineErrors.lastService ? "border-red-500" : ""}
@@ -300,6 +301,7 @@ export default function ServiceManagement() {
                     <Label>Upcoming Service <span className="text-red-500">*</span></Label>
                     <Input 
                       type="date"
+                      min={new Date(Date.now() + 86400000).toISOString().split("T")[0]}
                       value={newMachine.nextService}
                       onChange={(e) => setNewMachine({...newMachine, nextService: e.target.value})}
                       className={machineErrors.nextService ? "border-red-500" : ""}
@@ -385,6 +387,7 @@ export default function ServiceManagement() {
                     <Label>Deadline <span className="text-red-500">*</span></Label>
                     <Input 
                       type="date"
+                      min={new Date(Date.now() + 86400000).toISOString().split("T")[0]}
                       value={newTicket.deadline}
                       onChange={(e) => setNewTicket({...newTicket, deadline: e.target.value})}
                       className={ticketErrors.deadline ? "border-red-500" : ""}

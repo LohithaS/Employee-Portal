@@ -63,12 +63,27 @@ type Lead = {
   userId?: number;
 };
 
-const regionData = [
-  { name: "North", value: 40, color: "#3b82f6" },
-  { name: "East", value: 20, color: "#10b981" },
-  { name: "West", value: 25, color: "#f59e0b" },
-  { name: "South", value: 15, color: "#ef4444" },
-];
+type Machine = {
+  id: number;
+  client: string;
+  model: string;
+  type: string;
+  region: string;
+};
+
+const regionColors: Record<string, string> = {
+  N: "#3b82f6",
+  E: "#10b981",
+  W: "#f59e0b",
+  S: "#ef4444",
+};
+
+const regionLabels: Record<string, string> = {
+  N: "North",
+  E: "East",
+  W: "West",
+  S: "South",
+};
 
 const stages = [
   "inquiry", "RFQ", "quotation submission", "sample request",
@@ -81,12 +96,42 @@ export default function CRM() {
   const [, navigate] = useLocation();
   const clientsQuery = useQuery<Client[]>({ queryKey: ["/api/clients"] });
   const leadsQuery = useQuery<Lead[]>({ queryKey: ["/api/leads"] });
+  const machinesQuery = useQuery<Machine[]>({ queryKey: ["/api/machines"] });
   const clients = clientsQuery.data ?? [];
   const leads = leadsQuery.data ?? [];
+  const machines = machinesQuery.data ?? [];
   const [categoryFilter, setCategoryFilter] = useState("All");
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [selectedRegion, setSelectedRegion] = useState<string | null>(null);
+  const [isRegionOpen, setIsRegionOpen] = useState(false);
+
+  const regionPieData = useMemo(() => {
+    const counts: Record<string, number> = { N: 0, E: 0, W: 0, S: 0 };
+    machines.forEach(m => {
+      if (counts[m.region] !== undefined) counts[m.region]++;
+    });
+    return Object.entries(counts).map(([key, value]) => ({
+      name: regionLabels[key] || key,
+      regionKey: key,
+      value,
+      color: regionColors[key] || "#888",
+    }));
+  }, [machines]);
+
+  const regionClients = useMemo(() => {
+    if (!selectedRegion) return [];
+    return clients.filter(c => c.region === selectedRegion);
+  }, [clients, selectedRegion]);
+
+  const handlePieClick = (_: any, index: number) => {
+    const clicked = regionPieData[index];
+    if (clicked) {
+      setSelectedRegion(clicked.regionKey);
+      setIsRegionOpen(true);
+    }
+  };
 
   useEffect(() => {
     if (clients.length > 0) {
@@ -324,7 +369,7 @@ export default function CRM() {
                   </div>
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="holder" className="text-right">Holder <span className="text-red-500">*</span></Label>
+                  <Label htmlFor="holder" className="text-right">Account Holder <span className="text-red-500">*</span></Label>
                   <div className="col-span-3">
                     <Input
                       id="holder"
@@ -416,28 +461,31 @@ export default function CRM() {
         <div className="grid gap-6 md:grid-cols-2">
           <Card className="bg-card border-border shadow-md">
             <CardHeader>
-              <CardTitle className="text-foreground">Regional Client Distribution</CardTitle>
+              <CardTitle className="text-foreground">Total Machines Sold Regional Wise</CardTitle>
             </CardHeader>
             <CardContent className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
-                    data={regionData}
+                    data={regionPieData}
                     cx="50%"
                     cy="50%"
                     innerRadius={60}
                     outerRadius={80}
                     paddingAngle={5}
                     dataKey="value"
-                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                    label={({ name, value }) => `${name} (${value})`}
+                    onClick={handlePieClick}
+                    cursor="pointer"
                   >
-                    {regionData.map((entry, index) => (
+                    {regionPieData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
                   <Tooltip
                     contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }}
                     itemStyle={{ color: 'hsl(var(--foreground))' }}
+                    formatter={(value: number, name: string) => [`${value} machines`, name]}
                   />
                   <Legend verticalAlign="bottom" height={36} />
                 </PieChart>
@@ -613,6 +661,50 @@ export default function CRM() {
                 </div>
               </>
             )}
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={isRegionOpen} onOpenChange={setIsRegionOpen}>
+          <DialogContent className="bg-card text-card-foreground border-border sm:max-w-[550px] max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>{selectedRegion ? regionLabels[selectedRegion] : ""} Region - Clients</DialogTitle>
+              <DialogDescription>Clients registered in the {selectedRegion ? regionLabels[selectedRegion] : ""} region</DialogDescription>
+            </DialogHeader>
+            <div className="py-4">
+              {regionClients.length > 0 ? (
+                <div className="rounded-lg border border-border overflow-hidden">
+                  <Table>
+                    <TableHeader className="bg-muted/30">
+                      <TableRow>
+                        <TableHead className="w-12 text-center font-semibold text-foreground text-sm">S.No</TableHead>
+                        <TableHead className="font-semibold text-foreground text-sm">Client</TableHead>
+                        <TableHead className="font-semibold text-foreground text-sm">Category</TableHead>
+                        <TableHead className="font-semibold text-foreground text-sm">Product</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {regionClients.map((client, i) => (
+                        <TableRow key={client.id}>
+                          <TableCell className="text-center text-sm">{i + 1}</TableCell>
+                          <TableCell>
+                            <button
+                              className="font-semibold text-primary hover:underline cursor-pointer text-left text-sm"
+                              onClick={() => { setIsRegionOpen(false); openClientDetail(client); }}
+                            >
+                              {client.name}
+                            </button>
+                          </TableCell>
+                          <TableCell className="text-sm text-muted-foreground">{client.category}</TableCell>
+                          <TableCell className="text-sm text-muted-foreground">{client.product}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground italic text-center py-4">No clients found in this region.</p>
+              )}
+            </div>
           </DialogContent>
         </Dialog>
       </div>

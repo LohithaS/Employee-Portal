@@ -51,7 +51,7 @@ const registerSchema = z.object({
 type LoginFormValues = z.infer<typeof loginSchema>;
 type RegisterFormValues = z.infer<typeof registerSchema>;
 
-function LoginForm({ role, isLoading, onSubmit }: { role: string; isLoading: boolean; onSubmit: (values: LoginFormValues) => void }) {
+function LoginForm({ role, isLoading, onSubmit, loginError, onClearError }: { role: string; isLoading: boolean; onSubmit: (values: LoginFormValues) => void; loginError: string | null; onClearError: () => void }) {
   const loginForm = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -77,6 +77,7 @@ function LoginForm({ role, isLoading, onSubmit }: { role: string; isLoading: boo
                     className="pl-9"
                     data-testid={`input-login-username-${role.toLowerCase()}`}
                     {...field}
+                    onChange={(e) => { onClearError(); field.onChange(e); }}
                   />
                 </div>
               </FormControl>
@@ -98,10 +99,16 @@ function LoginForm({ role, isLoading, onSubmit }: { role: string; isLoading: boo
                     className="pl-9"
                     data-testid={`input-login-password-${role.toLowerCase()}`}
                     {...field}
+                    onChange={(e) => { onClearError(); field.onChange(e); }}
                   />
                 </div>
               </FormControl>
               <FormMessage />
+              {loginError && (
+                <p className="text-sm font-medium text-red-500 mt-1" data-testid={`text-login-error-${role.toLowerCase()}`}>
+                  {loginError.includes("Invalid credentials") ? "Enter correct password" : loginError}
+                </p>
+              )}
             </FormItem>
           )}
         />
@@ -241,7 +248,7 @@ function RegisterForm({ isLoading, onSubmit }: { isLoading: boolean; onSubmit: (
 }
 
 export default function AuthPage() {
-  const { login, register, isLoading } = useAuth();
+  const { login, register, isLoading, loginError, clearLoginError } = useAuth();
 
   const onEmployeeLogin = (values: LoginFormValues) => {
     login({ username: values.username, password: values.password, role: "Employee" });
@@ -305,14 +312,14 @@ export default function AuthPage() {
                   <Users className="h-4 w-4 flex-shrink-0" />
                   <span>Employee Login Portal</span>
                 </div>
-                <LoginForm role="Employee" isLoading={isLoading} onSubmit={onEmployeeLogin} />
+                <LoginForm role="Employee" isLoading={isLoading} onSubmit={onEmployeeLogin} loginError={loginError} onClearError={clearLoginError} />
               </TabsContent>
               <TabsContent value="manager-login" className="mt-0">
                 <div className="flex items-center gap-2 mb-4 p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 text-sm">
                   <Shield className="h-4 w-4 flex-shrink-0" />
                   <span>Manager Login Portal</span>
                 </div>
-                <LoginForm role="Manager" isLoading={isLoading} onSubmit={onManagerLogin} />
+                <LoginForm role="Manager" isLoading={isLoading} onSubmit={onManagerLogin} loginError={loginError} onClearError={clearLoginError} />
               </TabsContent>
               <TabsContent value="register" className="mt-0">
                 <RegisterForm isLoading={isLoading} onSubmit={onRegister} />

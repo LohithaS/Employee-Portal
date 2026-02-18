@@ -1,4 +1,4 @@
-import { createContext, useContext, ReactNode } from "react";
+import { createContext, useContext, ReactNode, useState, useCallback } from "react";
 import { useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, getQueryFn, queryClient } from "@/lib/queryClient";
@@ -16,12 +16,29 @@ type AuthContextType = {
   register: (data: { username: string; password: string; name: string; role: string }) => void;
   logout: () => void;
   isLoading: boolean;
+  loginError: string | null;
+  clearLoginError: () => void;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+function parseErrorMessage(error: unknown): string {
+  const raw = error instanceof Error ? error.message : String(error);
+  const jsonMatch = raw.match(/\d+:\s*(\{.*\})/);
+  if (jsonMatch) {
+    try {
+      const parsed = JSON.parse(jsonMatch[1]);
+      return parsed.message || raw;
+    } catch {}
+  }
+  return raw;
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [, setLocation] = useLocation();
+  const [loginError, setLoginError] = useState<string | null>(null);
+
+  const clearLoginError = useCallback(() => setLoginError(null), []);
 
   const { data: user, isLoading } = useQuery<User | null>({
     queryKey: ["/api/auth/me"],
@@ -34,8 +51,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return await res.json();
     },
     onSuccess: () => {
+      setLoginError(null);
       queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
       setLocation("/");
+    },
+    onError: (error: unknown) => {
+      setLoginError(parseErrorMessage(error));
     },
   });
 
@@ -68,6 +89,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         register: (data) => registerMutation.mutate(data),
         logout: () => logoutMutation.mutate(),
         isLoading,
+        loginError,
+        clearLoginError,
       }}
     >
       {children}

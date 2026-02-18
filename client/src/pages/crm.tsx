@@ -60,7 +60,10 @@ export default function CRM() {
   });
 
   const handleAddClient = () => {
-    if (!newClient.name) return;
+    if (!newClient.name || !newClient.type || !newClient.category || !newClient.product || !newClient.region || !newClient.accountHolder) {
+      alert("Please fill in all fields.");
+      return;
+    }
     const client = {
       ...newClient,
       id: clients.length + 1

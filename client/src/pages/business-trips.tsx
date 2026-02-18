@@ -34,7 +34,8 @@ export default function BusinessTripReports() {
   const [newTrip, setNewTrip] = useState({
     purpose: "",
     location: "",
-    dates: "",
+    startDate: "",
+    endDate: "",
     outcome: ""
   });
   
@@ -44,7 +45,11 @@ export default function BusinessTripReports() {
     const newErrors: Record<string, string> = {};
     if (!newTrip.purpose) newErrors.purpose = "Purpose is required";
     if (!newTrip.location) newErrors.location = "Location is required";
-    if (!newTrip.dates) newErrors.dates = "Dates are required";
+    if (!newTrip.startDate) newErrors.startDate = "Start date is required";
+    if (!newTrip.endDate) newErrors.endDate = "End date is required";
+    if (newTrip.startDate && newTrip.endDate && newTrip.startDate > newTrip.endDate) {
+       newErrors.endDate = "End date cannot be before start date";
+    }
     if (!newTrip.outcome) newErrors.outcome = "Outcome is required";
     
     setErrors(newErrors);
@@ -58,7 +63,7 @@ export default function BusinessTripReports() {
       id: trips.length + 1,
       purpose: newTrip.purpose,
       location: newTrip.location,
-      dates: newTrip.dates,
+      dates: `${newTrip.startDate} - ${newTrip.endDate}`,
       outcome: newTrip.outcome,
       status: "Pending"
     };
@@ -68,7 +73,8 @@ export default function BusinessTripReports() {
     setNewTrip({
       purpose: "",
       location: "",
-      dates: "",
+      startDate: "",
+      endDate: "",
       outcome: ""
     });
     setErrors({});
@@ -110,15 +116,27 @@ export default function BusinessTripReports() {
                   />
                   {errors.location && <span className="text-xs text-red-500">{errors.location}</span>}
                 </div>
-                <div className="grid gap-2">
-                  <Label>Dates <span className="text-red-500">*</span></Label>
-                  <Input 
-                    placeholder="e.g. March 1 - March 5" 
-                    value={newTrip.dates}
-                    onChange={(e) => setNewTrip({...newTrip, dates: e.target.value})}
-                    className={errors.dates ? "border-red-500" : ""}
-                  />
-                  {errors.dates && <span className="text-xs text-red-500">{errors.dates}</span>}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="grid gap-2">
+                    <Label>Start Date <span className="text-red-500">*</span></Label>
+                    <Input 
+                      type="date"
+                      value={newTrip.startDate}
+                      onChange={(e) => setNewTrip({...newTrip, startDate: e.target.value})}
+                      className={errors.startDate ? "border-red-500" : ""}
+                    />
+                    {errors.startDate && <span className="text-xs text-red-500">{errors.startDate}</span>}
+                  </div>
+                  <div className="grid gap-2">
+                    <Label>End Date <span className="text-red-500">*</span></Label>
+                    <Input 
+                      type="date"
+                      value={newTrip.endDate}
+                      onChange={(e) => setNewTrip({...newTrip, endDate: e.target.value})}
+                      className={errors.endDate ? "border-red-500" : ""}
+                    />
+                    {errors.endDate && <span className="text-xs text-red-500">{errors.endDate}</span>}
+                  </div>
                 </div>
                 <div className="grid gap-2">
                   <Label>Outcome <span className="text-red-500">*</span></Label>

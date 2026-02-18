@@ -1,0 +1,18 @@
+Add Service Management on the left panel and On clicking the Service Management, View the pictorial representation (pie chart) of total machines sold regional wise.
+View the machine details in below tabular format with column names as s.no, client/company, machine model, machine type, last service date, service information,
+upcoming service date. Option to Add or update machine details and display. Option to create ticket in tabular format with column names as customer name,
+region, machine model, complaint type, assigned to, created date, deadline. 
+On clicking the Minutes of Meeting which is present on the left panel, there should be an option to record Discussion points, Decisions, Action items. 
+Assign resposibility based on meeting points. Save and submit.
+Add Meeting Management on the left panel and On clicking the Meeting Management, there should be an option to Check meeting schedule, Allows MOM creation,
+Add or update meetings and display.
+On clicking the Business Trip Reports which is present on the left panel, option to Open Business Trip Reports, Create new trip report with details like 
+Purpose, Location, Dates, Outcome. Option to Attach documents. Submit for approval.
+On clicking the Reimbursements which is present on the left panel, option to Add new claim and display, Enter expense details and display, Upload bills and 
+display, submit. Option to Track approval status and also display the same on the main Dashboard on the Home page.
+On clicking the Leave Management which is present on the left panel, there should an option to Check leave balance, select the type of leave (dropdown contain sick leave, casual leave, earned leave,
+Maternity leave, Compensatory Off (Comp-off)), On selecting particular leave the count should deduct, Apply leave with reason and display, Submit request,
+Track approval.
+On clicking the Salary Slip which is present on the left panel, there should be an option to Select month, View or download slip.
+On clicking the Company Information which is present on the left panel, there should be an option to View company policies and announcements.
+On clicking the Settings which is present on the left panel, there should be an option to Update profile details and display, Change password when required.

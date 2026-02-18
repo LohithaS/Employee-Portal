@@ -45,6 +45,26 @@ const stages = [
 export default function LeadManagement() {
   const [leads, setLeads] = useState(initialLeads);
   const [isAddOpen, setIsAddOpen] = useState(false);
+  const [newLead, setNewLead] = useState({
+    customerName: "",
+    lead: "",
+    stage: "inquiry"
+  });
+
+  const handleAddLead = () => {
+    if (!newLead.customerName) return;
+    const lead = {
+      ...newLead,
+      id: leads.length + 1
+    };
+    setLeads([...leads, lead]);
+    setIsAddOpen(false);
+    setNewLead({
+      customerName: "",
+      lead: "",
+      stage: "inquiry"
+    });
+  };
 
   return (
     <DashboardLayout>
@@ -65,15 +85,28 @@ export default function LeadManagement() {
               <div className="grid gap-4 py-4">
                 <div className="grid gap-2">
                   <Label htmlFor="customer">Customer Name</Label>
-                  <Input id="customer" className="border-input bg-background" />
+                  <Input 
+                    id="customer" 
+                    className="border-input bg-background" 
+                    value={newLead.customerName}
+                    onChange={(e) => setNewLead({...newLead, customerName: e.target.value})}
+                  />
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="lead">Lead Owner</Label>
-                  <Input id="lead" className="border-input bg-background" />
+                  <Input 
+                    id="lead" 
+                    className="border-input bg-background" 
+                    value={newLead.lead}
+                    onChange={(e) => setNewLead({...newLead, lead: e.target.value})}
+                  />
                 </div>
                 <div className="grid gap-2">
                   <Label>Sales Stage</Label>
-                  <Select>
+                  <Select 
+                    value={newLead.stage} 
+                    onValueChange={(v) => setNewLead({...newLead, stage: v})}
+                  >
                     <SelectTrigger className="border-input bg-background">
                       <SelectValue placeholder="Select stage" />
                     </SelectTrigger>
@@ -85,7 +118,7 @@ export default function LeadManagement() {
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setIsAddOpen(false)}>Cancel</Button>
-                <Button onClick={() => setIsAddOpen(false)}>Save Lead</Button>
+                <Button onClick={handleAddLead}>Save Lead</Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>

@@ -50,6 +50,32 @@ export default function CRM() {
   const [clients, setClients] = useState(initialClients);
   const [categoryFilter, setCategoryFilter] = useState("All");
   const [isAddOpen, setIsAddOpen] = useState(false);
+  const [newClient, setNewClient] = useState({
+    name: "",
+    type: "tyre1",
+    category: "Automotive",
+    product: "",
+    region: "N",
+    accountHolder: ""
+  });
+
+  const handleAddClient = () => {
+    if (!newClient.name) return;
+    const client = {
+      ...newClient,
+      id: clients.length + 1
+    };
+    setClients([...clients, client]);
+    setIsAddOpen(false);
+    setNewClient({
+      name: "",
+      type: "tyre1",
+      category: "Automotive",
+      product: "",
+      region: "N",
+      accountHolder: ""
+    });
+  };
 
   const filteredClients = useMemo(() => {
     if (categoryFilter === "All") return clients;
@@ -75,11 +101,34 @@ export default function CRM() {
               <div className="grid gap-4 py-4">
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="name" className="text-right">Company</Label>
-                  <Input id="name" className="col-span-3 border-input bg-background" />
+                  <Input 
+                    id="name" 
+                    className="col-span-3 border-input bg-background" 
+                    value={newClient.name}
+                    onChange={(e) => setNewClient({...newClient, name: e.target.value})}
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="type" className="text-right">Type</Label>
+                  <Select 
+                    value={newClient.type} 
+                    onValueChange={(v) => setNewClient({...newClient, type: v})}
+                  >
+                    <SelectTrigger className="col-span-3 border-input bg-background">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="tyre1">Tyre 1</SelectItem>
+                      <SelectItem value="tyre2">Tyre 2</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="category" className="text-right">Category</Label>
-                  <Select>
+                  <Select 
+                    value={newClient.category} 
+                    onValueChange={(v) => setNewClient({...newClient, category: v})}
+                  >
                     <SelectTrigger className="col-span-3 border-input bg-background">
                       <SelectValue placeholder="Select category" />
                     </SelectTrigger>
@@ -92,10 +141,45 @@ export default function CRM() {
                     </SelectContent>
                   </Select>
                 </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="product" className="text-right">Product</Label>
+                  <Input 
+                    id="product" 
+                    className="col-span-3 border-input bg-background" 
+                    value={newClient.product}
+                    onChange={(e) => setNewClient({...newClient, product: e.target.value})}
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="region" className="text-right">Region</Label>
+                  <Select 
+                    value={newClient.region} 
+                    onValueChange={(v) => setNewClient({...newClient, region: v})}
+                  >
+                    <SelectTrigger className="col-span-3 border-input bg-background">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="N">North (N)</SelectItem>
+                      <SelectItem value="E">East (E)</SelectItem>
+                      <SelectItem value="W">West (W)</SelectItem>
+                      <SelectItem value="S">South (S)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="holder" className="text-right">Holder</Label>
+                  <Input 
+                    id="holder" 
+                    className="col-span-3 border-input bg-background" 
+                    value={newClient.accountHolder}
+                    onChange={(e) => setNewClient({...newClient, accountHolder: e.target.value})}
+                  />
+                </div>
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setIsAddOpen(false)}>Cancel</Button>
-                <Button onClick={() => setIsAddOpen(false)}>Save Client</Button>
+                <Button onClick={handleAddClient}>Save Client</Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>

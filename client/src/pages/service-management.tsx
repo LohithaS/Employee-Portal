@@ -75,7 +75,10 @@ export default function ServiceManagement() {
   });
 
   const handleAddMachine = () => {
-    if (!newMachine.client || !newMachine.model) return;
+    if (!newMachine.client || !newMachine.model || !newMachine.type || !newMachine.lastService || !newMachine.info || !newMachine.nextService) {
+      alert("Please fill in all fields.");
+      return;
+    }
     const machine = {
       ...newMachine,
       id: machines.length + 1
@@ -94,7 +97,10 @@ export default function ServiceManagement() {
   };
 
   const handleAddTicket = () => {
-    if (!newTicket.customer || !newTicket.complaint) return;
+    if (!newTicket.customer || !newTicket.region || !newTicket.model || !newTicket.complaint || !newTicket.assignedTo || !newTicket.deadline) {
+      alert("Please fill in all fields.");
+      return;
+    }
     const ticket = {
       ...newTicket,
       id: tickets.length + 1

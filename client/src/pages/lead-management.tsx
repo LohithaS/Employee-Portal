@@ -55,7 +55,10 @@ export default function LeadManagement() {
   });
 
   const handleAddLead = () => {
-    if (!newLead.customerName) return;
+    if (!newLead.customerName || !newLead.lead || !newLead.stage) {
+      alert("Please fill in all fields.");
+      return;
+    }
     const lead = {
       ...newLead,
       id: leads.length + 1

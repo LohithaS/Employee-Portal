@@ -9,6 +9,15 @@ import Dashboard from "@/pages/dashboard";
 import TaskManagement from "@/pages/tasks";
 import CRM from "@/pages/crm";
 import LeadManagement from "@/pages/lead-management";
+import ServiceManagement from "@/pages/service-management";
+import MinutesOfMeeting from "@/pages/mom";
+import MeetingManagement from "@/pages/meeting-management";
+import BusinessTripReports from "@/pages/business-trips";
+import Reimbursements from "@/pages/reimbursements";
+import LeaveManagement from "@/pages/leave-management";
+import SalarySlip from "@/pages/salary-slip";
+import CompanyInformation from "@/pages/company-info";
+import Settings from "@/pages/settings";
 import DashboardLayout from "@/components/layout/dashboard-layout";
 import { AuthProvider } from "@/hooks/use-auth";
 import { ProtectedRoute } from "@/lib/protected-route";
@@ -28,6 +37,15 @@ function Router() {
       <ProtectedRoute path="/tasks" component={TaskManagement} />
       <ProtectedRoute path="/crm" component={CRM} />
       <ProtectedRoute path="/leads" component={LeadManagement} />
+      <ProtectedRoute path="/service" component={ServiceManagement} />
+      <ProtectedRoute path="/mom" component={MinutesOfMeeting} />
+      <ProtectedRoute path="/meetings" component={MeetingManagement} />
+      <ProtectedRoute path="/trips" component={BusinessTripReports} />
+      <ProtectedRoute path="/reimbursements" component={Reimbursements} />
+      <ProtectedRoute path="/leaves" component={LeaveManagement} />
+      <ProtectedRoute path="/salary" component={SalarySlip} />
+      <ProtectedRoute path="/company" component={CompanyInformation} />
+      <ProtectedRoute path="/settings" component={Settings} />
       {/* Fallback routes for demo purposes that redirect to dashboard or show not found */}
       <ProtectedRoute 
         path="/:any*" 

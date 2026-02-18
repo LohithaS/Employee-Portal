@@ -45,6 +45,9 @@ const stages = [
 export default function LeadManagement() {
   const [leads, setLeads] = useState(initialLeads);
   const [isAddOpen, setIsAddOpen] = useState(false);
+  const [isUpdateOpen, setIsUpdateOpen] = useState(false);
+  const [selectedLead, setSelectedLead] = useState<typeof initialLeads[0] | null>(null);
+  
   const [newLead, setNewLead] = useState({
     customerName: "",
     lead: "",
@@ -64,6 +67,18 @@ export default function LeadManagement() {
       lead: "",
       stage: "inquiry"
     });
+  };
+
+  const openUpdateDialog = (lead: typeof initialLeads[0]) => {
+    setSelectedLead(lead);
+    setIsUpdateOpen(true);
+  };
+
+  const handleUpdateLead = () => {
+    if (!selectedLead) return;
+    setLeads(leads.map(l => l.id === selectedLead.id ? selectedLead : l));
+    setIsUpdateOpen(false);
+    setSelectedLead(null);
   };
 
   return (
@@ -122,6 +137,55 @@ export default function LeadManagement() {
               </DialogFooter>
             </DialogContent>
           </Dialog>
+
+          <Dialog open={isUpdateOpen} onOpenChange={setIsUpdateOpen}>
+            <DialogContent className="bg-card text-card-foreground border-border">
+              <DialogHeader>
+                <DialogTitle>Update Lead Details</DialogTitle>
+                <DialogDescription>Modify existing lead information.</DialogDescription>
+              </DialogHeader>
+              {selectedLead && (
+                <div className="grid gap-4 py-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="update-customer">Customer Name</Label>
+                    <Input 
+                      id="update-customer" 
+                      className="border-input bg-background" 
+                      value={selectedLead.customerName}
+                      onChange={(e) => setSelectedLead({...selectedLead, customerName: e.target.value})}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="update-lead">Lead Owner</Label>
+                    <Input 
+                      id="update-lead" 
+                      className="border-input bg-background" 
+                      value={selectedLead.lead}
+                      onChange={(e) => setSelectedLead({...selectedLead, lead: e.target.value})}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label>Sales Stage</Label>
+                    <Select 
+                      value={selectedLead.stage} 
+                      onValueChange={(v) => setSelectedLead({...selectedLead, stage: v})}
+                    >
+                      <SelectTrigger className="border-input bg-background">
+                        <SelectValue placeholder="Select stage" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {stages.map(s => <SelectItem key={s} value={s}>{s.replace(/_/g, " ").toUpperCase()}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              )}
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setIsUpdateOpen(false)}>Cancel</Button>
+                <Button onClick={handleUpdateLead}>Update Lead</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
 
         <div className="rounded-xl border border-border bg-card shadow-lg overflow-hidden">
@@ -152,7 +216,14 @@ export default function LeadManagement() {
                     </Select>
                   </TableCell>
                   <TableCell className="text-right pr-6">
-                    <Button variant="outline" size="sm" className="h-8 border-border hover:bg-muted">Update</Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="h-8 border-border hover:bg-muted"
+                      onClick={() => openUpdateDialog(lead)}
+                    >
+                      Update
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))}

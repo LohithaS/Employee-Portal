@@ -258,15 +258,7 @@ export default function CRM() {
                   <TableCell className="text-center font-medium">{index + 1}</TableCell>
                   <TableCell className="font-semibold text-primary">{client.name}</TableCell>
                   <TableCell>
-                    <Select defaultValue={client.type}>
-                      <SelectTrigger className="h-8 w-24 border-input bg-background">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="tyre1">Tyre 1</SelectItem>
-                        <SelectItem value="tyre2">Tyre 2</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    {client.type === 'tyre1' ? 'Tyre 1' : 'Tyre 2'}
                   </TableCell>
                   <TableCell className="text-muted-foreground">{client.category}</TableCell>
                   <TableCell className="text-muted-foreground">{client.product}</TableCell>

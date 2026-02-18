@@ -109,8 +109,8 @@ export default function CRM() {
 
   const regionPieData = useMemo(() => {
     const counts: Record<string, number> = { N: 0, E: 0, W: 0, S: 0 };
-    machines.forEach(m => {
-      if (counts[m.region] !== undefined) counts[m.region]++;
+    clients.forEach(c => {
+      if (counts[c.region] !== undefined) counts[c.region]++;
     });
     return Object.entries(counts).map(([key, value]) => ({
       name: regionLabels[key] || key,
@@ -118,7 +118,7 @@ export default function CRM() {
       value,
       color: regionColors[key] || "#888",
     }));
-  }, [machines]);
+  }, [clients]);
 
   const regionClients = useMemo(() => {
     if (!selectedRegion) return [];
@@ -480,7 +480,7 @@ export default function CRM() {
                         </button>
                       ))}
                     </div>
-                    <p className="text-sm text-muted-foreground">No machines added yet. Add machines in Service Management to see the chart.</p>
+                    <p className="text-sm text-muted-foreground">No clients added yet. Add clients to see the chart.</p>
                   </div>
                 </div>
               ) : (
@@ -505,7 +505,7 @@ export default function CRM() {
                     <Tooltip
                       contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }}
                       itemStyle={{ color: 'hsl(var(--foreground))' }}
-                      formatter={(value: number, name: string) => [`${value} machines`, name]}
+                      formatter={(value: number, name: string) => [`${value} clients`, name]}
                     />
                     <Legend verticalAlign="bottom" height={36} />
                   </PieChart>

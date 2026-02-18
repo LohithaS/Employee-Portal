@@ -204,6 +204,7 @@ export default function CRM() {
                     outerRadius={80}
                     paddingAngle={5}
                     dataKey="value"
+                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
                   >
                     {regionData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />

@@ -461,7 +461,7 @@ export default function CRM() {
         <div className="grid gap-6 md:grid-cols-2">
           <Card className="bg-card border-border shadow-md">
             <CardHeader>
-              <CardTitle className="text-foreground">Total Machines Sold Regional Wise</CardTitle>
+              <CardTitle className="text-foreground">Regional Client Distribution</CardTitle>
             </CardHeader>
             <CardContent className="h-[300px]">
               {regionPieData.every(d => d.value === 0) ? (

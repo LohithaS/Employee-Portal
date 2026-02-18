@@ -45,6 +45,8 @@ export const clients = pgTable("clients", {
   product: text("product").notNull(),
   region: text("region").notNull(),
   accountHolder: text("account_holder").notNull(),
+  description: text("description"),
+  stakeholders: text("stakeholders"),
   userId: integer("user_id"),
 });
 

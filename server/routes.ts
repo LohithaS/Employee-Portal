@@ -82,6 +82,13 @@ export async function registerRoutes(
     res.json(data);
   });
 
+  app.get("/api/clients/:id", requireAuth, async (req, res) => {
+    const id = parseInt(req.params.id);
+    const client = await storage.getClient(id);
+    if (!client) return res.status(404).json({ message: "Client not found" });
+    res.json(client);
+  });
+
   app.post("/api/clients", requireAuth, async (req, res) => {
     try {
       const client = await storage.createClient({ ...req.body, userId: req.session.userId });

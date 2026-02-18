@@ -180,7 +180,9 @@ export default function MeetingManagement() {
                         <TableCell>{meeting.location}</TableCell>
                         <TableCell>
                           <Button variant="outline" size="sm" asChild>
-                             <a href="/mom">Create MOM</a>
+                             <a href={`/mom?title=${encodeURIComponent(meeting.title)}&date=${encodeURIComponent(meeting.date.toISOString())}&time=${encodeURIComponent(meeting.time)}`}>
+                               Create MOM
+                             </a>
                           </Button>
                         </TableCell>
                       </TableRow>

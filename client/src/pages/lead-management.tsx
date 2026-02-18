@@ -28,10 +28,11 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { UserPlus, Filter } from "lucide-react";
+import { UserPlus } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useLocation } from "wouter";
 
 type Lead = {
   id: number;
@@ -41,26 +42,34 @@ type Lead = {
   userId?: number;
 };
 
+type Client = {
+  id: number;
+  name: string;
+};
+
 const stages = [
-  "inquiry", "RFQ", "quotation submission", "sample request", 
-  "sample submission", "sample testing", "sample approval", 
+  "inquiry", "RFQ", "quotation submission", "sample request",
+  "sample submission", "sample testing", "sample approval",
   "purchase order", "production"
 ];
 
 export default function LeadManagement() {
   const { toast } = useToast();
+  const [, navigate] = useLocation();
   const leadsQuery = useQuery<Lead[]>({ queryKey: ["/api/leads"] });
+  const clientsQuery = useQuery<Client[]>({ queryKey: ["/api/clients"] });
   const leads = leadsQuery.data ?? [];
+  const clients = clientsQuery.data ?? [];
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isUpdateOpen, setIsUpdateOpen] = useState(false);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
-  
+
   const [newLead, setNewLead] = useState({
     customerName: "",
     lead: "",
     stage: "inquiry"
   });
-  
+
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const validateLead = () => {
@@ -68,7 +77,7 @@ export default function LeadManagement() {
     if (!newLead.customerName) newErrors.customerName = "Customer name is required";
     if (!newLead.lead) newErrors.lead = "Lead owner is required";
     if (!newLead.stage) newErrors.stage = "Stage is required";
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -80,16 +89,9 @@ export default function LeadManagement() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/leads"] });
       setIsAddOpen(false);
-      setNewLead({
-        customerName: "",
-        lead: "",
-        stage: "inquiry"
-      });
+      setNewLead({ customerName: "", lead: "", stage: "inquiry" });
       setErrors({});
-      toast({
-        title: "Lead Created",
-        description: "Successfully added the new lead."
-      });
+      toast({ title: "Lead Created", description: "Successfully added the new lead." });
     },
   });
 
@@ -101,10 +103,7 @@ export default function LeadManagement() {
       queryClient.invalidateQueries({ queryKey: ["/api/leads"] });
       setIsUpdateOpen(false);
       setSelectedLead(null);
-      toast({
-        title: "Lead Updated",
-        description: "Successfully updated the lead."
-      });
+      toast({ title: "Lead Updated", description: "Successfully updated the lead." });
     },
   });
 
@@ -144,10 +143,10 @@ export default function LeadManagement() {
     <DashboardLayout>
       <div className="flex flex-col gap-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">Lead Management</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground" data-testid="text-leads-title">Lead Management</h1>
           <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-md">
+              <Button className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-md" data-testid="button-add-lead">
                 <UserPlus className="mr-2 h-4 w-4" /> Add Lead
               </Button>
             </DialogTrigger>
@@ -159,18 +158,36 @@ export default function LeadManagement() {
               <div className="grid gap-4 py-4">
                 <div className="grid gap-2">
                   <Label htmlFor="customer">Customer Name <span className="text-red-500">*</span></Label>
-                  <Input 
-                    id="customer" 
-                    className={`border-input bg-background ${errors.customerName ? "border-red-500" : ""}`}
-                    value={newLead.customerName}
-                    onChange={(e) => setNewLead({...newLead, customerName: e.target.value})}
-                  />
+                  {clients.length > 0 ? (
+                    <Select
+                      value={newLead.customerName}
+                      onValueChange={(v) => setNewLead({...newLead, customerName: v})}
+                    >
+                      <SelectTrigger data-testid="select-lead-customer" className={`border-input bg-background ${errors.customerName ? "border-red-500" : ""}`}>
+                        <SelectValue placeholder="Select a client" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {clients.map(c => (
+                          <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <Input
+                      id="customer"
+                      data-testid="input-lead-customer"
+                      className={`border-input bg-background ${errors.customerName ? "border-red-500" : ""}`}
+                      value={newLead.customerName}
+                      onChange={(e) => setNewLead({...newLead, customerName: e.target.value})}
+                    />
+                  )}
                   {errors.customerName && <span className="text-xs text-red-500">{errors.customerName}</span>}
                 </div>
                 <div className="grid gap-2">
                   <Label htmlFor="lead">Lead Owner <span className="text-red-500">*</span></Label>
-                  <Input 
-                    id="lead" 
+                  <Input
+                    id="lead"
+                    data-testid="input-lead-owner"
                     className={`border-input bg-background ${errors.lead ? "border-red-500" : ""}`}
                     value={newLead.lead}
                     onChange={(e) => setNewLead({...newLead, lead: e.target.value})}
@@ -179,11 +196,11 @@ export default function LeadManagement() {
                 </div>
                 <div className="grid gap-2">
                   <Label>Sales Stage <span className="text-red-500">*</span></Label>
-                  <Select 
-                    value={newLead.stage} 
+                  <Select
+                    value={newLead.stage}
                     onValueChange={(v) => setNewLead({...newLead, stage: v})}
                   >
-                    <SelectTrigger className={`border-input bg-background ${errors.stage ? "border-red-500" : ""}`}>
+                    <SelectTrigger data-testid="select-lead-stage" className={`border-input bg-background ${errors.stage ? "border-red-500" : ""}`}>
                       <SelectValue placeholder="Select stage" />
                     </SelectTrigger>
                     <SelectContent>
@@ -195,7 +212,7 @@ export default function LeadManagement() {
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setIsAddOpen(false)}>Cancel</Button>
-                <Button onClick={handleAddLead}>Save Lead</Button>
+                <Button onClick={handleAddLead} data-testid="button-save-lead">Save Lead</Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
@@ -210,26 +227,42 @@ export default function LeadManagement() {
                 <div className="grid gap-4 py-4">
                   <div className="grid gap-2">
                     <Label htmlFor="update-customer">Customer Name</Label>
-                    <Input 
-                      id="update-customer" 
-                      className="border-input bg-background" 
-                      value={selectedLead.customerName}
-                      onChange={(e) => setSelectedLead({...selectedLead, customerName: e.target.value})}
-                    />
+                    {clients.length > 0 ? (
+                      <Select
+                        value={selectedLead.customerName}
+                        onValueChange={(v) => setSelectedLead({...selectedLead, customerName: v})}
+                      >
+                        <SelectTrigger className="border-input bg-background">
+                          <SelectValue placeholder="Select a client" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {clients.map(c => (
+                            <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <Input
+                        id="update-customer"
+                        className="border-input bg-background"
+                        value={selectedLead.customerName}
+                        onChange={(e) => setSelectedLead({...selectedLead, customerName: e.target.value})}
+                      />
+                    )}
                   </div>
                   <div className="grid gap-2">
                     <Label htmlFor="update-lead">Lead Owner</Label>
-                    <Input 
-                      id="update-lead" 
-                      className="border-input bg-background" 
+                    <Input
+                      id="update-lead"
+                      className="border-input bg-background"
                       value={selectedLead.lead}
                       onChange={(e) => setSelectedLead({...selectedLead, lead: e.target.value})}
                     />
                   </div>
                   <div className="grid gap-2">
                     <Label>Sales Stage</Label>
-                    <Select 
-                      value={selectedLead.stage} 
+                    <Select
+                      value={selectedLead.stage}
                       onValueChange={(v) => setSelectedLead({...selectedLead, stage: v})}
                     >
                       <SelectTrigger className="border-input bg-background">
@@ -263,9 +296,17 @@ export default function LeadManagement() {
             </TableHeader>
             <TableBody>
               {leads.map((lead, index) => (
-                <TableRow key={lead.id} className="hover:bg-accent/5 transition-colors border-b border-border last:border-0">
+                <TableRow key={lead.id} className="hover:bg-accent/5 transition-colors border-b border-border last:border-0" data-testid={`row-lead-${lead.id}`}>
                   <TableCell className="text-center font-medium">{index + 1}</TableCell>
-                  <TableCell className="font-semibold text-primary">{lead.customerName}</TableCell>
+                  <TableCell>
+                    <button
+                      className="font-semibold text-primary hover:underline cursor-pointer text-left"
+                      onClick={() => navigate(`/crm?client=${encodeURIComponent(lead.customerName)}`)}
+                      data-testid={`link-lead-client-${lead.id}`}
+                    >
+                      {lead.customerName}
+                    </button>
+                  </TableCell>
                   <TableCell className="text-muted-foreground">{lead.lead}</TableCell>
                   <TableCell>
                     <Select defaultValue={lead.stage}>
@@ -278,11 +319,12 @@ export default function LeadManagement() {
                     </Select>
                   </TableCell>
                   <TableCell className="text-right pr-6">
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
+                    <Button
+                      variant="outline"
+                      size="sm"
                       className="h-8 border-border hover:bg-muted"
                       onClick={() => openUpdateDialog(lead)}
+                      data-testid={`button-update-lead-${lead.id}`}
                     >
                       Update
                     </Button>

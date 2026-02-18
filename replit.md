@@ -7,7 +7,14 @@ A comprehensive employee portal built with React + Express + PostgreSQL. Feature
 Full-stack application with real database persistence and session-based authentication.
 
 ## Recent Changes
-- **Feb 18, 2026**: Converted from frontend-only prototype to full-stack with PostgreSQL backend
+- **Feb 18, 2026**: Enhanced CRM and Lead Management linkage
+  - CRM table: "Company Name" renamed to "Client"
+  - Add Client form: added description, dynamic stakeholders (name + designation with add more)
+  - Client name clickable in CRM table → opens detail dialog showing all client data + associated leads
+  - Lead Management: customer name populated from CRM clients dropdown
+  - Customer name in leads table links back to CRM and auto-opens the matching client detail
+  - Clients schema: added description and stakeholders (JSON) fields
+- Converted from frontend-only prototype to full-stack with PostgreSQL backend
 - Added session-based authentication (register/login/logout) with bcrypt password hashing
 - Defined Drizzle ORM schemas for all entities: users, tasks, clients, leads, machines, tickets, meetings, MOM points, trips, reimbursements, leave requests
 - Built REST API routes for all CRUD operations

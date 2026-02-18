@@ -40,7 +40,7 @@ export default function Dashboard() {
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" className="hidden sm:flex">
             <Calendar className="mr-2 h-4 w-4" />
-            Feb 12, 2026
+            {new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
           </Button>
           <Button size="sm">Download Report</Button>
         </div>

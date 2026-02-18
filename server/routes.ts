@@ -10,11 +10,11 @@ export async function registerRoutes(
 
   app.post("/api/auth/register", async (req, res) => {
     try {
-      const { username, password, name } = req.body;
+      const { username, password, name, role } = req.body;
       if (!username || !password) {
         return res.status(400).json({ message: "Username and password are required" });
       }
-      const user = await registerUser(username, password, name || username);
+      const user = await registerUser(username, password, name || username, role || "Employee");
       req.session.userId = user.id;
       const { password: _, ...safeUser } = user;
       res.json(safeUser);
@@ -25,8 +25,11 @@ export async function registerRoutes(
 
   app.post("/api/auth/login", async (req, res) => {
     try {
-      const { username, password } = req.body;
-      const user = await loginUser(username, password);
+      const { username, password, role } = req.body;
+      if (!role) {
+        return res.status(400).json({ message: "Please select a login type" });
+      }
+      const user = await loginUser(username, password, role);
       req.session.userId = user.id;
       const { password: _, ...safeUser } = user;
       res.json(safeUser);

@@ -35,16 +35,17 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
   next();
 }
 
-export async function registerUser(username: string, password: string, name: string) {
+export async function registerUser(username: string, password: string, name: string, role: string = "Employee") {
   const existing = await storage.getUserByUsername(username);
   if (existing) {
     throw new Error("Username already exists");
   }
+  const validRole = role === "Manager" ? "Manager" : "Employee";
   const hashedPassword = await bcrypt.hash(password, 10);
-  return storage.createUser({ username, password: hashedPassword, name, role: "Employee" });
+  return storage.createUser({ username, password: hashedPassword, name, role: validRole });
 }
 
-export async function loginUser(username: string, password: string) {
+export async function loginUser(username: string, password: string, role: string) {
   const user = await storage.getUserByUsername(username);
   if (!user) {
     throw new Error("Invalid credentials");
@@ -52,6 +53,9 @@ export async function loginUser(username: string, password: string) {
   const valid = await bcrypt.compare(password, user.password);
   if (!valid) {
     throw new Error("Invalid credentials");
+  }
+  if (user.role !== role) {
+    throw new Error(`This account is registered as ${user.role}. Please use the ${user.role} login.`);
   }
   return user;
 }

@@ -464,32 +464,53 @@ export default function CRM() {
               <CardTitle className="text-foreground">Total Machines Sold Regional Wise</CardTitle>
             </CardHeader>
             <CardContent className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={regionPieData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={80}
-                    paddingAngle={5}
-                    dataKey="value"
-                    label={({ name, value }) => `${name} (${value})`}
-                    onClick={handlePieClick}
-                    cursor="pointer"
-                  >
-                    {regionPieData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }}
-                    itemStyle={{ color: 'hsl(var(--foreground))' }}
-                    formatter={(value: number, name: string) => [`${value} machines`, name]}
-                  />
-                  <Legend verticalAlign="bottom" height={36} />
-                </PieChart>
-              </ResponsiveContainer>
+              {regionPieData.every(d => d.value === 0) ? (
+                <div className="flex items-center justify-center h-full">
+                  <div className="text-center">
+                    <div className="flex justify-center gap-4 mb-4">
+                      {regionPieData.map((entry) => (
+                        <button
+                          key={entry.regionKey}
+                          className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border hover:bg-accent/10 transition-colors cursor-pointer"
+                          onClick={() => { setSelectedRegion(entry.regionKey); setIsRegionOpen(true); }}
+                        >
+                          <span className="w-3 h-3 rounded-full inline-block" style={{ backgroundColor: entry.color }} />
+                          <span className="text-sm font-medium">{entry.name}</span>
+                          <span className="text-xs text-muted-foreground">(0)</span>
+                        </button>
+                      ))}
+                    </div>
+                    <p className="text-sm text-muted-foreground">No machines added yet. Add machines in Service Management to see the chart.</p>
+                  </div>
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={regionPieData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={80}
+                      paddingAngle={5}
+                      dataKey="value"
+                      label={({ name, value }) => `${name} (${value})`}
+                      onClick={handlePieClick}
+                      cursor="pointer"
+                    >
+                      {regionPieData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: '8px' }}
+                      itemStyle={{ color: 'hsl(var(--foreground))' }}
+                      formatter={(value: number, name: string) => [`${value} machines`, name]}
+                    />
+                    <Legend verticalAlign="bottom" height={36} />
+                  </PieChart>
+                </ResponsiveContainer>
+              )}
             </CardContent>
           </Card>
 

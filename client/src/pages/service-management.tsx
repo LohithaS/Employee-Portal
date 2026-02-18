@@ -54,7 +54,63 @@ export default function ServiceManagement() {
   const [isAddMachineOpen, setIsAddMachineOpen] = useState(false);
   const [isAddTicketOpen, setIsAddTicketOpen] = useState(false);
 
-  // Form states would go here...
+  const [newMachine, setNewMachine] = useState({
+    client: "",
+    model: "",
+    type: "",
+    lastService: "",
+    info: "",
+    nextService: "",
+    region: "North"
+  });
+
+  const [newTicket, setNewTicket] = useState({
+    customer: "",
+    region: "North",
+    model: "",
+    complaint: "",
+    assignedTo: "",
+    created: new Date().toISOString().split('T')[0],
+    deadline: ""
+  });
+
+  const handleAddMachine = () => {
+    if (!newMachine.client || !newMachine.model) return;
+    const machine = {
+      ...newMachine,
+      id: machines.length + 1
+    };
+    setMachines([...machines, machine]);
+    setIsAddMachineOpen(false);
+    setNewMachine({
+      client: "",
+      model: "",
+      type: "",
+      lastService: "",
+      info: "",
+      nextService: "",
+      region: "North"
+    });
+  };
+
+  const handleAddTicket = () => {
+    if (!newTicket.customer || !newTicket.complaint) return;
+    const ticket = {
+      ...newTicket,
+      id: tickets.length + 1
+    };
+    setTickets([...tickets, ticket]);
+    setIsAddTicketOpen(false);
+    setNewTicket({
+      customer: "",
+      region: "North",
+      model: "",
+      complaint: "",
+      assignedTo: "",
+      created: new Date().toISOString().split('T')[0],
+      deadline: ""
+    });
+  };
 
   return (
     <DashboardLayout>
@@ -73,15 +129,57 @@ export default function ServiceManagement() {
                   <DialogTitle>Add Machine Details</DialogTitle>
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
-                  {/* Form fields for adding machine */}
                   <div className="grid gap-2">
                     <Label>Client/Company</Label>
-                    <Input placeholder="Client Name" />
+                    <Input 
+                      placeholder="Client Name" 
+                      value={newMachine.client}
+                      onChange={(e) => setNewMachine({...newMachine, client: e.target.value})}
+                    />
                   </div>
-                  {/* Add other fields as needed */}
+                  <div className="grid gap-2">
+                    <Label>Model</Label>
+                    <Input 
+                      placeholder="Machine Model" 
+                      value={newMachine.model}
+                      onChange={(e) => setNewMachine({...newMachine, model: e.target.value})}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label>Type</Label>
+                    <Input 
+                      placeholder="Machine Type" 
+                      value={newMachine.type}
+                      onChange={(e) => setNewMachine({...newMachine, type: e.target.value})}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label>Last Service Date</Label>
+                    <Input 
+                      type="date"
+                      value={newMachine.lastService}
+                      onChange={(e) => setNewMachine({...newMachine, lastService: e.target.value})}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label>Service Info</Label>
+                    <Input 
+                      placeholder="Maintenance Details" 
+                      value={newMachine.info}
+                      onChange={(e) => setNewMachine({...newMachine, info: e.target.value})}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label>Upcoming Service</Label>
+                    <Input 
+                      type="date"
+                      value={newMachine.nextService}
+                      onChange={(e) => setNewMachine({...newMachine, nextService: e.target.value})}
+                    />
+                  </div>
                 </div>
                 <DialogFooter>
-                  <Button onClick={() => setIsAddMachineOpen(false)}>Save</Button>
+                  <Button onClick={handleAddMachine}>Save</Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>
@@ -96,15 +194,66 @@ export default function ServiceManagement() {
                   <DialogTitle>Create Support Ticket</DialogTitle>
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
-                   {/* Form fields for adding ticket */}
                    <div className="grid gap-2">
                     <Label>Customer Name</Label>
-                    <Input placeholder="Customer Name" />
+                    <Input 
+                      placeholder="Customer Name" 
+                      value={newTicket.customer}
+                      onChange={(e) => setNewTicket({...newTicket, customer: e.target.value})}
+                    />
                   </div>
-                   {/* Add other fields as needed */}
+                  <div className="grid gap-2">
+                    <Label>Region</Label>
+                    <Select 
+                      value={newTicket.region}
+                      onValueChange={(v) => setNewTicket({...newTicket, region: v})}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="North">North</SelectItem>
+                        <SelectItem value="South">South</SelectItem>
+                        <SelectItem value="East">East</SelectItem>
+                        <SelectItem value="West">West</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="grid gap-2">
+                    <Label>Machine Model</Label>
+                    <Input 
+                      placeholder="Model Number" 
+                      value={newTicket.model}
+                      onChange={(e) => setNewTicket({...newTicket, model: e.target.value})}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label>Complaint Type</Label>
+                    <Input 
+                      placeholder="Issue Description" 
+                      value={newTicket.complaint}
+                      onChange={(e) => setNewTicket({...newTicket, complaint: e.target.value})}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label>Assigned To</Label>
+                    <Input 
+                      placeholder="Technician Name" 
+                      value={newTicket.assignedTo}
+                      onChange={(e) => setNewTicket({...newTicket, assignedTo: e.target.value})}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label>Deadline</Label>
+                    <Input 
+                      type="date"
+                      value={newTicket.deadline}
+                      onChange={(e) => setNewTicket({...newTicket, deadline: e.target.value})}
+                    />
+                  </div>
                 </div>
                 <DialogFooter>
-                  <Button onClick={() => setIsAddTicketOpen(false)}>Create</Button>
+                  <Button onClick={handleAddTicket}>Create</Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>

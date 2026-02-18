@@ -67,6 +67,7 @@ export default function TaskManagement() {
   
   const [newTask, setNewTask] = useState({
     description: "",
+    assignedBy: "",
     assignedTo: "",
     deadline: "",
     backupPlan: "",
@@ -76,7 +77,7 @@ export default function TaskManagement() {
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const isManager = user?.username === "manager" || false;
+  const isManager = user?.role === "Manager";
 
   const filteredTasks = useMemo(() => {
     return tasks.filter(task => 
@@ -97,8 +98,8 @@ export default function TaskManagement() {
     mutationFn: async (taskData: typeof newTask) => {
       await apiRequest("POST", "/api/tasks", {
         description: taskData.description,
-        assignedBy: user?.name || "System",
-        assignedTo: taskData.assignedTo || "Unassigned",
+        assignedBy: isManager ? (user?.name || "System") : (taskData.assignedBy || "Unassigned"),
+        assignedTo: isManager ? (taskData.assignedTo || "Unassigned") : (user?.name || "Self"),
         deadline: taskData.deadline,
         backupPlan: taskData.backupPlan,
         priority: taskData.priority,
@@ -111,6 +112,7 @@ export default function TaskManagement() {
       setIsDialogOpen(false);
       setNewTask({
         description: "",
+        assignedBy: "",
         assignedTo: "",
         deadline: "",
         backupPlan: "",
@@ -224,12 +226,12 @@ export default function TaskManagement() {
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div className="grid gap-2">
-                      <Label htmlFor="assignee">Assign To</Label>
+                      <Label htmlFor="assignee">{isManager ? "Assign To" : "Assigned By"}</Label>
                       <Input 
                         id="assignee" 
-                        placeholder="Employee Name" 
-                        value={newTask.assignedTo}
-                        onChange={(e) => setNewTask({...newTask, assignedTo: e.target.value})}
+                        placeholder={isManager ? "Employee Name" : "Manager Name"}
+                        value={isManager ? newTask.assignedTo : newTask.assignedBy}
+                        onChange={(e) => setNewTask({...newTask, ...(isManager ? { assignedTo: e.target.value } : { assignedBy: e.target.value })})}
                       />
                     </div>
                     <div className="grid gap-2">

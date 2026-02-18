@@ -38,7 +38,7 @@ const initialMachines = [
 ];
 
 const initialTickets = [
-  { id: 1, customer: "AutoCorp Solutions", region: "North", model: "X-2000", complaint: "Overheating", assignedTo: "Mike Tech", created: "2026-02-15", deadline: "2026-02-18" },
+  { id: 1, customer: "AutoCorp Solutions", region: "North", model: "X-2000", complaint: "Overheating", assignedTo: "Mike Tech", created: "2026-02-15", deadline: "2026-02-18", status: "Open" },
 ];
 
 const regionData = [
@@ -53,6 +53,8 @@ export default function ServiceManagement() {
   const [tickets, setTickets] = useState(initialTickets);
   const [isAddMachineOpen, setIsAddMachineOpen] = useState(false);
   const [isAddTicketOpen, setIsAddTicketOpen] = useState(false);
+  const [machineErrors, setMachineErrors] = useState<Record<string, string>>({});
+  const [ticketErrors, setTicketErrors] = useState<Record<string, string>>({});
 
   const [newMachine, setNewMachine] = useState({
     client: "",
@@ -71,14 +73,58 @@ export default function ServiceManagement() {
     complaint: "",
     assignedTo: "",
     created: new Date().toISOString().split('T')[0],
-    deadline: ""
+    deadline: "",
+    status: "Open"
   });
 
-  const handleAddMachine = () => {
-    if (!newMachine.client || !newMachine.model || !newMachine.type || !newMachine.lastService || !newMachine.info || !newMachine.nextService) {
-      alert("Please fill in all fields.");
-      return;
+  const validateMachine = () => {
+    const errors: Record<string, string> = {};
+    const today = new Date().toISOString().split('T')[0];
+    
+    if (!newMachine.client) errors.client = "Client is required";
+    if (!newMachine.model) errors.model = "Model is required";
+    if (!newMachine.type) errors.type = "Type is required";
+    if (!newMachine.info) errors.info = "Info is required";
+    
+    if (!newMachine.lastService) {
+      errors.lastService = "Last service date is required";
+    } else if (newMachine.lastService > today) {
+      errors.lastService = "Last service date cannot be in the future";
     }
+
+    if (!newMachine.nextService) {
+      errors.nextService = "Upcoming service date is required";
+    } else if (newMachine.nextService <= today) {
+      errors.nextService = "Upcoming service date must be in the future";
+    }
+
+    setMachineErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const validateTicket = () => {
+    const errors: Record<string, string> = {};
+    const today = new Date().toISOString().split('T')[0];
+
+    if (!newTicket.customer) errors.customer = "Customer is required";
+    if (!newTicket.region) errors.region = "Region is required";
+    if (!newTicket.model) errors.model = "Model is required";
+    if (!newTicket.complaint) errors.complaint = "Complaint is required";
+    if (!newTicket.assignedTo) errors.assignedTo = "Assigned to is required";
+
+    if (!newTicket.deadline) {
+      errors.deadline = "Deadline is required";
+    } else if (newTicket.deadline <= today) {
+      errors.deadline = "Deadline must be in the future";
+    }
+
+    setTicketErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const handleAddMachine = () => {
+    if (!validateMachine()) return;
+    
     const machine = {
       ...newMachine,
       id: machines.length + 1
@@ -94,13 +140,12 @@ export default function ServiceManagement() {
       nextService: "",
       region: "North"
     });
+    setMachineErrors({});
   };
 
   const handleAddTicket = () => {
-    if (!newTicket.customer || !newTicket.region || !newTicket.model || !newTicket.complaint || !newTicket.assignedTo || !newTicket.deadline) {
-      alert("Please fill in all fields.");
-      return;
-    }
+    if (!validateTicket()) return;
+
     const ticket = {
       ...newTicket,
       id: tickets.length + 1
@@ -114,8 +159,14 @@ export default function ServiceManagement() {
       complaint: "",
       assignedTo: "",
       created: new Date().toISOString().split('T')[0],
-      deadline: ""
+      deadline: "",
+      status: "Open"
     });
+    setTicketErrors({});
+  };
+
+  const handleStatusChange = (id: number, newStatus: string) => {
+    setTickets(tickets.map(t => t.id === id ? { ...t, status: newStatus } : t));
   };
 
   return (
@@ -136,52 +187,64 @@ export default function ServiceManagement() {
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
                   <div className="grid gap-2">
-                    <Label>Client/Company</Label>
+                    <Label>Client/Company <span className="text-red-500">*</span></Label>
                     <Input 
                       placeholder="Client Name" 
                       value={newMachine.client}
                       onChange={(e) => setNewMachine({...newMachine, client: e.target.value})}
+                      className={machineErrors.client ? "border-red-500" : ""}
                     />
+                    {machineErrors.client && <span className="text-xs text-red-500">{machineErrors.client}</span>}
                   </div>
                   <div className="grid gap-2">
-                    <Label>Model</Label>
+                    <Label>Model <span className="text-red-500">*</span></Label>
                     <Input 
                       placeholder="Machine Model" 
                       value={newMachine.model}
                       onChange={(e) => setNewMachine({...newMachine, model: e.target.value})}
+                      className={machineErrors.model ? "border-red-500" : ""}
                     />
+                    {machineErrors.model && <span className="text-xs text-red-500">{machineErrors.model}</span>}
                   </div>
                   <div className="grid gap-2">
-                    <Label>Type</Label>
+                    <Label>Type <span className="text-red-500">*</span></Label>
                     <Input 
                       placeholder="Machine Type" 
                       value={newMachine.type}
                       onChange={(e) => setNewMachine({...newMachine, type: e.target.value})}
+                      className={machineErrors.type ? "border-red-500" : ""}
                     />
+                    {machineErrors.type && <span className="text-xs text-red-500">{machineErrors.type}</span>}
                   </div>
                   <div className="grid gap-2">
-                    <Label>Last Service Date</Label>
+                    <Label>Last Service Date <span className="text-red-500">*</span></Label>
                     <Input 
                       type="date"
                       value={newMachine.lastService}
                       onChange={(e) => setNewMachine({...newMachine, lastService: e.target.value})}
+                      className={machineErrors.lastService ? "border-red-500" : ""}
                     />
+                    {machineErrors.lastService && <span className="text-xs text-red-500">{machineErrors.lastService}</span>}
                   </div>
                   <div className="grid gap-2">
-                    <Label>Service Info</Label>
+                    <Label>Service Info <span className="text-red-500">*</span></Label>
                     <Input 
                       placeholder="Maintenance Details" 
                       value={newMachine.info}
                       onChange={(e) => setNewMachine({...newMachine, info: e.target.value})}
+                      className={machineErrors.info ? "border-red-500" : ""}
                     />
+                    {machineErrors.info && <span className="text-xs text-red-500">{machineErrors.info}</span>}
                   </div>
                   <div className="grid gap-2">
-                    <Label>Upcoming Service</Label>
+                    <Label>Upcoming Service <span className="text-red-500">*</span></Label>
                     <Input 
                       type="date"
                       value={newMachine.nextService}
                       onChange={(e) => setNewMachine({...newMachine, nextService: e.target.value})}
+                      className={machineErrors.nextService ? "border-red-500" : ""}
                     />
+                    {machineErrors.nextService && <span className="text-xs text-red-500">{machineErrors.nextService}</span>}
                   </div>
                 </div>
                 <DialogFooter>
@@ -201,20 +264,22 @@ export default function ServiceManagement() {
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
                    <div className="grid gap-2">
-                    <Label>Customer Name</Label>
+                    <Label>Customer Name <span className="text-red-500">*</span></Label>
                     <Input 
                       placeholder="Customer Name" 
                       value={newTicket.customer}
                       onChange={(e) => setNewTicket({...newTicket, customer: e.target.value})}
+                      className={ticketErrors.customer ? "border-red-500" : ""}
                     />
+                    {ticketErrors.customer && <span className="text-xs text-red-500">{ticketErrors.customer}</span>}
                   </div>
                   <div className="grid gap-2">
-                    <Label>Region</Label>
+                    <Label>Region <span className="text-red-500">*</span></Label>
                     <Select 
                       value={newTicket.region}
                       onValueChange={(v) => setNewTicket({...newTicket, region: v})}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger className={ticketErrors.region ? "border-red-500" : ""}>
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -224,38 +289,47 @@ export default function ServiceManagement() {
                         <SelectItem value="West">West</SelectItem>
                       </SelectContent>
                     </Select>
+                    {ticketErrors.region && <span className="text-xs text-red-500">{ticketErrors.region}</span>}
                   </div>
                   <div className="grid gap-2">
-                    <Label>Machine Model</Label>
+                    <Label>Machine Model <span className="text-red-500">*</span></Label>
                     <Input 
                       placeholder="Model Number" 
                       value={newTicket.model}
                       onChange={(e) => setNewTicket({...newTicket, model: e.target.value})}
+                      className={ticketErrors.model ? "border-red-500" : ""}
                     />
+                    {ticketErrors.model && <span className="text-xs text-red-500">{ticketErrors.model}</span>}
                   </div>
                   <div className="grid gap-2">
-                    <Label>Complaint Type</Label>
+                    <Label>Complaint Type <span className="text-red-500">*</span></Label>
                     <Input 
                       placeholder="Issue Description" 
                       value={newTicket.complaint}
                       onChange={(e) => setNewTicket({...newTicket, complaint: e.target.value})}
+                      className={ticketErrors.complaint ? "border-red-500" : ""}
                     />
+                    {ticketErrors.complaint && <span className="text-xs text-red-500">{ticketErrors.complaint}</span>}
                   </div>
                   <div className="grid gap-2">
-                    <Label>Assigned To</Label>
+                    <Label>Assigned To <span className="text-red-500">*</span></Label>
                     <Input 
                       placeholder="Technician Name" 
                       value={newTicket.assignedTo}
                       onChange={(e) => setNewTicket({...newTicket, assignedTo: e.target.value})}
+                      className={ticketErrors.assignedTo ? "border-red-500" : ""}
                     />
+                    {ticketErrors.assignedTo && <span className="text-xs text-red-500">{ticketErrors.assignedTo}</span>}
                   </div>
                   <div className="grid gap-2">
-                    <Label>Deadline</Label>
+                    <Label>Deadline <span className="text-red-500">*</span></Label>
                     <Input 
                       type="date"
                       value={newTicket.deadline}
                       onChange={(e) => setNewTicket({...newTicket, deadline: e.target.value})}
+                      className={ticketErrors.deadline ? "border-red-500" : ""}
                     />
+                    {ticketErrors.deadline && <span className="text-xs text-red-500">{ticketErrors.deadline}</span>}
                   </div>
                 </div>
                 <DialogFooter>
@@ -313,7 +387,22 @@ export default function ServiceManagement() {
                       <TableRow key={ticket.id}>
                         <TableCell>{ticket.customer}</TableCell>
                         <TableCell>{ticket.complaint}</TableCell>
-                        <TableCell><span className="text-yellow-600 bg-yellow-100 px-2 py-1 rounded text-xs">Open</span></TableCell>
+                        <TableCell>
+                          <Select 
+                            value={ticket.status} 
+                            onValueChange={(val) => handleStatusChange(ticket.id, val)}
+                          >
+                            <SelectTrigger className="h-8 w-[100px]">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Open">Open</SelectItem>
+                              <SelectItem value="In Progress">In Progress</SelectItem>
+                              <SelectItem value="Resolved">Resolved</SelectItem>
+                              <SelectItem value="Closed">Closed</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>

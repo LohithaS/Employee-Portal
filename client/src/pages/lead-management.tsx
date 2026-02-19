@@ -102,8 +102,26 @@ export default function LeadManagement() {
   const validateLead = () => {
     const newErrors: Record<string, string> = {};
     if (!newLead.customerName) newErrors.customerName = "Client is required";
+    if (!newLead.department) newErrors.department = "Department is required";
+    if (!newLead.projectName) newErrors.projectName = "Project name is required";
+    if (!newLead.contactName) newErrors.contactName = "Name is required";
+    if (!newLead.contactNumber) {
+      newErrors.contactNumber = "Contact number is required";
+    } else if (!/^\d{10}$/.test(newLead.contactNumber)) {
+      newErrors.contactNumber = "Enter a valid 10-digit contact number";
+    }
+    if (!newLead.email) {
+      newErrors.email = "Email is required";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newLead.email)) {
+      newErrors.email = "Enter a valid email address";
+    }
+    if (!newLead.location) newErrors.location = "Location is required";
     if (!newLead.lead) newErrors.lead = "Lead owner is required";
+    if (!newLead.productDescription) newErrors.productDescription = "Product description is required";
+    if (!newLead.quantity) newErrors.quantity = "Quantity is required";
+    if (!newLead.valueInr) newErrors.valueInr = "Value is required";
     if (!newLead.stage) newErrors.stage = "Lead stage is required";
+    if (!newLead.remarks) newErrors.remarks = "Remarks is required";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -221,12 +239,12 @@ export default function LeadManagement() {
                     {errors.customerName && <span className="text-xs text-red-500">{errors.customerName}</span>}
                   </div>
                   <div className="grid gap-2">
-                    <Label htmlFor="department">Department</Label>
+                    <Label htmlFor="department">Department <span className="text-red-500">*</span></Label>
                     <Select
                       value={newLead.department}
                       onValueChange={(v) => setNewLead({...newLead, department: v})}
                     >
-                      <SelectTrigger data-testid="select-lead-department" className="border-input bg-background">
+                      <SelectTrigger data-testid="select-lead-department" className={`border-input bg-background ${errors.department ? "border-red-500" : ""}`}>
                         <SelectValue placeholder="Select department" />
                       </SelectTrigger>
                       <SelectContent>
@@ -235,66 +253,72 @@ export default function LeadManagement() {
                         ))}
                       </SelectContent>
                     </Select>
+                    {errors.department && <span className="text-xs text-red-500">{errors.department}</span>}
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="grid gap-2">
-                    <Label htmlFor="projectName">Project Name</Label>
+                    <Label htmlFor="projectName">Project Name <span className="text-red-500">*</span></Label>
                     <Input
                       id="projectName"
                       data-testid="input-lead-project"
-                      className="border-input bg-background"
+                      className={`border-input bg-background ${errors.projectName ? "border-red-500" : ""}`}
                       value={newLead.projectName}
                       onChange={(e) => setNewLead({...newLead, projectName: e.target.value})}
                     />
+                    {errors.projectName && <span className="text-xs text-red-500">{errors.projectName}</span>}
                   </div>
                   <div className="grid gap-2">
-                    <Label htmlFor="contactName">Name</Label>
+                    <Label htmlFor="contactName">Name <span className="text-red-500">*</span></Label>
                     <Input
                       id="contactName"
                       data-testid="input-lead-contact-name"
-                      className="border-input bg-background"
+                      className={`border-input bg-background ${errors.contactName ? "border-red-500" : ""}`}
                       value={newLead.contactName}
                       onChange={(e) => setNewLead({...newLead, contactName: e.target.value})}
                     />
+                    {errors.contactName && <span className="text-xs text-red-500">{errors.contactName}</span>}
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="grid gap-2">
-                    <Label htmlFor="contactNumber">Contact Number</Label>
+                    <Label htmlFor="contactNumber">Contact Number <span className="text-red-500">*</span></Label>
                     <Input
                       id="contactNumber"
                       data-testid="input-lead-contact-number"
-                      className="border-input bg-background"
+                      className={`border-input bg-background ${errors.contactNumber ? "border-red-500" : ""}`}
                       value={newLead.contactNumber}
                       onChange={(e) => setNewLead({...newLead, contactNumber: e.target.value})}
                     />
+                    {errors.contactNumber && <span className="text-xs text-red-500">{errors.contactNumber}</span>}
                   </div>
                   <div className="grid gap-2">
-                    <Label htmlFor="email">Email</Label>
+                    <Label htmlFor="email">Email <span className="text-red-500">*</span></Label>
                     <Input
                       id="email"
                       type="email"
                       data-testid="input-lead-email"
-                      className="border-input bg-background"
+                      className={`border-input bg-background ${errors.email ? "border-red-500" : ""}`}
                       value={newLead.email}
                       onChange={(e) => setNewLead({...newLead, email: e.target.value})}
                     />
+                    {errors.email && <span className="text-xs text-red-500">{errors.email}</span>}
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="grid gap-2">
-                    <Label htmlFor="location">Location</Label>
+                    <Label htmlFor="location">Location <span className="text-red-500">*</span></Label>
                     <Input
                       id="location"
                       data-testid="input-lead-location"
-                      className="border-input bg-background"
+                      className={`border-input bg-background ${errors.location ? "border-red-500" : ""}`}
                       value={newLead.location}
                       onChange={(e) => setNewLead({...newLead, location: e.target.value})}
                     />
+                    {errors.location && <span className="text-xs text-red-500">{errors.location}</span>}
                   </div>
                   <div className="grid gap-2">
                     <Label htmlFor="lead">Lead Owner <span className="text-red-500">*</span></Label>
@@ -310,36 +334,39 @@ export default function LeadManagement() {
                 </div>
 
                 <div className="grid gap-2">
-                  <Label htmlFor="productDescription">Product Description</Label>
+                  <Label htmlFor="productDescription">Product Description <span className="text-red-500">*</span></Label>
                   <Textarea
                     id="productDescription"
                     data-testid="input-lead-product-desc"
-                    className="border-input bg-background"
+                    className={`border-input bg-background ${errors.productDescription ? "border-red-500" : ""}`}
                     value={newLead.productDescription}
                     onChange={(e) => setNewLead({...newLead, productDescription: e.target.value})}
                   />
+                  {errors.productDescription && <span className="text-xs text-red-500">{errors.productDescription}</span>}
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="grid gap-2">
-                    <Label htmlFor="quantity">Quantity</Label>
+                    <Label htmlFor="quantity">Quantity <span className="text-red-500">*</span></Label>
                     <Input
                       id="quantity"
                       data-testid="input-lead-quantity"
-                      className="border-input bg-background"
+                      className={`border-input bg-background ${errors.quantity ? "border-red-500" : ""}`}
                       value={newLead.quantity}
                       onChange={(e) => setNewLead({...newLead, quantity: e.target.value})}
                     />
+                    {errors.quantity && <span className="text-xs text-red-500">{errors.quantity}</span>}
                   </div>
                   <div className="grid gap-2">
-                    <Label htmlFor="valueInr">Value (in INR)</Label>
+                    <Label htmlFor="valueInr">Value (in INR) <span className="text-red-500">*</span></Label>
                     <Input
                       id="valueInr"
                       data-testid="input-lead-value"
-                      className="border-input bg-background"
+                      className={`border-input bg-background ${errors.valueInr ? "border-red-500" : ""}`}
                       value={newLead.valueInr}
                       onChange={(e) => setNewLead({...newLead, valueInr: e.target.value})}
                     />
+                    {errors.valueInr && <span className="text-xs text-red-500">{errors.valueInr}</span>}
                   </div>
                 </div>
 
@@ -360,14 +387,15 @@ export default function LeadManagement() {
                 </div>
 
                 <div className="grid gap-2">
-                  <Label htmlFor="remarks">Remarks</Label>
+                  <Label htmlFor="remarks">Remarks <span className="text-red-500">*</span></Label>
                   <Textarea
                     id="remarks"
                     data-testid="input-lead-remarks"
-                    className="border-input bg-background"
+                    className={`border-input bg-background ${errors.remarks ? "border-red-500" : ""}`}
                     value={newLead.remarks}
                     onChange={(e) => setNewLead({...newLead, remarks: e.target.value})}
                   />
+                  {errors.remarks && <span className="text-xs text-red-500">{errors.remarks}</span>}
                 </div>
               </div>
               <DialogFooter>

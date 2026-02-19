@@ -59,6 +59,16 @@ export const leads = pgTable("leads", {
   customerName: text("customer_name").notNull(),
   lead: text("lead").notNull(),
   stage: text("stage").notNull().default("inquiry"),
+  department: text("department"),
+  projectName: text("project_name"),
+  contactName: text("contact_name"),
+  contactNumber: text("contact_number"),
+  email: text("email"),
+  location: text("location"),
+  productDescription: text("product_description"),
+  quantity: text("quantity"),
+  valueInr: text("value_inr"),
+  remarks: text("remarks"),
   userId: integer("user_id"),
 });
 

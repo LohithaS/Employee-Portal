@@ -16,6 +16,7 @@ import BusinessTripReports from "@/pages/business-trips";
 import Reimbursements from "@/pages/reimbursements";
 import LeaveManagement from "@/pages/leave-management";
 import SalarySlip from "@/pages/salary-slip";
+import Reports from "@/pages/reports";
 import CompanyInformation from "@/pages/company-info";
 import Settings from "@/pages/settings";
 import DashboardLayout from "@/components/layout/dashboard-layout";
@@ -44,6 +45,7 @@ function Router() {
       <ProtectedRoute path="/reimbursements" component={Reimbursements} />
       <ProtectedRoute path="/leaves" component={LeaveManagement} />
       <ProtectedRoute path="/salary" component={SalarySlip} />
+      <ProtectedRoute path="/reports" component={Reports} />
       <ProtectedRoute path="/company" component={CompanyInformation} />
       <ProtectedRoute path="/settings" component={Settings} />
       {/* Fallback routes for demo purposes that redirect to dashboard or show not found */}

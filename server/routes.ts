@@ -35,7 +35,12 @@ export async function registerRoutes(
         req.session.cookie.maxAge = 30 * 24 * 60 * 60 * 1000;
       }
       const { password: _, ...safeUser } = user;
-      res.json(safeUser);
+      req.session.save((err) => {
+        if (err) {
+          return res.status(500).json({ message: "Session save failed" });
+        }
+        res.json(safeUser);
+      });
     } catch (e: any) {
       res.status(401).json({ message: e.message });
     }

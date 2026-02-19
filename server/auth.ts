@@ -35,14 +35,28 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
   next();
 }
 
-export async function registerUser(username: string, password: string, name: string, role: string = "Employee") {
+export async function registerUser(username: string, password: string, name: string, role: string = "Employee", email?: string) {
   const existing = await storage.getUserByUsername(username);
   if (existing) {
     throw new Error("Username already exists");
   }
   const validRole = role === "Manager" ? "Manager" : "Employee";
   const hashedPassword = await bcrypt.hash(password, 10);
-  return storage.createUser({ username, password: hashedPassword, name, role: validRole });
+  return storage.createUser({ username, password: hashedPassword, name, email: email || null, role: validRole });
+}
+
+export async function changePassword(userId: number, currentPassword: string, newPassword: string) {
+  const user = await storage.getUser(userId);
+  if (!user) {
+    throw new Error("User not found");
+  }
+  const valid = await bcrypt.compare(currentPassword, user.password);
+  if (!valid) {
+    throw new Error("Current password is incorrect");
+  }
+  const hashedPassword = await bcrypt.hash(newPassword, 10);
+  await storage.updateUserPassword(userId, hashedPassword);
+  return { message: "Password updated successfully" };
 }
 
 export async function loginUser(username: string, password: string, role: string) {

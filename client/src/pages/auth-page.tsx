@@ -50,6 +50,10 @@ const registerSchema = z.object({
     .string()
     .min(1, "Last name is required")
     .max(25, "Last name must be at most 25 characters"),
+  email: z
+    .string()
+    .min(1, "Email is required")
+    .email("Please enter a valid email address"),
 });
 
 type LoginFormValues = z.infer<typeof loginSchema>;
@@ -140,6 +144,7 @@ function RegisterForm({ isLoading, onSubmit }: { isLoading: boolean; onSubmit: (
       password: "",
       firstName: "",
       lastName: "",
+      email: "",
     },
   });
 
@@ -186,6 +191,24 @@ function RegisterForm({ isLoading, onSubmit }: { isLoading: boolean; onSubmit: (
             )}
           />
         </div>
+        <FormField
+          control={registerForm.control}
+          name="email"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Email <span className="text-red-500">*</span></FormLabel>
+              <FormControl>
+                <Input
+                  type="email"
+                  placeholder="john.doe@example.com"
+                  data-testid="input-register-email"
+                  {...field}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
         <FormField
           control={registerForm.control}
           name="username"
@@ -279,7 +302,7 @@ export default function AuthPage() {
   };
 
   const onRegister = (values: RegisterFormValues & { name: string; role: string }) => {
-    register({ username: values.username, password: values.password, name: values.name, role: values.role });
+    register({ username: values.username, password: values.password, name: values.name, role: values.role, email: values.email });
   };
 
   return (

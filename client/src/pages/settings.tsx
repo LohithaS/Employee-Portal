@@ -9,6 +9,8 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
+import { useMutation } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 
 function getInitials(name?: string): string {
   if (!name) return "U";
@@ -65,6 +67,26 @@ export default function Settings() {
     toast({ title: "Profile updated successfully" });
   };
 
+  const changePasswordMutation = useMutation({
+    mutationFn: async (data: { currentPassword: string; newPassword: string }) => {
+      const res = await apiRequest("POST", "/api/auth/change-password", data);
+      return await res.json();
+    },
+    onSuccess: () => {
+      toast({ title: "Password updated successfully", description: "Your new password is now active. Use it for your next login." });
+      setPasswords({ current: "", newPass: "", confirm: "" });
+      setPassErrors({});
+    },
+    onError: (error: Error) => {
+      const msg = error.message;
+      if (msg.includes("Current password is incorrect") || msg.includes("incorrect")) {
+        setPassErrors({ current: "Current password is incorrect" });
+      } else {
+        toast({ title: "Error", description: msg, variant: "destructive" });
+      }
+    },
+  });
+
   const handleUpdatePassword = () => {
     const errors: Record<string, string> = {};
     if (!passwords.current.trim()) errors.current = "Current password is required";
@@ -74,8 +96,7 @@ export default function Settings() {
     else if (passwords.newPass !== passwords.confirm) errors.confirm = "Passwords do not match";
     setPassErrors(errors);
     if (Object.keys(errors).length > 0) return;
-    toast({ title: "Password updated successfully" });
-    setPasswords({ current: "", newPass: "", confirm: "" });
+    changePasswordMutation.mutate({ currentPassword: passwords.current, newPassword: passwords.newPass });
   };
 
   const handleSaveNotifications = () => {
@@ -227,7 +248,9 @@ export default function Settings() {
                             {passErrors.confirm && <span className="text-xs text-red-500">{passErrors.confirm}</span>}
                         </div>
                         <div className="flex justify-end mt-4">
-                            <Button onClick={handleUpdatePassword} data-testid="button-update-password">Update Password</Button>
+                            <Button onClick={handleUpdatePassword} disabled={changePasswordMutation.isPending} data-testid="button-update-password">
+                              {changePasswordMutation.isPending ? "Updating..." : "Update Password"}
+                            </Button>
                         </div>
                     </CardContent>
                 </Card>

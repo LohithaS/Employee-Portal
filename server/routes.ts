@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { requireAuth, registerUser, loginUser } from "./auth";
+import { requireAuth, registerUser, loginUser, changePassword } from "./auth";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -10,11 +10,11 @@ export async function registerRoutes(
 
   app.post("/api/auth/register", async (req, res) => {
     try {
-      const { username, password, name, role } = req.body;
+      const { username, password, name, role, email } = req.body;
       if (!username || !password) {
         return res.status(400).json({ message: "Username and password are required" });
       }
-      const user = await registerUser(username, password, name || username, role || "Employee");
+      const user = await registerUser(username, password, name || username, role || "Employee", email);
       req.session.userId = user.id;
       const { password: _, ...safeUser } = user;
       res.json(safeUser);
@@ -54,6 +54,19 @@ export async function registerRoutes(
     }
     const { password: _, ...safeUser } = user;
     res.json(safeUser);
+  });
+
+  app.post("/api/auth/change-password", requireAuth, async (req, res) => {
+    try {
+      const { currentPassword, newPassword } = req.body;
+      if (!currentPassword || !newPassword) {
+        return res.status(400).json({ message: "Current and new passwords are required" });
+      }
+      const result = await changePassword(req.session.userId!, currentPassword, newPassword);
+      res.json(result);
+    } catch (e: any) {
+      res.status(400).json({ message: e.message });
+    }
   });
 
   app.get("/api/tasks", requireAuth, async (_req, res) => {

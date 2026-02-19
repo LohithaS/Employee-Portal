@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import DashboardLayout from "@/components/layout/dashboard-layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import { useSearch } from "wouter";
 
 function getInitials(name?: string): string {
   if (!name) return "U";
@@ -27,6 +28,16 @@ export default function Settings() {
   const nameParts = (user?.name || "").trim().split(/\s+/);
   const defaultFirst = nameParts[0] || "";
   const defaultLast = nameParts.length > 1 ? nameParts.slice(1).join(" ") : "";
+
+  const searchString = useSearch();
+  const searchParams = new URLSearchParams(searchString);
+  const tabFromUrl = searchParams.get("tab");
+  const validTab = tabFromUrl === "profile" || tabFromUrl === "security" || tabFromUrl === "notifications" ? tabFromUrl : "profile";
+  const [activeTab, setActiveTab] = useState(validTab);
+
+  useEffect(() => {
+    setActiveTab(validTab);
+  }, [validTab]);
 
   const [profile, setProfile] = useState({
     firstName: defaultFirst,
@@ -110,7 +121,7 @@ export default function Settings() {
       <div className="flex flex-col gap-6">
         <h1 className="text-3xl font-bold tracking-tight text-foreground">Settings</h1>
 
-        <Tabs defaultValue="profile" className="w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="mb-4">
                 <TabsTrigger value="profile">Profile Details</TabsTrigger>
                 <TabsTrigger value="security">Security & Password</TabsTrigger>

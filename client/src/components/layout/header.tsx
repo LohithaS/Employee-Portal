@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Bell, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
+import { useLocation } from "wouter";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -35,6 +36,7 @@ function getInitials(name?: string): string {
 
 export function Header() {
   const { user, logout } = useAuth();
+  const [, setLocation] = useLocation();
   const [notifications, setNotifications] = useState(defaultNotifications);
   const unreadCount = notifications.filter((n) => !n.read).length;
 
@@ -118,8 +120,8 @@ export function Header() {
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>Profile</DropdownMenuItem>
-            <DropdownMenuItem>Settings</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setLocation("/settings?tab=profile")} data-testid="menu-profile">Profile</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setLocation("/settings")} data-testid="menu-settings">Settings</DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={logout} className="text-destructive focus:text-destructive">
               Log out

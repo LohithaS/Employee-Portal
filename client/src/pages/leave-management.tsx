@@ -53,7 +53,7 @@ export default function LeaveManagement() {
   const leaveBalances = leaveTypes.map(lt => ({
     ...lt,
     used: usedDaysByType[lt.name] || 0,
-    balance: lt.total - (usedDaysByType[lt.name] || 0),
+    balance: Math.max(0, lt.total - (usedDaysByType[lt.name] || 0)),
   }));
 
   const addRequestMutation = useMutation({

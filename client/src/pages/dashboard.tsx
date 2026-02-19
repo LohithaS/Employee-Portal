@@ -23,7 +23,8 @@ import {
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { useQuery } from "@tanstack/react-query";
 import { getQueryFn } from "@/lib/queryClient";
-import type { Meeting } from "@shared/schema";
+import type { Meeting, Client } from "@shared/schema";
+import { useLocation } from "wouter";
 
 const data = [
   { name: "Jan", total: 1200 },
@@ -52,8 +53,15 @@ function getInitials(title: string): string {
 }
 
 export default function Dashboard() {
+  const [, setLocation] = useLocation();
+
   const { data: meetings = [] } = useQuery<Meeting[]>({
     queryKey: ["/api/meetings"],
+    queryFn: getQueryFn({ on401: "returnNull" }),
+  });
+
+  const { data: clients = [] } = useQuery<Client[]>({
+    queryKey: ["/api/clients"],
     queryFn: getQueryFn({ on401: "returnNull" }),
   });
 
@@ -89,7 +97,7 @@ export default function Dashboard() {
             </p>
           </CardContent>
         </Card>
-        <Card className="shadow-sm">
+        <Card className="shadow-sm cursor-pointer hover:shadow-md transition-shadow" onClick={() => setLocation("/crm")}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Active Clients</CardTitle>
             <div className="p-2 bg-blue-100 rounded-lg">
@@ -97,7 +105,7 @@ export default function Dashboard() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">+2350</div>
+            <div className="text-2xl font-bold">{clients.length}</div>
             <p className="text-xs text-muted-foreground">
               +180.1% from last month
             </p>

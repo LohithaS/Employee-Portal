@@ -50,6 +50,7 @@ export default function LeaveManagement() {
 
   const usedDaysByType: Record<string, number> = {};
   requests.forEach((req: any) => {
+    if (req.status === "Rejected") return;
     const days = Number(req.days) || 0;
     usedDaysByType[req.type] = (usedDaysByType[req.type] || 0) + days;
   });

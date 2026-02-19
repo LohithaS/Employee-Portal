@@ -23,7 +23,7 @@ import {
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { useQuery } from "@tanstack/react-query";
 import { getQueryFn } from "@/lib/queryClient";
-import type { Meeting, Client } from "@shared/schema";
+import type { Meeting, Client, Reimbursement } from "@shared/schema";
 import { useLocation } from "wouter";
 
 const data = [
@@ -64,6 +64,13 @@ export default function Dashboard() {
     queryKey: ["/api/clients"],
     queryFn: getQueryFn({ on401: "returnNull" }),
   });
+
+  const { data: reimbursements = [] } = useQuery<Reimbursement[]>({
+    queryKey: ["/api/reimbursements"],
+    queryFn: getQueryFn({ on401: "returnNull" }),
+  });
+
+  const pendingReimbursements = reimbursements.filter((r) => r.status === "Pending");
 
   const todayMeetings = meetings
     .filter((m) => isTodayIST(m.date))
@@ -285,24 +292,26 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {[
-                { id: "EXP-001", type: "Travel", amount: "₹3,500.00", date: "Feb 10" },
-                { id: "EXP-002", type: "Software", amount: "₹4,999.00", date: "Feb 08" },
-                { id: "EXP-003", type: "Client Dinner", amount: "₹1,255.00", date: "Feb 05" },
-              ].map((item) => (
-                <div key={item.id} className="flex items-center justify-between border-b pb-2 last:border-0 last:pb-0">
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium">{item.type}</p>
-                    <p className="text-xs text-muted-foreground">{item.date} • {item.id}</p>
+              {pendingReimbursements.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">No pending reimbursements</p>
+              ) : (
+                pendingReimbursements.map((item) => (
+                  <div key={item.id} className="flex items-center justify-between border-b pb-2 last:border-0 last:pb-0">
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium">{item.type}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {item.date ? new Date(item.date).toLocaleDateString("en-IN", { month: "short", day: "numeric" }) : "No date"} • EXP-{String(item.id).padStart(3, "0")}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-bold">₹{Number(item.amount || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
+                      <Button variant="ghost" size="icon" className="h-6 w-6">
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-bold">{item.amount}</span>
-                    <Button variant="ghost" size="icon" className="h-6 w-6">
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           </CardContent>
         </Card>

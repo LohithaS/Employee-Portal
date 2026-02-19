@@ -24,6 +24,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/use-auth";
 
 const leaveTypes = [
@@ -142,87 +143,96 @@ export default function LeaveManagement() {
             ))}
         </div>
 
-        <div className="grid gap-6 md:grid-cols-[400px_1fr]">
-            <Card>
-                <CardHeader>
-                    <CardTitle>Apply for Leave</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    <div className="space-y-2">
-                        <Label>Leave Type <span className="text-red-500">*</span></Label>
-                        <Select value={selectedLeave} onValueChange={setSelectedLeave}>
-                            <SelectTrigger className={errors.type ? "border-red-500" : ""}>
-                                <SelectValue placeholder="Select type" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {leaveBalances.map(l => (
-                                    <SelectItem key={l.id} value={l.id}>{l.name} ({l.balance} left)</SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                        {errors.type && <span className="text-xs text-red-500">{errors.type}</span>}
-                    </div>
-                    <div className="space-y-2">
-                        <Label>From Date <span className="text-red-500">*</span></Label>
-                        <Input type="date" min={new Date(Date.now() + 86400000).toISOString().split("T")[0]} value={fromDate} onChange={(e) => setFromDate(e.target.value)} className={errors.fromDate ? "border-red-500" : ""} />
-                        {errors.fromDate && <span className="text-xs text-red-500">{errors.fromDate}</span>}
-                    </div>
-                    <div className="space-y-2">
-                        <Label>To Date <span className="text-red-500">*</span></Label>
-                        <Input type="date" min={fromDate || new Date(Date.now() + 86400000).toISOString().split("T")[0]} value={toDate} onChange={(e) => setToDate(e.target.value)} className={errors.toDate ? "border-red-500" : ""} />
-                        {errors.toDate && <span className="text-xs text-red-500">{errors.toDate}</span>}
-                    </div>
-                    <div className="space-y-2">
-                        <Label>Reason <span className="text-red-500">*</span></Label>
-                        <Textarea placeholder="Reason for leave..." value={reason} onChange={(e) => setReason(e.target.value)} className={errors.reason ? "border-red-500" : ""} />
-                        {errors.reason && <span className="text-xs text-red-500">{errors.reason}</span>}
-                    </div>
-                    <Button className="w-full" onClick={handleSubmitRequest} disabled={addRequestMutation.isPending}>Submit Request</Button>
-                </CardContent>
-            </Card>
+        <Tabs defaultValue="apply" className="w-full">
+            <TabsList>
+                <TabsTrigger value="apply">Apply for Leave</TabsTrigger>
+                <TabsTrigger value="history">Leave History</TabsTrigger>
+            </TabsList>
 
-            <Card>
-                <CardHeader>
-                    <CardTitle>Leave History</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Type</TableHead>
-                                <TableHead>Dates</TableHead>
-                                <TableHead>Days</TableHead>
-                                <TableHead>Reason</TableHead>
-                                <TableHead>Status</TableHead>
-                                <TableHead>Rejection Reason</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {requests.map((req: any) => (
-                                <TableRow key={req.id}>
-                                    <TableCell className="font-medium">{req.type}</TableCell>
-                                    <TableCell>{req.fromDate} - {req.toDate}</TableCell>
-                                    <TableCell>{req.days}</TableCell>
-                                    <TableCell>{req.reason}</TableCell>
-                                    <TableCell>
-                                        <Badge variant="outline" className={req.status === "Approved" ? "bg-green-50 text-green-700 border-green-200" : req.status === "Rejected" ? "bg-red-50 text-red-700 border-red-200" : "bg-yellow-50 text-yellow-700 border-yellow-200"}>
-                                            {req.status}
-                                        </Badge>
-                                    </TableCell>
-                                    <TableCell>
-                                        {req.status === "Rejected" && req.rejectionReason ? (
-                                            <span className="text-sm text-red-600">{req.rejectionReason}</span>
-                                        ) : (
-                                            <span className="text-xs text-muted-foreground">—</span>
-                                        )}
-                                    </TableCell>
+            <TabsContent value="apply">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Apply for Leave</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4 max-w-lg">
+                        <div className="space-y-2">
+                            <Label>Leave Type <span className="text-red-500">*</span></Label>
+                            <Select value={selectedLeave} onValueChange={setSelectedLeave}>
+                                <SelectTrigger className={errors.type ? "border-red-500" : ""}>
+                                    <SelectValue placeholder="Select type" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {leaveBalances.map(l => (
+                                        <SelectItem key={l.id} value={l.id}>{l.name} ({l.balance} left)</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            {errors.type && <span className="text-xs text-red-500">{errors.type}</span>}
+                        </div>
+                        <div className="space-y-2">
+                            <Label>From Date <span className="text-red-500">*</span></Label>
+                            <Input type="date" min={new Date(Date.now() + 86400000).toISOString().split("T")[0]} value={fromDate} onChange={(e) => setFromDate(e.target.value)} className={errors.fromDate ? "border-red-500" : ""} />
+                            {errors.fromDate && <span className="text-xs text-red-500">{errors.fromDate}</span>}
+                        </div>
+                        <div className="space-y-2">
+                            <Label>To Date <span className="text-red-500">*</span></Label>
+                            <Input type="date" min={fromDate || new Date(Date.now() + 86400000).toISOString().split("T")[0]} value={toDate} onChange={(e) => setToDate(e.target.value)} className={errors.toDate ? "border-red-500" : ""} />
+                            {errors.toDate && <span className="text-xs text-red-500">{errors.toDate}</span>}
+                        </div>
+                        <div className="space-y-2">
+                            <Label>Reason <span className="text-red-500">*</span></Label>
+                            <Textarea placeholder="Reason for leave..." value={reason} onChange={(e) => setReason(e.target.value)} className={errors.reason ? "border-red-500" : ""} />
+                            {errors.reason && <span className="text-xs text-red-500">{errors.reason}</span>}
+                        </div>
+                        <Button className="w-full" onClick={handleSubmitRequest} disabled={addRequestMutation.isPending}>Submit Request</Button>
+                    </CardContent>
+                </Card>
+            </TabsContent>
+
+            <TabsContent value="history">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Leave History</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Type</TableHead>
+                                    <TableHead>Dates</TableHead>
+                                    <TableHead>Days</TableHead>
+                                    <TableHead>Reason</TableHead>
+                                    <TableHead>Status</TableHead>
+                                    <TableHead>Rejection Reason</TableHead>
                                 </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                </CardContent>
-            </Card>
-        </div>
+                            </TableHeader>
+                            <TableBody>
+                                {requests.map((req: any) => (
+                                    <TableRow key={req.id}>
+                                        <TableCell className="font-medium">{req.type}</TableCell>
+                                        <TableCell>{req.fromDate} - {req.toDate}</TableCell>
+                                        <TableCell>{req.days}</TableCell>
+                                        <TableCell>{req.reason}</TableCell>
+                                        <TableCell>
+                                            <Badge variant="outline" className={req.status === "Approved" ? "bg-green-50 text-green-700 border-green-200" : req.status === "Rejected" ? "bg-red-50 text-red-700 border-red-200" : "bg-yellow-50 text-yellow-700 border-yellow-200"}>
+                                                {req.status}
+                                            </Badge>
+                                        </TableCell>
+                                        <TableCell>
+                                            {req.status === "Rejected" && req.rejectionReason ? (
+                                                <span className="text-sm text-red-600">{req.rejectionReason}</span>
+                                            ) : (
+                                                <span className="text-xs text-muted-foreground">—</span>
+                                            )}
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </CardContent>
+                </Card>
+            </TabsContent>
+        </Tabs>
       </div>
     </DashboardLayout>
   );

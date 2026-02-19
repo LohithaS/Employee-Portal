@@ -56,6 +56,13 @@ type Lead = {
 type Client = {
   id: number;
   name: string;
+  type: string;
+  category: string;
+  product: string;
+  region: string;
+  accountHolder: string;
+  description?: string;
+  stakeholders?: string;
 };
 
 const stages = [
@@ -93,6 +100,8 @@ export default function LeadManagement() {
   const clients = clientsQuery.data ?? [];
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isUpdateOpen, setIsUpdateOpen] = useState(false);
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [detailLead, setDetailLead] = useState<Lead | null>(null);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
 
   const [newLead, setNewLead] = useState({ ...emptyLead });
@@ -600,7 +609,7 @@ export default function LeadManagement() {
                   <TableCell>
                     <button
                       className="font-semibold text-primary hover:underline cursor-pointer text-left"
-                      onClick={() => navigate(`/crm?client=${encodeURIComponent(lead.customerName)}`)}
+                      onClick={() => { setDetailLead(lead); setIsDetailOpen(true); }}
                       data-testid={`link-lead-client-${lead.id}`}
                     >
                       {lead.customerName}
@@ -628,6 +637,77 @@ export default function LeadManagement() {
             </TableBody>
           </Table>
         </div>
+        <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
+          <DialogContent className="bg-card text-card-foreground border-border max-w-2xl max-h-[85vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Client & Lead Details</DialogTitle>
+              <DialogDescription>Detailed information for this lead entry.</DialogDescription>
+            </DialogHeader>
+            {detailLead && (() => {
+              const client = clients.find(c => c.name.toLowerCase() === detailLead.customerName.toLowerCase());
+              let stakeholdersList: { name: string; designation: string }[] = [];
+              if (client?.stakeholders) {
+                try { stakeholdersList = JSON.parse(client.stakeholders); } catch {}
+              }
+              const regionMap: Record<string, string> = { N: "North", S: "South", E: "East", W: "West" };
+              return (
+                <div className="space-y-6 py-2">
+                  {client && (
+                    <div className="space-y-3">
+                      <h3 className="text-sm font-semibold text-primary uppercase tracking-wider border-b border-border pb-1">Client Information</h3>
+                      <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
+                        <div><span className="text-muted-foreground">Client:</span> <span className="font-medium">{client.name}</span></div>
+                        <div><span className="text-muted-foreground">Type:</span> <span className="font-medium">{client.type}</span></div>
+                        <div><span className="text-muted-foreground">Category:</span> <span className="font-medium">{client.category}</span></div>
+                        <div><span className="text-muted-foreground">Product:</span> <span className="font-medium">{client.product}</span></div>
+                        <div><span className="text-muted-foreground">Region:</span> <span className="font-medium">{regionMap[client.region] || client.region}</span></div>
+                        <div><span className="text-muted-foreground">Account Holder:</span> <span className="font-medium">{client.accountHolder}</span></div>
+                        {client.description && (
+                          <div className="col-span-2"><span className="text-muted-foreground">Description:</span> <span className="font-medium">{client.description}</span></div>
+                        )}
+                      </div>
+                      {stakeholdersList.length > 0 && (
+                        <div>
+                          <span className="text-sm text-muted-foreground">Stakeholders:</span>
+                          <div className="mt-1 flex flex-wrap gap-2">
+                            {stakeholdersList.map((s, i) => (
+                              <Badge key={i} variant="secondary" className="text-xs">{s.name} — {s.designation}</Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  <div className="space-y-3">
+                    <h3 className="text-sm font-semibold text-primary uppercase tracking-wider border-b border-border pb-1">Lead Details</h3>
+                    <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
+                      <div><span className="text-muted-foreground">Lead Owner:</span> <span className="font-medium">{detailLead.lead}</span></div>
+                      <div><span className="text-muted-foreground">Lead Stage:</span> <span className="font-medium capitalize">{detailLead.stage.replace(/_/g, " ")}</span></div>
+                      {detailLead.department && <div><span className="text-muted-foreground">Department:</span> <span className="font-medium">{detailLead.department}</span></div>}
+                      {detailLead.projectName && <div><span className="text-muted-foreground">Project Name:</span> <span className="font-medium">{detailLead.projectName}</span></div>}
+                      {detailLead.contactName && <div><span className="text-muted-foreground">Name:</span> <span className="font-medium">{detailLead.contactName}</span></div>}
+                      {detailLead.contactNumber && <div><span className="text-muted-foreground">Contact Number:</span> <span className="font-medium">{detailLead.contactNumber}</span></div>}
+                      {detailLead.email && <div><span className="text-muted-foreground">Email:</span> <span className="font-medium">{detailLead.email}</span></div>}
+                      {detailLead.location && <div><span className="text-muted-foreground">Location:</span> <span className="font-medium">{detailLead.location}</span></div>}
+                      {detailLead.productDescription && (
+                        <div className="col-span-2"><span className="text-muted-foreground">Product Description:</span> <span className="font-medium">{detailLead.productDescription}</span></div>
+                      )}
+                      {detailLead.quantity && <div><span className="text-muted-foreground">Quantity:</span> <span className="font-medium">{detailLead.quantity}</span></div>}
+                      {detailLead.valueInr && <div><span className="text-muted-foreground">Value (INR):</span> <span className="font-medium">{detailLead.valueInr}</span></div>}
+                      {detailLead.remarks && (
+                        <div className="col-span-2"><span className="text-muted-foreground">Remarks:</span> <span className="font-medium">{detailLead.remarks}</span></div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsDetailOpen(false)}>Close</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </DashboardLayout>
   );

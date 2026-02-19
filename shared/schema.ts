@@ -94,6 +94,7 @@ export type Machine = typeof machines.$inferSelect;
 
 export const tickets = pgTable("tickets", {
   id: serial("id").primaryKey(),
+  incidentId: text("incident_id"),
   customer: text("customer").notNull(),
   region: text("region").notNull(),
   model: text("model").notNull(),

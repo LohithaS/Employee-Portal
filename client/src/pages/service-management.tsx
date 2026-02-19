@@ -48,6 +48,7 @@ type Machine = {
 
 type TicketType = {
   id: number;
+  incidentId?: string;
   customer: string;
   region: string;
   model: string;
@@ -88,6 +89,7 @@ export default function ServiceManagement() {
   });
 
   const [newTicket, setNewTicket] = useState({
+    incidentId: "",
     customer: "",
     region: "North",
     model: "",
@@ -175,6 +177,7 @@ export default function ServiceManagement() {
       queryClient.invalidateQueries({ queryKey: ["/api/tickets"] });
       setIsAddTicketOpen(false);
       setNewTicket({
+        incidentId: "",
         customer: "",
         region: "North",
         model: "",
@@ -247,7 +250,7 @@ export default function ServiceManagement() {
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
                   <div className="grid gap-2">
-                    <Label>Client/Company <span className="text-red-500">*</span></Label>
+                    <Label>Client <span className="text-red-500">*</span></Label>
                     <Input 
                       placeholder="Client Name" 
                       value={newMachine.client}
@@ -325,10 +328,18 @@ export default function ServiceManagement() {
                   <DialogTitle>Create Support Ticket</DialogTitle>
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
-                   <div className="grid gap-2">
-                    <Label>Customer Name <span className="text-red-500">*</span></Label>
+                  <div className="grid gap-2">
+                    <Label>Incident ID</Label>
                     <Input 
-                      placeholder="Customer Name" 
+                      placeholder="Incident ID" 
+                      value={newTicket.incidentId}
+                      onChange={(e) => setNewTicket({...newTicket, incidentId: e.target.value})}
+                    />
+                  </div>
+                   <div className="grid gap-2">
+                    <Label>Client <span className="text-red-500">*</span></Label>
+                    <Input 
+                      placeholder="Client Name" 
                       value={newTicket.customer}
                       onChange={(e) => setNewTicket({...newTicket, customer: e.target.value})}
                       className={ticketErrors.customer ? "border-red-500" : ""}
@@ -440,7 +451,7 @@ export default function ServiceManagement() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Customer</TableHead>
+                      <TableHead>Client</TableHead>
                       <TableHead>Complaint</TableHead>
                       <TableHead>Status</TableHead>
                     </TableRow>
@@ -481,7 +492,7 @@ export default function ServiceManagement() {
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-[50px]">S.No</TableHead>
-                  <TableHead>Client/Company</TableHead>
+                  <TableHead>Client</TableHead>
                   <TableHead>Model</TableHead>
                   <TableHead>Type</TableHead>
                   <TableHead>Last Service</TableHead>
@@ -507,12 +518,13 @@ export default function ServiceManagement() {
         </div>
 
         <div className="space-y-4">
-          <h2 className="text-xl font-semibold">Support Tickets</h2>
+          <h2 className="text-xl font-semibold">Ticket/Request Details</h2>
           <div className="rounded-md border bg-card">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Customer Name</TableHead>
+                  <TableHead>Incident ID</TableHead>
+                  <TableHead>Client</TableHead>
                   <TableHead>Region</TableHead>
                   <TableHead>Machine Model</TableHead>
                   <TableHead>Complaint Type</TableHead>
@@ -524,6 +536,7 @@ export default function ServiceManagement() {
               <TableBody>
                 {tickets.map((ticket) => (
                   <TableRow key={ticket.id}>
+                    <TableCell className="font-medium">{ticket.incidentId || "-"}</TableCell>
                     <TableCell className="font-medium">{ticket.customer}</TableCell>
                     <TableCell>{ticket.region}</TableCell>
                     <TableCell>{ticket.model}</TableCell>

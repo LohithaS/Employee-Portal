@@ -7,6 +7,12 @@ A comprehensive employee portal built with React + Express + PostgreSQL. Feature
 Full-stack application with real database persistence and session-based authentication.
 
 ## Recent Changes
+- **Feb 19, 2026**: MOM linked to specific meetings with agenda & attendees
+  - Meetings schema: added agenda (text) and attendees (JSON) fields
+  - Meeting Management form: captures agenda, dynamic attendees list (name + designation with add/remove)
+  - "Create MOM" button passes meetingId; MOM page fetches meeting details by ID
+  - MOM page displays: meeting details card, agenda card, people involved table, and discussion points
+  - Added GET /api/meetings/:id endpoint and getMeeting storage method
 - **Feb 18, 2026**: Enhanced CRM and Lead Management linkage
   - CRM table: "Company Name" renamed to "Client"
   - Add Client form: added description, dynamic stakeholders (name + designation with add more)

@@ -59,6 +59,7 @@ export interface IStorage {
 
   getLeaveRequests(): Promise<LeaveRequest[]>;
   createLeaveRequest(r: InsertLeaveRequest): Promise<LeaveRequest>;
+  updateLeaveRequest(id: number, data: Partial<LeaveRequest>): Promise<LeaveRequest | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -223,6 +224,11 @@ export class DatabaseStorage implements IStorage {
   async createLeaveRequest(r: InsertLeaveRequest): Promise<LeaveRequest> {
     const [created] = await db.insert(leaveRequests).values(r).returning();
     return created;
+  }
+
+  async updateLeaveRequest(id: number, data: Partial<LeaveRequest>): Promise<LeaveRequest | undefined> {
+    const [updated] = await db.update(leaveRequests).set(data).where(eq(leaveRequests.id, id)).returning();
+    return updated;
   }
 }
 

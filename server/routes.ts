@@ -299,6 +299,24 @@ export async function registerRoutes(
     res.json(data);
   });
 
+  app.patch("/api/leave-requests/:id", requireAuth, async (req, res) => {
+    try {
+      const user = await storage.getUser(req.session.userId!);
+      if (!user || user.role !== "Manager") {
+        return res.status(403).json({ message: "Only managers can approve or reject leave requests" });
+      }
+      const id = parseInt(req.params.id as string);
+      const { status } = req.body;
+      if (!status || !["Approved", "Rejected"].includes(status)) {
+        return res.status(400).json({ message: "Invalid status" });
+      }
+      const updated = await storage.updateLeaveRequest(id, { status });
+      res.json(updated);
+    } catch (e: any) {
+      res.status(400).json({ message: e.message });
+    }
+  });
+
   app.post("/api/leave-requests", requireAuth, async (req, res) => {
     try {
       const r = await storage.createLeaveRequest({ ...req.body, userId: req.session.userId });

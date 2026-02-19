@@ -24,6 +24,8 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Check, X } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
 
 const leaveTypes = [
   { id: "sl", name: "Sick Leave", total: 5 },
@@ -40,6 +42,8 @@ export default function LeaveManagement() {
   const [reason, setReason] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const { toast } = useToast();
+  const { user } = useAuth();
+  const isManager = user?.role === "Manager";
 
   const requestsQuery = useQuery<any[]>({ queryKey: ["/api/leave-requests"] });
   const requests = requestsQuery.data ?? [];
@@ -68,6 +72,19 @@ export default function LeaveManagement() {
       setReason("");
       setErrors({});
       toast({ title: "Leave request submitted successfully" });
+    },
+  });
+
+  const updateStatusMutation = useMutation({
+    mutationFn: async ({ id, status }: { id: number; status: string }) => {
+      await apiRequest("PATCH", `/api/leave-requests/${id}`, { status });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/leave-requests"] });
+      toast({ title: "Leave request status updated" });
+    },
+    onError: (error: Error) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
     },
   });
 
@@ -191,6 +208,7 @@ export default function LeaveManagement() {
                                 <TableHead>Days</TableHead>
                                 <TableHead>Reason</TableHead>
                                 <TableHead>Status</TableHead>
+                                {isManager && <TableHead>Actions</TableHead>}
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -201,10 +219,38 @@ export default function LeaveManagement() {
                                     <TableCell>{req.days}</TableCell>
                                     <TableCell>{req.reason}</TableCell>
                                     <TableCell>
-                                        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                                        <Badge variant="outline" className={req.status === "Approved" ? "bg-green-50 text-green-700 border-green-200" : req.status === "Rejected" ? "bg-red-50 text-red-700 border-red-200" : "bg-yellow-50 text-yellow-700 border-yellow-200"}>
                                             {req.status}
                                         </Badge>
                                     </TableCell>
+                                    {isManager && (
+                                      <TableCell>
+                                        {req.status === "Pending" ? (
+                                          <div className="flex items-center gap-2">
+                                            <Button
+                                              size="sm"
+                                              variant="outline"
+                                              className="h-7 text-xs bg-green-50 text-green-700 hover:bg-green-100 border-green-200"
+                                              onClick={() => updateStatusMutation.mutate({ id: req.id, status: "Approved" })}
+                                              disabled={updateStatusMutation.isPending}
+                                            >
+                                              <Check className="h-3 w-3 mr-1" /> Approve
+                                            </Button>
+                                            <Button
+                                              size="sm"
+                                              variant="outline"
+                                              className="h-7 text-xs bg-red-50 text-red-700 hover:bg-red-100 border-red-200"
+                                              onClick={() => updateStatusMutation.mutate({ id: req.id, status: "Rejected" })}
+                                              disabled={updateStatusMutation.isPending}
+                                            >
+                                              <X className="h-3 w-3 mr-1" /> Reject
+                                            </Button>
+                                          </div>
+                                        ) : (
+                                          <span className="text-xs text-muted-foreground">—</span>
+                                        )}
+                                      </TableCell>
+                                    )}
                                 </TableRow>
                             ))}
                         </TableBody>

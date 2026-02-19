@@ -640,17 +640,8 @@ export default function CRM() {
                   )}
 
                   <div>
-                    <div className="flex items-center justify-between mb-2">
+                    <div className="mb-2">
                       <p className="text-sm text-muted-foreground">Associated Leads</p>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-7 text-xs"
-                        onClick={() => { setIsDetailOpen(false); navigate("/lead-management"); }}
-                        data-testid="button-go-to-leads"
-                      >
-                        View All Leads
-                      </Button>
                     </div>
                     {getClientLeads(selectedClient.name).length > 0 ? (
                       <div className="rounded-lg border border-border overflow-hidden">

@@ -270,8 +270,9 @@ export async function registerRoutes(
     }
   });
 
-  app.get("/api/reimbursements", requireAuth, async (_req, res) => {
-    const data = await storage.getReimbursements();
+  app.get("/api/reimbursements", requireAuth, async (req, res) => {
+    const allData = await storage.getReimbursements();
+    const data = allData.filter(r => r.userId === req.session.userId);
     res.json(data);
   });
 
@@ -282,11 +283,18 @@ export async function registerRoutes(
         return res.status(403).json({ message: "Only managers can approve or reject claims" });
       }
       const id = parseInt(req.params.id as string);
-      const { status } = req.body;
+      const { status, rejectionReason } = req.body;
       if (!status || !["Approved", "Rejected"].includes(status)) {
         return res.status(400).json({ message: "Invalid status" });
       }
-      const updated = await storage.updateReimbursement(id, { status });
+      if (status === "Rejected" && (!rejectionReason || !rejectionReason.trim())) {
+        return res.status(400).json({ message: "Rejection reason is required" });
+      }
+      const updateData: any = { status };
+      if (status === "Rejected") {
+        updateData.rejectionReason = rejectionReason.trim();
+      }
+      const updated = await storage.updateReimbursement(id, updateData);
       res.json(updated);
     } catch (e: any) {
       res.status(400).json({ message: e.message });
@@ -348,11 +356,18 @@ export async function registerRoutes(
         return res.status(403).json({ message: "Only managers can approve or reject leave requests" });
       }
       const id = parseInt(req.params.id as string);
-      const { status } = req.body;
+      const { status, rejectionReason } = req.body;
       if (!status || !["Approved", "Rejected"].includes(status)) {
         return res.status(400).json({ message: "Invalid status" });
       }
-      const updated = await storage.updateLeaveRequest(id, { status });
+      if (status === "Rejected" && (!rejectionReason || !rejectionReason.trim())) {
+        return res.status(400).json({ message: "Rejection reason is required" });
+      }
+      const updateData: any = { status };
+      if (status === "Rejected") {
+        updateData.rejectionReason = rejectionReason.trim();
+      }
+      const updated = await storage.updateLeaveRequest(id, updateData);
       res.json(updated);
     } catch (e: any) {
       res.status(400).json({ message: e.message });

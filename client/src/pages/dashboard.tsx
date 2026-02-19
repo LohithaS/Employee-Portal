@@ -19,6 +19,16 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { 
   ArrowUpRight, 
   Calendar, 
@@ -86,8 +96,8 @@ export default function Dashboard() {
   });
 
   const approveRejectLeaveMutation = useMutation({
-    mutationFn: async ({ id, status }: { id: number; status: string }) => {
-      await apiRequest("PATCH", `/api/leave-requests/${id}`, { status });
+    mutationFn: async ({ id, status, rejectionReason }: { id: number; status: string; rejectionReason?: string }) => {
+      await apiRequest("PATCH", `/api/leave-requests/${id}`, { status, rejectionReason });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/pending-approvals"] });
@@ -100,8 +110,8 @@ export default function Dashboard() {
   });
 
   const approveRejectReimbursementMutation = useMutation({
-    mutationFn: async ({ id, status }: { id: number; status: string }) => {
-      await apiRequest("PATCH", `/api/reimbursements/${id}`, { status });
+    mutationFn: async ({ id, status, rejectionReason }: { id: number; status: string; rejectionReason?: string }) => {
+      await apiRequest("PATCH", `/api/reimbursements/${id}`, { status, rejectionReason });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/pending-approvals"] });
@@ -188,8 +198,8 @@ export default function Dashboard() {
           <TabsContent value="approvals" className="mt-4">
             <ApprovalsTab
               approvals={approvals}
-              onLeaveAction={(id, status) => approveRejectLeaveMutation.mutate({ id, status })}
-              onReimbursementAction={(id, status) => approveRejectReimbursementMutation.mutate({ id, status })}
+              onLeaveAction={(id, status, rejectionReason) => approveRejectLeaveMutation.mutate({ id, status, rejectionReason })}
+              onReimbursementAction={(id, status, rejectionReason) => approveRejectReimbursementMutation.mutate({ id, status, rejectionReason })}
               isLeaveLoading={approveRejectLeaveMutation.isPending}
               isReimbursementLoading={approveRejectReimbursementMutation.isPending}
             />
@@ -220,16 +230,62 @@ function ApprovalsTab({
   isReimbursementLoading,
 }: {
   approvals: PendingApprovals | undefined;
-  onLeaveAction: (id: number, status: string) => void;
-  onReimbursementAction: (id: number, status: string) => void;
+  onLeaveAction: (id: number, status: string, rejectionReason?: string) => void;
+  onReimbursementAction: (id: number, status: string, rejectionReason?: string) => void;
   isLeaveLoading: boolean;
   isReimbursementLoading: boolean;
 }) {
   const pendingLeaves = approvals?.leaves || [];
   const pendingReimbursements = approvals?.reimbursements || [];
+  const [rejectDialog, setRejectDialog] = useState<{ type: "leave" | "reimbursement"; id: number; name: string } | null>(null);
+  const [rejectionReason, setRejectionReason] = useState("");
+  const [reasonError, setReasonError] = useState("");
+
+  const handleRejectConfirm = () => {
+    if (!rejectionReason.trim()) {
+      setReasonError("Rejection reason is required");
+      return;
+    }
+    if (rejectDialog) {
+      if (rejectDialog.type === "leave") {
+        onLeaveAction(rejectDialog.id, "Rejected", rejectionReason.trim());
+      } else {
+        onReimbursementAction(rejectDialog.id, "Rejected", rejectionReason.trim());
+      }
+      setRejectDialog(null);
+      setRejectionReason("");
+      setReasonError("");
+    }
+  };
 
   return (
     <div className="flex flex-col gap-6">
+      <Dialog open={!!rejectDialog} onOpenChange={(open) => { if (!open) { setRejectDialog(null); setRejectionReason(""); setReasonError(""); } }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reject {rejectDialog?.type === "leave" ? "Leave Request" : "Reimbursement Claim"}</DialogTitle>
+            <DialogDescription>
+              Please provide a reason for rejecting {rejectDialog?.name}'s {rejectDialog?.type === "leave" ? "leave request" : "reimbursement claim"}.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label>Reason for Rejection <span className="text-red-500">*</span></Label>
+            <Textarea
+              placeholder="Enter reason for rejection..."
+              value={rejectionReason}
+              onChange={(e) => { setRejectionReason(e.target.value); setReasonError(""); }}
+              className={reasonError ? "border-red-500" : ""}
+              data-testid="input-rejection-reason"
+            />
+            {reasonError && <span className="text-xs text-red-500">{reasonError}</span>}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setRejectDialog(null); setRejectionReason(""); setReasonError(""); }}>Cancel</Button>
+            <Button variant="destructive" onClick={handleRejectConfirm} disabled={isLeaveLoading || isReimbursementLoading} data-testid="button-confirm-reject">Reject</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <Card className="shadow-sm">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -285,7 +341,7 @@ function ApprovalsTab({
                           size="sm"
                           variant="outline"
                           className="h-7 text-xs bg-red-50 text-red-700 hover:bg-red-100 border-red-200"
-                          onClick={() => onLeaveAction(leave.id, "Rejected")}
+                          onClick={() => setRejectDialog({ type: "leave", id: leave.id, name: leave.employeeName })}
                           disabled={isLeaveLoading}
                           data-testid={`reject-leave-${leave.id}`}
                         >
@@ -354,7 +410,7 @@ function ApprovalsTab({
                           size="sm"
                           variant="outline"
                           className="h-7 text-xs bg-red-50 text-red-700 hover:bg-red-100 border-red-200"
-                          onClick={() => onReimbursementAction(claim.id, "Rejected")}
+                          onClick={() => setRejectDialog({ type: "reimbursement", id: claim.id, name: claim.employeeName })}
                           disabled={isReimbursementLoading}
                           data-testid={`reject-reimbursement-${claim.id}`}
                         >

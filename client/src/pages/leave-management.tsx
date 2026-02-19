@@ -194,6 +194,7 @@ export default function LeaveManagement() {
                                 <TableHead>Days</TableHead>
                                 <TableHead>Reason</TableHead>
                                 <TableHead>Status</TableHead>
+                                <TableHead>Rejection Reason</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -207,6 +208,13 @@ export default function LeaveManagement() {
                                         <Badge variant="outline" className={req.status === "Approved" ? "bg-green-50 text-green-700 border-green-200" : req.status === "Rejected" ? "bg-red-50 text-red-700 border-red-200" : "bg-yellow-50 text-yellow-700 border-yellow-200"}>
                                             {req.status}
                                         </Badge>
+                                    </TableCell>
+                                    <TableCell>
+                                        {req.status === "Rejected" && req.rejectionReason ? (
+                                            <span className="text-sm text-red-600">{req.rejectionReason}</span>
+                                        ) : (
+                                            <span className="text-xs text-muted-foreground">—</span>
+                                        )}
                                     </TableCell>
                                 </TableRow>
                             ))}

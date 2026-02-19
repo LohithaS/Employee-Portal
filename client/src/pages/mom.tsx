@@ -61,19 +61,18 @@ export default function MinutesOfMeeting() {
       if (!res.ok) return [];
       return res.json();
     },
-    enabled: !isSpecificMeeting,
   });
 
   const meeting = meetingQuery.data;
   const allMeetings = allMeetingsQuery.data ?? [];
   const meetingsMap: Record<number, any> = {};
   allMeetings.forEach((m: any) => { meetingsMap[m.id] = m; });
+  if (meeting) meetingsMap[meeting.id] = meeting;
 
   const pointsQuery = useQuery<any[]>({
-    queryKey: ["/api/mom-points", meetingId],
+    queryKey: ["/api/mom-points"],
     queryFn: async () => {
-      const url = meetingId ? `/api/mom-points?meetingId=${meetingId}` : "/api/mom-points";
-      const res = await fetch(url, { credentials: "include" });
+      const res = await fetch("/api/mom-points", { credentials: "include" });
       if (!res.ok) return [];
       return res.json();
     },
@@ -94,7 +93,7 @@ export default function MinutesOfMeeting() {
       await apiRequest("POST", "/api/mom-points", pointData);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/mom-points", meetingId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/mom-points"] });
       setNewPoint({ discussion: "", decision: "", actionItem: "", responsibility: "" });
       setErrors({});
       toast({ title: "Point added successfully" });

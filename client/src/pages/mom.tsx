@@ -152,65 +152,6 @@ export default function MinutesOfMeeting() {
           </Card>
         )}
 
-        {meeting && (
-          <div className="grid gap-4 md:grid-cols-3">
-            <Card className="bg-muted/30">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base font-medium">Meeting Details</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid gap-2 text-sm">
-                  <div className="flex gap-2">
-                    <span className="text-muted-foreground min-w-[70px]">Title:</span>
-                    <span className="font-medium">{meeting.title}</span>
-                  </div>
-                  <div className="flex gap-2">
-                    <span className="text-muted-foreground min-w-[70px]">Date:</span>
-                    <span className="font-medium">{new Date(meeting.date).toLocaleDateString()}</span>
-                  </div>
-                  <div className="flex gap-2">
-                    <span className="text-muted-foreground min-w-[70px]">Time:</span>
-                    <span className="font-medium">{meeting.time}</span>
-                  </div>
-                  <div className="flex gap-2">
-                    <span className="text-muted-foreground min-w-[70px]">Location:</span>
-                    <span className="font-medium">{meeting.location}</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-muted/30">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base font-medium">Agenda</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm whitespace-pre-wrap">{meeting.agenda || "No agenda specified"}</p>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-muted/30">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base font-medium">People Involved ({attendees.length})</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {attendees.length > 0 ? (
-                  <div className="space-y-2 text-sm">
-                    {attendees.map((attendee: any, index: number) => (
-                      <div key={index} className="flex items-center justify-between">
-                        <span className="font-medium">{attendee.name}</span>
-                        <span className="text-muted-foreground text-xs">{attendee.designation || "-"}</span>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-sm text-muted-foreground">No attendees listed</p>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-        )}
-
         <Card>
           <CardHeader>
             <CardTitle>Record Discussion Points</CardTitle>
@@ -263,11 +204,14 @@ export default function MinutesOfMeeting() {
           </CardContent>
         </Card>
 
-        <div className="rounded-md border bg-card">
+        <div className="rounded-md border bg-card overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>S.No</TableHead>
+                {meeting && <TableHead>Meeting Title</TableHead>}
+                {meeting && <TableHead>Date & Time</TableHead>}
+                {meeting && <TableHead>Attendees</TableHead>}
                 <TableHead>Discussion Point</TableHead>
                 <TableHead>Decision</TableHead>
                 <TableHead>Action Item</TableHead>
@@ -278,7 +222,7 @@ export default function MinutesOfMeeting() {
             <TableBody>
               {points.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={meeting ? 6 : 5} className="text-center text-muted-foreground h-24">
+                  <TableCell colSpan={meeting ? 9 : 5} className="text-center text-muted-foreground h-24">
                     No points recorded yet.
                   </TableCell>
                 </TableRow>
@@ -286,6 +230,21 @@ export default function MinutesOfMeeting() {
                 points.map((point: any, index: number) => (
                   <TableRow key={point.id || index} data-testid={`row-mom-point-${index}`}>
                     <TableCell>{index + 1}</TableCell>
+                    {meeting && (
+                      <TableCell className="font-medium">{meeting.title}</TableCell>
+                    )}
+                    {meeting && (
+                      <TableCell className="whitespace-nowrap text-sm">
+                        {new Date(meeting.date).toLocaleDateString()} at {meeting.time}
+                      </TableCell>
+                    )}
+                    {meeting && (
+                      <TableCell className="text-sm">
+                        {attendees.length > 0
+                          ? attendees.map((a: any) => a.name).join(", ")
+                          : "-"}
+                      </TableCell>
+                    )}
                     <TableCell>{point.discussion}</TableCell>
                     <TableCell>{point.decision || "-"}</TableCell>
                     <TableCell>{point.actionItem || "-"}</TableCell>

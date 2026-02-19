@@ -25,12 +25,15 @@ export async function registerRoutes(
 
   app.post("/api/auth/login", async (req, res) => {
     try {
-      const { username, password, role } = req.body;
+      const { username, password, role, rememberMe } = req.body;
       if (!role) {
         return res.status(400).json({ message: "Please select a login type" });
       }
       const user = await loginUser(username, password, role);
       req.session.userId = user.id;
+      if (rememberMe && req.session.cookie) {
+        req.session.cookie.maxAge = 30 * 24 * 60 * 60 * 1000;
+      }
       const { password: _, ...safeUser } = user;
       res.json(safeUser);
     } catch (e: any) {

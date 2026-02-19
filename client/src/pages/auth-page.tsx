@@ -59,7 +59,8 @@ const registerSchema = z.object({
 type LoginFormValues = z.infer<typeof loginSchema>;
 type RegisterFormValues = z.infer<typeof registerSchema>;
 
-function LoginForm({ role, isLoading, onSubmit, loginError, onClearError }: { role: string; isLoading: boolean; onSubmit: (values: LoginFormValues) => void; loginError: string | null; onClearError: () => void }) {
+function LoginForm({ role, isLoading, onSubmit, loginError, onClearError }: { role: string; isLoading: boolean; onSubmit: (values: LoginFormValues & { rememberMe: boolean }) => void; loginError: string | null; onClearError: () => void }) {
+  const [rememberMe, setRememberMe] = useState(false);
   const loginForm = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -68,9 +69,13 @@ function LoginForm({ role, isLoading, onSubmit, loginError, onClearError }: { ro
     },
   });
 
+  const handleFormSubmit = (values: LoginFormValues) => {
+    onSubmit({ ...values, rememberMe });
+  };
+
   return (
     <Form {...loginForm}>
-      <form onSubmit={loginForm.handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={loginForm.handleSubmit(handleFormSubmit)} className="space-y-4">
         <FormField
           control={loginForm.control}
           name="username"
@@ -121,7 +126,7 @@ function LoginForm({ role, isLoading, onSubmit, loginError, onClearError }: { ro
           )}
         />
         <div className="flex items-center space-x-2">
-          <Checkbox id={`remember-${role.toLowerCase()}`} />
+          <Checkbox id={`remember-${role.toLowerCase()}`} checked={rememberMe} onCheckedChange={(checked) => setRememberMe(checked === true)} />
           <Label htmlFor={`remember-${role.toLowerCase()}`} className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
             Remember me
           </Label>
@@ -293,12 +298,12 @@ function RegisterForm({ isLoading, onSubmit }: { isLoading: boolean; onSubmit: (
 export default function AuthPage() {
   const { login, register, isLoading, loginError, clearLoginError } = useAuth();
 
-  const onEmployeeLogin = (values: LoginFormValues) => {
-    login({ username: values.username, password: values.password, role: "Employee" });
+  const onEmployeeLogin = (values: LoginFormValues & { rememberMe: boolean }) => {
+    login({ username: values.username, password: values.password, role: "Employee", rememberMe: values.rememberMe });
   };
 
-  const onManagerLogin = (values: LoginFormValues) => {
-    login({ username: values.username, password: values.password, role: "Manager" });
+  const onManagerLogin = (values: LoginFormValues & { rememberMe: boolean }) => {
+    login({ username: values.username, password: values.password, role: "Manager", rememberMe: values.rememberMe });
   };
 
   const onRegister = (values: RegisterFormValues & { name: string; role: string }) => {

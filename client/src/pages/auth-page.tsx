@@ -42,10 +42,14 @@ const registerSchema = z.object({
     .string()
     .min(6, "Password must be at least 6 characters")
     .max(12, "Password must be at most 12 characters"),
-  name: z
+  firstName: z
     .string()
-    .min(1, "Name is required")
-    .max(50, "Name must be at most 50 characters"),
+    .min(1, "First name is required")
+    .max(25, "First name must be at most 25 characters"),
+  lastName: z
+    .string()
+    .min(1, "Last name is required")
+    .max(25, "Last name must be at most 25 characters"),
 });
 
 type LoginFormValues = z.infer<typeof loginSchema>;
@@ -126,7 +130,7 @@ function LoginForm({ role, isLoading, onSubmit, loginError, onClearError }: { ro
   );
 }
 
-function RegisterForm({ isLoading, onSubmit }: { isLoading: boolean; onSubmit: (values: RegisterFormValues & { role: string }) => void }) {
+function RegisterForm({ isLoading, onSubmit }: { isLoading: boolean; onSubmit: (values: RegisterFormValues & { name: string; role: string }) => void }) {
   const [selectedRole, setSelectedRole] = useState<string>("Employee");
 
   const registerForm = useForm<RegisterFormValues>({
@@ -134,38 +138,54 @@ function RegisterForm({ isLoading, onSubmit }: { isLoading: boolean; onSubmit: (
     defaultValues: {
       username: "",
       password: "",
-      name: "",
+      firstName: "",
+      lastName: "",
     },
   });
 
   const handleSubmit = (values: RegisterFormValues) => {
-    onSubmit({ ...values, role: selectedRole });
+    onSubmit({ ...values, name: `${values.firstName} ${values.lastName}`, role: selectedRole });
   };
 
   return (
     <Form {...registerForm}>
       <form onSubmit={registerForm.handleSubmit(handleSubmit)} className="space-y-4">
-        <FormField
-          control={registerForm.control}
-          name="name"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Full Name <span className="text-red-500">*</span></FormLabel>
-              <FormControl>
-                <div className="relative">
-                  <User className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+        <div className="grid grid-cols-2 gap-3">
+          <FormField
+            control={registerForm.control}
+            name="firstName"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>First Name <span className="text-red-500">*</span></FormLabel>
+                <FormControl>
                   <Input
-                    placeholder="John Doe"
-                    className="pl-9"
-                    data-testid="input-register-name"
+                    placeholder="John"
+                    data-testid="input-register-firstname"
                     {...field}
                   />
-                </div>
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={registerForm.control}
+            name="lastName"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Last Name <span className="text-red-500">*</span></FormLabel>
+                <FormControl>
+                  <Input
+                    placeholder="Doe"
+                    data-testid="input-register-lastname"
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
         <FormField
           control={registerForm.control}
           name="username"
@@ -258,7 +278,7 @@ export default function AuthPage() {
     login({ username: values.username, password: values.password, role: "Manager" });
   };
 
-  const onRegister = (values: RegisterFormValues & { role: string }) => {
+  const onRegister = (values: RegisterFormValues & { name: string; role: string }) => {
     register({ username: values.username, password: values.password, name: values.name, role: values.role });
   };
 

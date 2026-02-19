@@ -190,6 +190,14 @@ export async function registerRoutes(
     }
   });
 
+  app.patch("/api/mom-points/:id", requireAuth, async (req, res) => {
+    const id = parseInt(req.params.id);
+    const { discussion, decision, actionItem, responsibility } = req.body;
+    const updated = await storage.updateMomPoint(id, { discussion, decision, actionItem, responsibility });
+    if (!updated) return res.status(404).json({ message: "MOM point not found" });
+    res.json(updated);
+  });
+
   app.get("/api/trips", requireAuth, async (_req, res) => {
     const data = await storage.getTrips();
     res.json(data);

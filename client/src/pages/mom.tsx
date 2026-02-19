@@ -14,7 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Plus, Save, ArrowLeft, Eye } from "lucide-react";
+import { Plus, Save, ArrowLeft, Eye, Pencil, Check, X } from "lucide-react";
 import { useLocation } from "wouter";
 import {
   Table,
@@ -31,6 +31,8 @@ export default function MinutesOfMeeting() {
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [selectedMeeting, setSelectedMeeting] = useState<any>(null);
   const [selectedAttendees, setSelectedAttendees] = useState<any[]>([]);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editData, setEditData] = useState({ discussion: "", decision: "", actionItem: "", responsibility: "" });
   
   const getQueryParams = () => {
     const search = window.location.search;
@@ -99,6 +101,35 @@ export default function MinutesOfMeeting() {
       toast({ title: "Point added successfully" });
     },
   });
+
+  const updatePointMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: any }) => {
+      await apiRequest("PATCH", `/api/mom-points/${id}`, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/mom-points"] });
+      setEditingId(null);
+      toast({ title: "Point updated successfully" });
+    },
+  });
+
+  const startEdit = (point: any) => {
+    setEditingId(point.id);
+    setEditData({
+      discussion: point.discussion || "",
+      decision: point.decision || "",
+      actionItem: point.actionItem || "",
+      responsibility: point.responsibility || "",
+    });
+  };
+
+  const saveEdit = () => {
+    if (!editData.discussion.trim()) {
+      toast({ title: "Discussion point is required", variant: "destructive" });
+      return;
+    }
+    updatePointMutation.mutate({ id: editingId!, data: editData });
+  };
 
   const validatePoint = () => {
     const newErrors: Record<string, string> = {};
@@ -237,25 +268,62 @@ export default function MinutesOfMeeting() {
                 <TableHead>Action Item</TableHead>
                 <TableHead>Responsibility</TableHead>
                 <TableHead>Meeting Details</TableHead>
+                <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {points.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center text-muted-foreground h-24">
+                  <TableCell colSpan={7} className="text-center text-muted-foreground h-24">
                     No points recorded yet.
                   </TableCell>
                 </TableRow>
               ) : (
                 points.map((point: any, index: number) => {
                   const pointMeeting = getMeetingForPoint(point);
+                  const isEditing = editingId === point.id;
                   return (
                     <TableRow key={point.id || index} data-testid={`row-mom-point-${index}`}>
                       <TableCell>{index + 1}</TableCell>
-                      <TableCell>{point.discussion}</TableCell>
-                      <TableCell>{point.decision || "-"}</TableCell>
-                      <TableCell>{point.actionItem || "-"}</TableCell>
-                      <TableCell>{point.responsibility || "-"}</TableCell>
+                      <TableCell>
+                        {isEditing ? (
+                          <Textarea
+                            value={editData.discussion}
+                            onChange={(e) => setEditData({ ...editData, discussion: e.target.value })}
+                            className="min-h-[60px]"
+                            data-testid="edit-discussion"
+                          />
+                        ) : point.discussion}
+                      </TableCell>
+                      <TableCell>
+                        {isEditing ? (
+                          <Textarea
+                            value={editData.decision}
+                            onChange={(e) => setEditData({ ...editData, decision: e.target.value })}
+                            className="min-h-[60px]"
+                            data-testid="edit-decision"
+                          />
+                        ) : (point.decision || "-")}
+                      </TableCell>
+                      <TableCell>
+                        {isEditing ? (
+                          <Textarea
+                            value={editData.actionItem}
+                            onChange={(e) => setEditData({ ...editData, actionItem: e.target.value })}
+                            className="min-h-[60px]"
+                            data-testid="edit-action-item"
+                          />
+                        ) : (point.actionItem || "-")}
+                      </TableCell>
+                      <TableCell>
+                        {isEditing ? (
+                          <Input
+                            value={editData.responsibility}
+                            onChange={(e) => setEditData({ ...editData, responsibility: e.target.value })}
+                            data-testid="edit-responsibility"
+                          />
+                        ) : (point.responsibility || "-")}
+                      </TableCell>
                       <TableCell>
                         {pointMeeting ? (
                           <Button
@@ -269,6 +337,22 @@ export default function MinutesOfMeeting() {
                           </Button>
                         ) : (
                           <span className="text-muted-foreground text-sm">-</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {isEditing ? (
+                          <div className="flex gap-1">
+                            <Button variant="ghost" size="icon" onClick={saveEdit} disabled={updatePointMutation.isPending} data-testid={`button-save-edit-${index}`}>
+                              <Check className="h-4 w-4 text-green-600" />
+                            </Button>
+                            <Button variant="ghost" size="icon" onClick={() => setEditingId(null)} data-testid={`button-cancel-edit-${index}`}>
+                              <X className="h-4 w-4 text-red-500" />
+                            </Button>
+                          </div>
+                        ) : (
+                          <Button variant="ghost" size="icon" onClick={() => startEdit(point)} data-testid={`button-edit-point-${index}`}>
+                            <Pencil className="h-4 w-4" />
+                          </Button>
                         )}
                       </TableCell>
                     </TableRow>

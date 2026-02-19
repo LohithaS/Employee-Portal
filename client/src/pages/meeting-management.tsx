@@ -46,6 +46,10 @@ export default function MeetingManagement() {
   const meetingsQuery = useQuery<any[]>({ queryKey: ["/api/meetings"] });
   const meetings = meetingsQuery.data ?? [];
 
+  const momPointsQuery = useQuery<any[]>({ queryKey: ["/api/mom-points"] });
+  const momPoints = momPointsQuery.data ?? [];
+  const meetingsWithMom = new Set(momPoints.map((p: any) => p.meetingId));
+
   const addMeetingMutation = useMutation({
     mutationFn: async (meetingData: any) => {
       await apiRequest("POST", "/api/meetings", meetingData);
@@ -286,11 +290,19 @@ export default function MeetingManagement() {
                               : "-"}
                           </TableCell>
                           <TableCell>
-                            <Button variant="outline" size="sm" asChild data-testid={`button-create-mom-${meeting.id}`}>
-                               <Link href={`/mom?meetingId=${meeting.id}`}>
-                                 Create MOM
-                               </Link>
-                            </Button>
+                            {meetingsWithMom.has(meeting.id) ? (
+                              <Button variant="outline" size="sm" asChild data-testid={`button-edit-mom-${meeting.id}`}>
+                                <Link href={`/mom?meetingId=${meeting.id}`}>
+                                  Edit MOM
+                                </Link>
+                              </Button>
+                            ) : (
+                              <Button variant="outline" size="sm" asChild data-testid={`button-create-mom-${meeting.id}`}>
+                                <Link href={`/mom?meetingId=${meeting.id}`}>
+                                  Create MOM
+                                </Link>
+                              </Button>
+                            )}
                           </TableCell>
                         </TableRow>
                       );

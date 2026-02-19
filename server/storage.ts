@@ -45,6 +45,7 @@ export interface IStorage {
 
   getMomPoints(meetingId?: number): Promise<MomPoint[]>;
   createMomPoint(point: InsertMomPoint): Promise<MomPoint>;
+  updateMomPoint(id: number, data: Partial<MomPoint>): Promise<MomPoint | undefined>;
 
   getTrips(): Promise<Trip[]>;
   createTrip(trip: InsertTrip): Promise<Trip>;
@@ -161,6 +162,11 @@ export class DatabaseStorage implements IStorage {
   async createMomPoint(point: InsertMomPoint): Promise<MomPoint> {
     const [created] = await db.insert(momPoints).values(point).returning();
     return created;
+  }
+
+  async updateMomPoint(id: number, data: Partial<MomPoint>): Promise<MomPoint | undefined> {
+    const [updated] = await db.update(momPoints).set(data).where(eq(momPoints.id, id)).returning();
+    return updated;
   }
 
   async getTrips(): Promise<Trip[]> {

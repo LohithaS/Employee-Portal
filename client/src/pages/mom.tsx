@@ -134,73 +134,6 @@ export default function MinutesOfMeeting() {
           </Button>
         </div>
 
-        {meeting && (
-          <div className="grid gap-4 md:grid-cols-2">
-            <Card className="bg-muted/30">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base font-medium">Meeting Details</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid gap-3 text-sm">
-                  <div className="flex gap-2">
-                    <span className="text-muted-foreground min-w-[80px]">Meeting:</span>
-                    <span className="font-medium">{meeting.title}</span>
-                  </div>
-                  <div className="flex gap-2">
-                    <span className="text-muted-foreground min-w-[80px]">Date:</span>
-                    <span className="font-medium">{new Date(meeting.date).toLocaleDateString()}</span>
-                  </div>
-                  <div className="flex gap-2">
-                    <span className="text-muted-foreground min-w-[80px]">Time:</span>
-                    <span className="font-medium">{meeting.time}</span>
-                  </div>
-                  <div className="flex gap-2">
-                    <span className="text-muted-foreground min-w-[80px]">Location:</span>
-                    <span className="font-medium">{meeting.location}</span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-muted/30">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base font-medium">Agenda</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm whitespace-pre-wrap">{meeting.agenda || "No agenda specified"}</p>
-              </CardContent>
-            </Card>
-          </div>
-        )}
-
-        {attendees.length > 0 && (
-          <Card className="bg-muted/30">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base font-medium">People Involved</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>S.No</TableHead>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Designation</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {attendees.map((attendee: any, index: number) => (
-                    <TableRow key={index} data-testid={`row-attendee-${index}`}>
-                      <TableCell>{index + 1}</TableCell>
-                      <TableCell className="font-medium">{attendee.name}</TableCell>
-                      <TableCell>{attendee.designation || "-"}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
-        )}
-
         {!meeting && !meetingId && (
           <Card className="bg-muted/30">
             <CardContent className="py-8 text-center">
@@ -217,7 +150,66 @@ export default function MinutesOfMeeting() {
             <CardTitle>Record Discussion Points</CardTitle>
             <CardDescription>Add key discussion points, decisions made, and action items assigned.</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-6">
+            {meeting && (
+              <>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="rounded-lg border bg-muted/30 p-4 space-y-3">
+                    <h3 className="text-sm font-semibold text-foreground">Meeting Details</h3>
+                    <div className="grid gap-2 text-sm">
+                      <div className="flex gap-2">
+                        <span className="text-muted-foreground min-w-[80px]">Meeting:</span>
+                        <span className="font-medium">{meeting.title}</span>
+                      </div>
+                      <div className="flex gap-2">
+                        <span className="text-muted-foreground min-w-[80px]">Date:</span>
+                        <span className="font-medium">{new Date(meeting.date).toLocaleDateString()}</span>
+                      </div>
+                      <div className="flex gap-2">
+                        <span className="text-muted-foreground min-w-[80px]">Time:</span>
+                        <span className="font-medium">{meeting.time}</span>
+                      </div>
+                      <div className="flex gap-2">
+                        <span className="text-muted-foreground min-w-[80px]">Location:</span>
+                        <span className="font-medium">{meeting.location}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="rounded-lg border bg-muted/30 p-4 space-y-3">
+                    <h3 className="text-sm font-semibold text-foreground">Agenda</h3>
+                    <p className="text-sm whitespace-pre-wrap">{meeting.agenda || "No agenda specified"}</p>
+                  </div>
+                </div>
+
+                {attendees.length > 0 && (
+                  <div className="rounded-lg border bg-muted/30 p-4 space-y-3">
+                    <h3 className="text-sm font-semibold text-foreground">People Involved</h3>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>S.No</TableHead>
+                          <TableHead>Name</TableHead>
+                          <TableHead>Designation</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {attendees.map((attendee: any, index: number) => (
+                          <TableRow key={index} data-testid={`row-attendee-${index}`}>
+                            <TableCell>{index + 1}</TableCell>
+                            <TableCell className="font-medium">{attendee.name}</TableCell>
+                            <TableCell>{attendee.designation || "-"}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+
+                <div className="border-t pt-4" />
+              </>
+            )}
+
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
               <div className="space-y-2">
                 <Label>Discussion Point <span className="text-red-500">*</span></Label>

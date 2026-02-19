@@ -18,6 +18,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
   DialogContent,
@@ -39,6 +40,16 @@ type Lead = {
   customerName: string;
   lead: string;
   stage: string;
+  department?: string;
+  projectName?: string;
+  contactName?: string;
+  contactNumber?: string;
+  email?: string;
+  location?: string;
+  productDescription?: string;
+  quantity?: string;
+  valueInr?: string;
+  remarks?: string;
   userId?: number;
 };
 
@@ -53,6 +64,26 @@ const stages = [
   "purchase order", "production"
 ];
 
+const departments = [
+  "Procurement", "Purchase", "R&D", "Engineering", "Others"
+];
+
+const emptyLead = {
+  customerName: "",
+  lead: "",
+  stage: "inquiry",
+  department: "",
+  projectName: "",
+  contactName: "",
+  contactNumber: "",
+  email: "",
+  location: "",
+  productDescription: "",
+  quantity: "",
+  valueInr: "",
+  remarks: "",
+};
+
 export default function LeadManagement() {
   const { toast } = useToast();
   const [, navigate] = useLocation();
@@ -64,20 +95,15 @@ export default function LeadManagement() {
   const [isUpdateOpen, setIsUpdateOpen] = useState(false);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
 
-  const [newLead, setNewLead] = useState({
-    customerName: "",
-    lead: "",
-    stage: "inquiry"
-  });
+  const [newLead, setNewLead] = useState({ ...emptyLead });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const validateLead = () => {
     const newErrors: Record<string, string> = {};
-    if (!newLead.customerName) newErrors.customerName = "Customer name is required";
+    if (!newLead.customerName) newErrors.customerName = "Client is required";
     if (!newLead.lead) newErrors.lead = "Lead owner is required";
-    if (!newLead.stage) newErrors.stage = "Stage is required";
-
+    if (!newLead.stage) newErrors.stage = "Lead stage is required";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -89,7 +115,7 @@ export default function LeadManagement() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/leads"] });
       setIsAddOpen(false);
-      setNewLead({ customerName: "", lead: "", stage: "inquiry" });
+      setNewLead({ ...emptyLead });
       setErrors({});
       toast({ title: "Lead Created", description: "Successfully added the new lead." });
     },
@@ -125,6 +151,16 @@ export default function LeadManagement() {
         customerName: selectedLead.customerName,
         lead: selectedLead.lead,
         stage: selectedLead.stage,
+        department: selectedLead.department,
+        projectName: selectedLead.projectName,
+        contactName: selectedLead.contactName,
+        contactNumber: selectedLead.contactNumber,
+        email: selectedLead.email,
+        location: selectedLead.location,
+        productDescription: selectedLead.productDescription,
+        quantity: selectedLead.quantity,
+        valueInr: selectedLead.valueInr,
+        remarks: selectedLead.remarks,
       },
     });
   };
@@ -150,52 +186,165 @@ export default function LeadManagement() {
                 <UserPlus className="mr-2 h-4 w-4" /> Add Lead
               </Button>
             </DialogTrigger>
-            <DialogContent className="bg-card text-card-foreground border-border">
+            <DialogContent className="bg-card text-card-foreground border-border max-w-2xl max-h-[85vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>Create New Lead</DialogTitle>
                 <DialogDescription>Track a new business opportunity.</DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="customer">Customer Name <span className="text-red-500">*</span></Label>
-                  {clients.length > 0 ? (
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="customer">Client <span className="text-red-500">*</span></Label>
+                    {clients.length > 0 ? (
+                      <Select
+                        value={newLead.customerName}
+                        onValueChange={(v) => setNewLead({...newLead, customerName: v})}
+                      >
+                        <SelectTrigger data-testid="select-lead-customer" className={`border-input bg-background ${errors.customerName ? "border-red-500" : ""}`}>
+                          <SelectValue placeholder="Select a client" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {clients.map(c => (
+                            <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <Input
+                        id="customer"
+                        data-testid="input-lead-customer"
+                        className={`border-input bg-background ${errors.customerName ? "border-red-500" : ""}`}
+                        value={newLead.customerName}
+                        onChange={(e) => setNewLead({...newLead, customerName: e.target.value})}
+                      />
+                    )}
+                    {errors.customerName && <span className="text-xs text-red-500">{errors.customerName}</span>}
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="department">Department</Label>
                     <Select
-                      value={newLead.customerName}
-                      onValueChange={(v) => setNewLead({...newLead, customerName: v})}
+                      value={newLead.department}
+                      onValueChange={(v) => setNewLead({...newLead, department: v})}
                     >
-                      <SelectTrigger data-testid="select-lead-customer" className={`border-input bg-background ${errors.customerName ? "border-red-500" : ""}`}>
-                        <SelectValue placeholder="Select a client" />
+                      <SelectTrigger data-testid="select-lead-department" className="border-input bg-background">
+                        <SelectValue placeholder="Select department" />
                       </SelectTrigger>
                       <SelectContent>
-                        {clients.map(c => (
-                          <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
+                        {departments.map(d => (
+                          <SelectItem key={d} value={d}>{d}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
-                  ) : (
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="projectName">Project Name</Label>
                     <Input
-                      id="customer"
-                      data-testid="input-lead-customer"
-                      className={`border-input bg-background ${errors.customerName ? "border-red-500" : ""}`}
-                      value={newLead.customerName}
-                      onChange={(e) => setNewLead({...newLead, customerName: e.target.value})}
+                      id="projectName"
+                      data-testid="input-lead-project"
+                      className="border-input bg-background"
+                      value={newLead.projectName}
+                      onChange={(e) => setNewLead({...newLead, projectName: e.target.value})}
                     />
-                  )}
-                  {errors.customerName && <span className="text-xs text-red-500">{errors.customerName}</span>}
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="contactName">Name</Label>
+                    <Input
+                      id="contactName"
+                      data-testid="input-lead-contact-name"
+                      className="border-input bg-background"
+                      value={newLead.contactName}
+                      onChange={(e) => setNewLead({...newLead, contactName: e.target.value})}
+                    />
+                  </div>
                 </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="contactNumber">Contact Number</Label>
+                    <Input
+                      id="contactNumber"
+                      data-testid="input-lead-contact-number"
+                      className="border-input bg-background"
+                      value={newLead.contactNumber}
+                      onChange={(e) => setNewLead({...newLead, contactNumber: e.target.value})}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      data-testid="input-lead-email"
+                      className="border-input bg-background"
+                      value={newLead.email}
+                      onChange={(e) => setNewLead({...newLead, email: e.target.value})}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="location">Location</Label>
+                    <Input
+                      id="location"
+                      data-testid="input-lead-location"
+                      className="border-input bg-background"
+                      value={newLead.location}
+                      onChange={(e) => setNewLead({...newLead, location: e.target.value})}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="lead">Lead Owner <span className="text-red-500">*</span></Label>
+                    <Input
+                      id="lead"
+                      data-testid="input-lead-owner"
+                      className={`border-input bg-background ${errors.lead ? "border-red-500" : ""}`}
+                      value={newLead.lead}
+                      onChange={(e) => setNewLead({...newLead, lead: e.target.value})}
+                    />
+                    {errors.lead && <span className="text-xs text-red-500">{errors.lead}</span>}
+                  </div>
+                </div>
+
                 <div className="grid gap-2">
-                  <Label htmlFor="lead">Lead Owner <span className="text-red-500">*</span></Label>
-                  <Input
-                    id="lead"
-                    data-testid="input-lead-owner"
-                    className={`border-input bg-background ${errors.lead ? "border-red-500" : ""}`}
-                    value={newLead.lead}
-                    onChange={(e) => setNewLead({...newLead, lead: e.target.value})}
+                  <Label htmlFor="productDescription">Product Description</Label>
+                  <Textarea
+                    id="productDescription"
+                    data-testid="input-lead-product-desc"
+                    className="border-input bg-background"
+                    value={newLead.productDescription}
+                    onChange={(e) => setNewLead({...newLead, productDescription: e.target.value})}
                   />
-                  {errors.lead && <span className="text-xs text-red-500">{errors.lead}</span>}
                 </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="quantity">Quantity</Label>
+                    <Input
+                      id="quantity"
+                      data-testid="input-lead-quantity"
+                      className="border-input bg-background"
+                      value={newLead.quantity}
+                      onChange={(e) => setNewLead({...newLead, quantity: e.target.value})}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="valueInr">Value (in INR)</Label>
+                    <Input
+                      id="valueInr"
+                      data-testid="input-lead-value"
+                      className="border-input bg-background"
+                      value={newLead.valueInr}
+                      onChange={(e) => setNewLead({...newLead, valueInr: e.target.value})}
+                    />
+                  </div>
+                </div>
+
                 <div className="grid gap-2">
-                  <Label>Sales Stage <span className="text-red-500">*</span></Label>
+                  <Label>Lead Stage <span className="text-red-500">*</span></Label>
                   <Select
                     value={newLead.stage}
                     onValueChange={(v) => setNewLead({...newLead, stage: v})}
@@ -209,6 +358,17 @@ export default function LeadManagement() {
                   </Select>
                   {errors.stage && <span className="text-xs text-red-500">{errors.stage}</span>}
                 </div>
+
+                <div className="grid gap-2">
+                  <Label htmlFor="remarks">Remarks</Label>
+                  <Textarea
+                    id="remarks"
+                    data-testid="input-lead-remarks"
+                    className="border-input bg-background"
+                    value={newLead.remarks}
+                    onChange={(e) => setNewLead({...newLead, remarks: e.target.value})}
+                  />
+                </div>
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setIsAddOpen(false)}>Cancel</Button>
@@ -218,49 +378,145 @@ export default function LeadManagement() {
           </Dialog>
 
           <Dialog open={isUpdateOpen} onOpenChange={setIsUpdateOpen}>
-            <DialogContent className="bg-card text-card-foreground border-border">
+            <DialogContent className="bg-card text-card-foreground border-border max-w-2xl max-h-[85vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>Update Lead Details</DialogTitle>
                 <DialogDescription>Modify existing lead information.</DialogDescription>
               </DialogHeader>
               {selectedLead && (
                 <div className="grid gap-4 py-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="update-customer">Customer Name</Label>
-                    {clients.length > 0 ? (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="grid gap-2">
+                      <Label htmlFor="update-customer">Client</Label>
+                      {clients.length > 0 ? (
+                        <Select
+                          value={selectedLead.customerName}
+                          onValueChange={(v) => setSelectedLead({...selectedLead, customerName: v})}
+                        >
+                          <SelectTrigger className="border-input bg-background">
+                            <SelectValue placeholder="Select a client" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {clients.map(c => (
+                              <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <Input
+                          id="update-customer"
+                          className="border-input bg-background"
+                          value={selectedLead.customerName}
+                          onChange={(e) => setSelectedLead({...selectedLead, customerName: e.target.value})}
+                        />
+                      )}
+                    </div>
+                    <div className="grid gap-2">
+                      <Label>Department</Label>
                       <Select
-                        value={selectedLead.customerName}
-                        onValueChange={(v) => setSelectedLead({...selectedLead, customerName: v})}
+                        value={selectedLead.department || ""}
+                        onValueChange={(v) => setSelectedLead({...selectedLead, department: v})}
                       >
                         <SelectTrigger className="border-input bg-background">
-                          <SelectValue placeholder="Select a client" />
+                          <SelectValue placeholder="Select department" />
                         </SelectTrigger>
                         <SelectContent>
-                          {clients.map(c => (
-                            <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
+                          {departments.map(d => (
+                            <SelectItem key={d} value={d}>{d}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
-                    ) : (
-                      <Input
-                        id="update-customer"
-                        className="border-input bg-background"
-                        value={selectedLead.customerName}
-                        onChange={(e) => setSelectedLead({...selectedLead, customerName: e.target.value})}
-                      />
-                    )}
+                    </div>
                   </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="grid gap-2">
+                      <Label>Project Name</Label>
+                      <Input
+                        className="border-input bg-background"
+                        value={selectedLead.projectName || ""}
+                        onChange={(e) => setSelectedLead({...selectedLead, projectName: e.target.value})}
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label>Name</Label>
+                      <Input
+                        className="border-input bg-background"
+                        value={selectedLead.contactName || ""}
+                        onChange={(e) => setSelectedLead({...selectedLead, contactName: e.target.value})}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="grid gap-2">
+                      <Label>Contact Number</Label>
+                      <Input
+                        className="border-input bg-background"
+                        value={selectedLead.contactNumber || ""}
+                        onChange={(e) => setSelectedLead({...selectedLead, contactNumber: e.target.value})}
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label>Email</Label>
+                      <Input
+                        type="email"
+                        className="border-input bg-background"
+                        value={selectedLead.email || ""}
+                        onChange={(e) => setSelectedLead({...selectedLead, email: e.target.value})}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="grid gap-2">
+                      <Label>Location</Label>
+                      <Input
+                        className="border-input bg-background"
+                        value={selectedLead.location || ""}
+                        onChange={(e) => setSelectedLead({...selectedLead, location: e.target.value})}
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label>Lead Owner</Label>
+                      <Input
+                        className="border-input bg-background"
+                        value={selectedLead.lead}
+                        onChange={(e) => setSelectedLead({...selectedLead, lead: e.target.value})}
+                      />
+                    </div>
+                  </div>
+
                   <div className="grid gap-2">
-                    <Label htmlFor="update-lead">Lead Owner</Label>
-                    <Input
-                      id="update-lead"
+                    <Label>Product Description</Label>
+                    <Textarea
                       className="border-input bg-background"
-                      value={selectedLead.lead}
-                      onChange={(e) => setSelectedLead({...selectedLead, lead: e.target.value})}
+                      value={selectedLead.productDescription || ""}
+                      onChange={(e) => setSelectedLead({...selectedLead, productDescription: e.target.value})}
                     />
                   </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="grid gap-2">
+                      <Label>Quantity</Label>
+                      <Input
+                        className="border-input bg-background"
+                        value={selectedLead.quantity || ""}
+                        onChange={(e) => setSelectedLead({...selectedLead, quantity: e.target.value})}
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label>Value (in INR)</Label>
+                      <Input
+                        className="border-input bg-background"
+                        value={selectedLead.valueInr || ""}
+                        onChange={(e) => setSelectedLead({...selectedLead, valueInr: e.target.value})}
+                      />
+                    </div>
+                  </div>
+
                   <div className="grid gap-2">
-                    <Label>Sales Stage</Label>
+                    <Label>Lead Stage</Label>
                     <Select
                       value={selectedLead.stage}
                       onValueChange={(v) => setSelectedLead({...selectedLead, stage: v})}
@@ -272,6 +528,15 @@ export default function LeadManagement() {
                         {stages.map(s => <SelectItem key={s} value={s}>{s.replace(/_/g, " ").toUpperCase()}</SelectItem>)}
                       </SelectContent>
                     </Select>
+                  </div>
+
+                  <div className="grid gap-2">
+                    <Label>Remarks</Label>
+                    <Textarea
+                      className="border-input bg-background"
+                      value={selectedLead.remarks || ""}
+                      onChange={(e) => setSelectedLead({...selectedLead, remarks: e.target.value})}
+                    />
                   </div>
                 </div>
               )}
@@ -288,9 +553,11 @@ export default function LeadManagement() {
             <TableHeader className="bg-muted/50">
               <TableRow>
                 <TableHead className="w-16 text-center font-bold text-foreground">S.No</TableHead>
-                <TableHead className="font-bold text-foreground">Customer Name</TableHead>
-                <TableHead className="font-bold text-foreground">Lead Owner</TableHead>
+                <TableHead className="font-bold text-foreground">Client</TableHead>
+                <TableHead className="font-bold text-foreground">Project Name</TableHead>
                 <TableHead className="font-bold text-foreground">Current Stage</TableHead>
+                <TableHead className="font-bold text-foreground">Value (in INR)</TableHead>
+                <TableHead className="font-bold text-foreground">Remarks</TableHead>
                 <TableHead className="text-right pr-6 font-bold text-foreground">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -307,17 +574,12 @@ export default function LeadManagement() {
                       {lead.customerName}
                     </button>
                   </TableCell>
-                  <TableCell className="text-muted-foreground">{lead.lead}</TableCell>
+                  <TableCell className="text-muted-foreground">{lead.projectName || "-"}</TableCell>
                   <TableCell>
-                    <Select defaultValue={lead.stage}>
-                      <SelectTrigger className="h-9 w-56 border-input bg-background text-sm font-medium">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {stages.map(s => <SelectItem key={s} value={s}>{s.replace(/_/g, " ").toUpperCase()}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
+                    <Badge variant="outline" className="capitalize">{lead.stage.replace(/_/g, " ")}</Badge>
                   </TableCell>
+                  <TableCell className="text-muted-foreground">{lead.valueInr || "-"}</TableCell>
+                  <TableCell className="text-muted-foreground max-w-[200px] truncate">{lead.remarks || "-"}</TableCell>
                   <TableCell className="text-right pr-6">
                     <Button
                       variant="outline"

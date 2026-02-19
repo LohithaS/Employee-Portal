@@ -10,7 +10,7 @@ import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useSearch } from "wouter";
 
 function getInitials(name?: string): string {
@@ -42,11 +42,11 @@ export default function Settings() {
   const [profile, setProfile] = useState({
     firstName: defaultFirst,
     lastName: defaultLast,
-    email: "",
-    phone: "",
-    department: "",
-    designation: "",
-    reportingTo: "",
+    email: (user as any)?.email || "",
+    phone: (user as any)?.phone || "",
+    department: (user as any)?.department || "",
+    designation: (user as any)?.designation || "",
+    reportingTo: (user as any)?.reportingTo || "",
   });
   const [profileErrors, setProfileErrors] = useState<Record<string, string>>({});
 
@@ -66,6 +66,20 @@ export default function Settings() {
     salarySlipAvailable: false,
   });
 
+  const updateProfileMutation = useMutation({
+    mutationFn: async (data: typeof profile) => {
+      const res = await apiRequest("PUT", "/api/auth/profile", data);
+      return await res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
+      toast({ title: "Profile updated successfully" });
+    },
+    onError: (error: Error) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
   const handleSaveProfile = () => {
     const errors: Record<string, string> = {};
     if (!profile.firstName.trim()) errors.firstName = "First name is required";
@@ -77,7 +91,7 @@ export default function Settings() {
     if (!profile.reportingTo.trim()) errors.reportingTo = "Reporting To is required";
     setProfileErrors(errors);
     if (Object.keys(errors).length > 0) return;
-    toast({ title: "Profile updated successfully" });
+    updateProfileMutation.mutate(profile);
   };
 
   const changePasswordMutation = useMutation({
@@ -225,7 +239,9 @@ export default function Settings() {
                             </div>
                         </div>
                         <div className="flex justify-end">
-                            <Button onClick={handleSaveProfile} data-testid="button-save-profile">Save Changes</Button>
+                            <Button onClick={handleSaveProfile} disabled={updateProfileMutation.isPending} data-testid="button-save-profile">
+                              {updateProfileMutation.isPending ? "Saving..." : "Save Changes"}
+                            </Button>
                         </div>
                     </CardContent>
                 </Card>

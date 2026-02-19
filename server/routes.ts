@@ -56,6 +56,31 @@ export async function registerRoutes(
     res.json(safeUser);
   });
 
+  app.put("/api/auth/profile", requireAuth, async (req, res) => {
+    try {
+      const { firstName, lastName, email, phone, department, designation, reportingTo } = req.body;
+      if (!firstName || !lastName || !email || !phone || !department || !designation || !reportingTo) {
+        return res.status(400).json({ message: "All fields are required" });
+      }
+      const name = `${firstName.trim()} ${lastName.trim()}`;
+      const updated = await storage.updateUserProfile(req.session.userId!, {
+        name,
+        email: email.trim(),
+        phone: phone.trim(),
+        department: department.trim(),
+        designation: designation.trim(),
+        reportingTo: reportingTo.trim(),
+      });
+      if (!updated) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      const { password: _, ...safeUser } = updated;
+      res.json(safeUser);
+    } catch (e: any) {
+      res.status(400).json({ message: e.message });
+    }
+  });
+
   app.post("/api/auth/change-password", requireAuth, async (req, res) => {
     try {
       const { currentPassword, newPassword } = req.body;

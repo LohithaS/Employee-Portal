@@ -10,6 +10,10 @@ export const users = pgTable("users", {
   name: text("name").notNull(),
   email: text("email"),
   role: text("role").notNull().default("Employee"),
+  phone: text("phone"),
+  department: text("department"),
+  designation: text("designation"),
+  reportingTo: text("reporting_to"),
 });
 
 export const insertUserSchema = createInsertSchema(users).pick({

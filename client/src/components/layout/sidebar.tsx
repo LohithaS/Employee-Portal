@@ -17,6 +17,7 @@ import {
   Settings 
 } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useAuth } from "@/hooks/use-auth";
 
 const sidebarItems = [
   { icon: Home, label: "Home", href: "/" },
@@ -35,8 +36,18 @@ const sidebarItems = [
   { icon: Settings, label: "Settings", href: "/settings" },
 ];
 
+function getInitials(name?: string): string {
+  if (!name) return "U";
+  const parts = name.trim().split(/\s+/);
+  if (parts.length >= 2) {
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  }
+  return parts[0][0].toUpperCase();
+}
+
 export function Sidebar() {
   const [location] = useLocation();
+  const { user } = useAuth();
 
   return (
     <div className="hidden border-r bg-sidebar text-sidebar-foreground md:flex md:w-64 md:flex-col">
@@ -69,11 +80,11 @@ export function Sidebar() {
       <div className="border-t border-sidebar-border p-4">
         <div className="flex items-center gap-3 rounded-md bg-sidebar-accent/50 p-3">
           <div className="h-8 w-8 rounded-full bg-sidebar-primary/20 flex items-center justify-center">
-            <span className="text-xs font-bold text-sidebar-primary">AM</span>
+            <span className="text-xs font-bold text-sidebar-primary">{getInitials(user?.name)}</span>
           </div>
           <div className="flex flex-col">
-            <span className="text-sm font-medium">Alex Morgan</span>
-            <span className="text-xs text-sidebar-foreground/60">Product Designer</span>
+            <span className="text-sm font-medium">{user?.name || "User"}</span>
+            <span className="text-xs text-sidebar-foreground/60">{user?.role || "Employee"}</span>
           </div>
         </div>
       </div>

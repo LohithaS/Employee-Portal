@@ -21,6 +21,9 @@ import {
   Users 
 } from "lucide-react";
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { useQuery } from "@tanstack/react-query";
+import { getQueryFn } from "@/lib/queryClient";
+import type { Meeting } from "@shared/schema";
 
 const data = [
   { name: "Jan", total: 1200 },
@@ -32,7 +35,32 @@ const data = [
   { name: "Jul", total: 4100 },
 ];
 
+function isTodayIST(dateStr: string): boolean {
+  const now = new Date();
+  const istNow = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
+  const todayStr = istNow.toISOString().slice(0, 10);
+
+  const meetingDate = new Date(dateStr);
+  const istMeeting = new Date(meetingDate.toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
+  const meetingStr = istMeeting.toISOString().slice(0, 10);
+
+  return todayStr === meetingStr;
+}
+
+function getInitials(title: string): string {
+  return title.split(/\s+/).map(w => w[0]).join("").toUpperCase().slice(0, 2);
+}
+
 export default function Dashboard() {
+  const { data: meetings = [] } = useQuery<Meeting[]>({
+    queryKey: ["/api/meetings"],
+    queryFn: getQueryFn({ on401: "returnNull" }),
+  });
+
+  const todayMeetings = meetings
+    .filter((m) => isTodayIST(m.date))
+    .sort((a, b) => (a.time || "").localeCompare(b.time || ""));
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
@@ -156,50 +184,31 @@ export default function Dashboard() {
           <CardHeader>
             <CardTitle>Upcoming Meetings</CardTitle>
             <CardDescription>
-              You have 3 meetings scheduled for today.
+              {todayMeetings.length > 0
+                ? `You have ${todayMeetings.length} meeting${todayMeetings.length > 1 ? "s" : ""} scheduled for today.`
+                : "No meetings scheduled for today."}
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-8">
-              <div className="flex items-center">
-                <Avatar className="h-9 w-9">
-                  <AvatarImage src="/avatars/01.png" alt="Avatar" />
-                  <AvatarFallback>OM</AvatarFallback>
-                </Avatar>
-                <div className="ml-4 space-y-1">
-                  <p className="text-sm font-medium leading-none">Product Review</p>
-                  <p className="text-sm text-muted-foreground">
-                    10:00 - 11:00 IST
-                  </p>
-                </div>
-                <div className="ml-auto font-medium text-xs text-muted-foreground">In 30m</div>
-              </div>
-              <div className="flex items-center">
-                <Avatar className="h-9 w-9">
-                  <AvatarImage src="/avatars/02.png" alt="Avatar" />
-                  <AvatarFallback>JL</AvatarFallback>
-                </Avatar>
-                <div className="ml-4 space-y-1">
-                  <p className="text-sm font-medium leading-none">Client Sync: Acme Corp</p>
-                  <p className="text-sm text-muted-foreground">
-                    13:00 - 14:00 IST
-                  </p>
-                </div>
-                <div className="ml-auto font-medium text-xs text-muted-foreground">Today</div>
-              </div>
-              <div className="flex items-center">
-                <Avatar className="h-9 w-9">
-                  <AvatarImage src="/avatars/03.png" alt="Avatar" />
-                  <AvatarFallback>IN</AvatarFallback>
-                </Avatar>
-                <div className="ml-4 space-y-1">
-                  <p className="text-sm font-medium leading-none">Team Weekly</p>
-                  <p className="text-sm text-muted-foreground">
-                    16:30 - 17:30 IST
-                  </p>
-                </div>
-                <div className="ml-auto font-medium text-xs text-muted-foreground">Today</div>
-              </div>
+            <div className="space-y-6">
+              {todayMeetings.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">No meetings today</p>
+              ) : (
+                todayMeetings.map((meeting) => (
+                  <div key={meeting.id} className="flex items-center" data-testid={`dashboard-meeting-${meeting.id}`}>
+                    <Avatar className="h-9 w-9">
+                      <AvatarFallback>{getInitials(meeting.title)}</AvatarFallback>
+                    </Avatar>
+                    <div className="ml-4 space-y-1">
+                      <p className="text-sm font-medium leading-none">{meeting.title}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {meeting.time} IST {meeting.location ? `• ${meeting.location}` : ""}
+                      </p>
+                    </div>
+                    <div className="ml-auto font-medium text-xs text-muted-foreground">Today</div>
+                  </div>
+                ))
+              )}
             </div>
           </CardContent>
         </Card>

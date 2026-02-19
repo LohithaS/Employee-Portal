@@ -68,9 +68,12 @@ export default function Reimbursements() {
     const newErrors: Record<string, string> = {};
     if (!newClaim.type) newErrors.type = "Expense type is required";
     if (!newClaim.amount) newErrors.amount = "Amount is required";
-    if (newClaim.date && newClaim.date > new Date().toISOString().split("T")[0]) {
+    if (!newClaim.date) {
+      newErrors.date = "Date is required";
+    } else if (newClaim.date > new Date().toISOString().split("T")[0]) {
       newErrors.date = "Date cannot be in the future";
     }
+    if (!newClaim.description) newErrors.description = "Description is required";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -134,7 +137,7 @@ export default function Reimbursements() {
                   {errors.amount && <span className="text-xs text-red-500">{errors.amount}</span>}
                 </div>
                 <div className="grid gap-2">
-                  <Label>Date</Label>
+                  <Label>Date <span className="text-red-500">*</span></Label>
                   <Input
                     type="date"
                     max={new Date().toISOString().split("T")[0]}
@@ -145,12 +148,14 @@ export default function Reimbursements() {
                   {errors.date && <span className="text-xs text-red-500">{errors.date}</span>}
                 </div>
                 <div className="grid gap-2">
-                  <Label>Description</Label>
+                  <Label>Description <span className="text-red-500">*</span></Label>
                   <Input
                     placeholder="Details..."
                     value={newClaim.description}
                     onChange={(e) => setNewClaim({...newClaim, description: e.target.value})}
+                    className={errors.description ? "border-red-500" : ""}
                   />
+                  {errors.description && <span className="text-xs text-red-500">{errors.description}</span>}
                 </div>
                 <div className="grid gap-2">
                   <Label>Upload Bills</Label>

@@ -26,11 +26,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 
 const leaveTypes = [
-  { id: "sl", name: "Sick Leave", balance: 5 },
-  { id: "cl", name: "Casual Leave", balance: 8 },
-  { id: "el", name: "Earned Leave", balance: 12 },
-  { id: "ml", name: "Maternity Leave", balance: 180 },
-  { id: "co", name: "Compensatory Off", balance: 2 },
+  { id: "sl", name: "Sick Leave", total: 5 },
+  { id: "cl", name: "Casual Leave", total: 8 },
+  { id: "el", name: "Earned Leave", total: 12 },
+  { id: "ml", name: "Maternity Leave", total: 180 },
+  { id: "co", name: "Compensatory Off", total: 2 },
 ];
 
 export default function LeaveManagement() {
@@ -38,11 +38,23 @@ export default function LeaveManagement() {
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const [reason, setReason] = useState("");
-  const [leaveBalances] = useState(leaveTypes);
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const { toast } = useToast();
 
   const requestsQuery = useQuery<any[]>({ queryKey: ["/api/leave-requests"] });
   const requests = requestsQuery.data ?? [];
+
+  const usedDaysByType: Record<string, number> = {};
+  requests.forEach((req: any) => {
+    const days = Number(req.days) || 0;
+    usedDaysByType[req.type] = (usedDaysByType[req.type] || 0) + days;
+  });
+
+  const leaveBalances = leaveTypes.map(lt => ({
+    ...lt,
+    used: usedDaysByType[lt.name] || 0,
+    balance: lt.total - (usedDaysByType[lt.name] || 0),
+  }));
 
   const addRequestMutation = useMutation({
     mutationFn: async (requestData: any) => {
@@ -54,12 +66,19 @@ export default function LeaveManagement() {
       setFromDate("");
       setToDate("");
       setReason("");
+      setErrors({});
       toast({ title: "Leave request submitted successfully" });
     },
   });
 
   const handleSubmitRequest = () => {
-    if (!selectedLeave || !fromDate || !toDate) return;
+    const newErrors: Record<string, string> = {};
+    if (!selectedLeave) newErrors.type = "Leave type is required";
+    if (!fromDate) newErrors.fromDate = "From date is required";
+    if (!toDate) newErrors.toDate = "To date is required";
+    if (!reason.trim()) newErrors.reason = "Reason is required";
+    setErrors(newErrors);
+    if (Object.keys(newErrors).length > 0) return;
 
     const today = new Date().toISOString().split("T")[0];
     if (fromDate <= today || toDate <= today) {
@@ -75,6 +94,11 @@ export default function LeaveManagement() {
     const from = new Date(fromDate);
     const to = new Date(toDate);
     const days = Math.ceil((to.getTime() - from.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+
+    if (leaveType && days > leaveType.balance) {
+      toast({ title: `Insufficient ${leaveType.name} balance. Available: ${leaveType.balance} days`, variant: "destructive" });
+      return;
+    }
 
     addRequestMutation.mutate({
       type: leaveType?.name || selectedLeave,
@@ -109,6 +133,7 @@ export default function LeaveManagement() {
                     </CardHeader>
                     <CardContent className="p-4 pt-0">
                         <div className="text-2xl font-bold">{leave.balance}</div>
+                        <p className="text-xs text-muted-foreground mt-1">Used: {leave.used} / {leave.total}</p>
                     </CardContent>
                 </Card>
             ))}
@@ -121,29 +146,33 @@ export default function LeaveManagement() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <div className="space-y-2">
-                        <Label>Leave Type</Label>
+                        <Label>Leave Type <span className="text-red-500">*</span></Label>
                         <Select value={selectedLeave} onValueChange={setSelectedLeave}>
-                            <SelectTrigger>
+                            <SelectTrigger className={errors.type ? "border-red-500" : ""}>
                                 <SelectValue placeholder="Select type" />
                             </SelectTrigger>
                             <SelectContent>
                                 {leaveBalances.map(l => (
-                                    <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>
+                                    <SelectItem key={l.id} value={l.id}>{l.name} ({l.balance} left)</SelectItem>
                                 ))}
                             </SelectContent>
                         </Select>
+                        {errors.type && <span className="text-xs text-red-500">{errors.type}</span>}
                     </div>
                     <div className="space-y-2">
-                        <Label>From Date</Label>
-                        <Input type="date" min={new Date(Date.now() + 86400000).toISOString().split("T")[0]} value={fromDate} onChange={(e) => setFromDate(e.target.value)} />
+                        <Label>From Date <span className="text-red-500">*</span></Label>
+                        <Input type="date" min={new Date(Date.now() + 86400000).toISOString().split("T")[0]} value={fromDate} onChange={(e) => setFromDate(e.target.value)} className={errors.fromDate ? "border-red-500" : ""} />
+                        {errors.fromDate && <span className="text-xs text-red-500">{errors.fromDate}</span>}
                     </div>
                     <div className="space-y-2">
-                        <Label>To Date</Label>
-                        <Input type="date" min={fromDate || new Date(Date.now() + 86400000).toISOString().split("T")[0]} value={toDate} onChange={(e) => setToDate(e.target.value)} />
+                        <Label>To Date <span className="text-red-500">*</span></Label>
+                        <Input type="date" min={fromDate || new Date(Date.now() + 86400000).toISOString().split("T")[0]} value={toDate} onChange={(e) => setToDate(e.target.value)} className={errors.toDate ? "border-red-500" : ""} />
+                        {errors.toDate && <span className="text-xs text-red-500">{errors.toDate}</span>}
                     </div>
                     <div className="space-y-2">
-                        <Label>Reason</Label>
-                        <Textarea placeholder="Reason for leave..." value={reason} onChange={(e) => setReason(e.target.value)} />
+                        <Label>Reason <span className="text-red-500">*</span></Label>
+                        <Textarea placeholder="Reason for leave..." value={reason} onChange={(e) => setReason(e.target.value)} className={errors.reason ? "border-red-500" : ""} />
+                        {errors.reason && <span className="text-xs text-red-500">{errors.reason}</span>}
                     </div>
                     <Button className="w-full" onClick={handleSubmitRequest} disabled={addRequestMutation.isPending}>Submit Request</Button>
                 </CardContent>

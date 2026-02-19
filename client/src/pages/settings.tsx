@@ -93,7 +93,6 @@ export default function Settings() {
     const errors: Record<string, string> = {};
     if (!profile.firstName.trim()) errors.firstName = "First name is required";
     if (!profile.lastName.trim()) errors.lastName = "Last name is required";
-    if (!profile.email.trim()) errors.email = "Email is required";
     if (!profile.phone.trim()) {
       errors.phone = "Phone is required";
     } else if (!/^\+?\d[\d\s\-]{7,14}$/.test(profile.phone.trim())) {
@@ -195,16 +194,16 @@ export default function Settings() {
                                 {profileErrors.lastName && <span className="text-xs text-red-500">{profileErrors.lastName}</span>}
                             </div>
                             <div className="space-y-2">
-                                <Label>Email <span className="text-red-500">*</span></Label>
+                                <Label>Email</Label>
                                 <Input
                                   type="email"
                                   value={profile.email}
-                                  onChange={(e) => setProfile({ ...profile, email: e.target.value })}
-                                  className={profileErrors.email ? "border-red-500" : ""}
+                                  disabled
+                                  className="bg-muted cursor-not-allowed"
                                   placeholder="you@example.com"
                                   data-testid="input-settings-email"
                                 />
-                                {profileErrors.email && <span className="text-xs text-red-500">{profileErrors.email}</span>}
+                                <span className="text-xs text-muted-foreground">Email cannot be changed. It is set during registration.</span>
                             </div>
                             <div className="space-y-2">
                                 <Label>Phone <span className="text-red-500">*</span></Label>

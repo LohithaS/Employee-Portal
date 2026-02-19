@@ -335,8 +335,9 @@ export async function registerRoutes(
     }
   });
 
-  app.get("/api/leave-requests", requireAuth, async (_req, res) => {
-    const data = await storage.getLeaveRequests();
+  app.get("/api/leave-requests", requireAuth, async (req, res) => {
+    const allData = await storage.getLeaveRequests();
+    const data = allData.filter(l => l.userId === req.session.userId);
     res.json(data);
   });
 

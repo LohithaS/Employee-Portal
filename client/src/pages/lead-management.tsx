@@ -119,7 +119,11 @@ export default function LeadManagement() {
     if (!newLead.lead) newErrors.lead = "Lead owner is required";
     if (!newLead.productDescription) newErrors.productDescription = "Product description is required";
     if (!newLead.quantity) newErrors.quantity = "Quantity is required";
-    if (!newLead.valueInr) newErrors.valueInr = "Value is required";
+    if (!newLead.valueInr) {
+      newErrors.valueInr = "Value is required";
+    } else if (!/^\d+(\.\d{1,2})?$/.test(newLead.valueInr)) {
+      newErrors.valueInr = "Enter a valid numeric value (e.g. 50000 or 50000.50)";
+    }
     if (!newLead.stage) newErrors.stage = "Lead stage is required";
     if (!newLead.remarks) newErrors.remarks = "Remarks is required";
     setErrors(newErrors);

@@ -14,7 +14,7 @@ import {
   Calendar, 
   CheckCircle2, 
   Clock, 
-  DollarSign, 
+  IndianRupee, 
   FileText, 
   MoreHorizontal, 
   TrendingUp, 
@@ -40,7 +40,7 @@ export default function Dashboard() {
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" className="hidden sm:flex">
             <Calendar className="mr-2 h-4 w-4" />
-            {new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+            {new Date().toLocaleDateString("en-IN", { month: "short", day: "numeric", year: "numeric" })}
           </Button>
           <Button size="sm">Download Report</Button>
         </div>
@@ -51,11 +51,11 @@ export default function Dashboard() {
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
             <div className="p-2 bg-emerald-100 rounded-lg">
-              <DollarSign className="h-4 w-4 text-emerald-600" />
+              <IndianRupee className="h-4 w-4 text-emerald-600" />
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">$45,231.89</div>
+            <div className="text-2xl font-bold">₹45,231.89</div>
             <p className="text-xs text-muted-foreground">
               +20.1% from last month
             </p>
@@ -134,7 +134,7 @@ export default function Dashboard() {
                   fontSize={12}
                   tickLine={false}
                   axisLine={false}
-                  tickFormatter={(value) => `$${value}`}
+                  tickFormatter={(value) => `₹${value}`}
                 />
                 <Tooltip 
                   contentStyle={{ backgroundColor: 'hsl(var(--card))', borderRadius: '8px', border: '1px solid hsl(var(--border))' }}
@@ -169,7 +169,7 @@ export default function Dashboard() {
                 <div className="ml-4 space-y-1">
                   <p className="text-sm font-medium leading-none">Product Review</p>
                   <p className="text-sm text-muted-foreground">
-                    10:00 AM - 11:00 AM
+                    10:00 - 11:00 IST
                   </p>
                 </div>
                 <div className="ml-auto font-medium text-xs text-muted-foreground">In 30m</div>
@@ -182,7 +182,7 @@ export default function Dashboard() {
                 <div className="ml-4 space-y-1">
                   <p className="text-sm font-medium leading-none">Client Sync: Acme Corp</p>
                   <p className="text-sm text-muted-foreground">
-                    01:00 PM - 02:00 PM
+                    13:00 - 14:00 IST
                   </p>
                 </div>
                 <div className="ml-auto font-medium text-xs text-muted-foreground">Today</div>
@@ -195,7 +195,7 @@ export default function Dashboard() {
                 <div className="ml-4 space-y-1">
                   <p className="text-sm font-medium leading-none">Team Weekly</p>
                   <p className="text-sm text-muted-foreground">
-                    04:30 PM - 05:30 PM
+                    16:30 - 17:30 IST
                   </p>
                 </div>
                 <div className="ml-auto font-medium text-xs text-muted-foreground">Today</div>
@@ -223,7 +223,7 @@ export default function Dashboard() {
                     Review Q1 Financials
                   </label>
                   <p className="text-xs text-muted-foreground">
-                    Due today at 5:00 PM
+                    Due today at 17:00 IST
                   </p>
                   <Badge variant="secondary" className="w-fit text-[10px] px-1 py-0 h-5">High Priority</Badge>
                 </div>
@@ -269,9 +269,9 @@ export default function Dashboard() {
           <CardContent>
             <div className="space-y-4">
               {[
-                { id: "EXP-001", type: "Travel", amount: "$350.00", date: "Feb 10" },
-                { id: "EXP-002", type: "Software", amount: "$49.99", date: "Feb 08" },
-                { id: "EXP-003", type: "Client Dinner", amount: "$125.50", date: "Feb 05" },
+                { id: "EXP-001", type: "Travel", amount: "₹3,500.00", date: "Feb 10" },
+                { id: "EXP-002", type: "Software", amount: "₹4,999.00", date: "Feb 08" },
+                { id: "EXP-003", type: "Client Dinner", amount: "₹1,255.00", date: "Feb 05" },
               ].map((item) => (
                 <div key={item.id} className="flex items-center justify-between border-b pb-2 last:border-0 last:pb-0">
                   <div className="space-y-1">

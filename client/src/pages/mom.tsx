@@ -8,7 +8,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Plus, Save, ArrowLeft } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Plus, Save, ArrowLeft, Eye } from "lucide-react";
 import { useLocation } from "wouter";
 import {
   Table,
@@ -22,6 +28,7 @@ import {
 export default function MinutesOfMeeting() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const [detailsOpen, setDetailsOpen] = useState(false);
   
   const getQueryParams = () => {
     const search = window.location.search;
@@ -145,71 +152,71 @@ export default function MinutesOfMeeting() {
           </Card>
         )}
 
+        {meeting && (
+          <div className="grid gap-4 md:grid-cols-3">
+            <Card className="bg-muted/30">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base font-medium">Meeting Details</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid gap-2 text-sm">
+                  <div className="flex gap-2">
+                    <span className="text-muted-foreground min-w-[70px]">Title:</span>
+                    <span className="font-medium">{meeting.title}</span>
+                  </div>
+                  <div className="flex gap-2">
+                    <span className="text-muted-foreground min-w-[70px]">Date:</span>
+                    <span className="font-medium">{new Date(meeting.date).toLocaleDateString()}</span>
+                  </div>
+                  <div className="flex gap-2">
+                    <span className="text-muted-foreground min-w-[70px]">Time:</span>
+                    <span className="font-medium">{meeting.time}</span>
+                  </div>
+                  <div className="flex gap-2">
+                    <span className="text-muted-foreground min-w-[70px]">Location:</span>
+                    <span className="font-medium">{meeting.location}</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-muted/30">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base font-medium">Agenda</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm whitespace-pre-wrap">{meeting.agenda || "No agenda specified"}</p>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-muted/30">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base font-medium">People Involved ({attendees.length})</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {attendees.length > 0 ? (
+                  <div className="space-y-2 text-sm">
+                    {attendees.map((attendee: any, index: number) => (
+                      <div key={index} className="flex items-center justify-between">
+                        <span className="font-medium">{attendee.name}</span>
+                        <span className="text-muted-foreground text-xs">{attendee.designation || "-"}</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">No attendees listed</p>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
         <Card>
           <CardHeader>
             <CardTitle>Record Discussion Points</CardTitle>
             <CardDescription>Add key discussion points, decisions made, and action items assigned.</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-6">
-            {meeting && (
-              <>
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="rounded-lg border bg-muted/30 p-4 space-y-3">
-                    <h3 className="text-sm font-semibold text-foreground">Meeting Details</h3>
-                    <div className="grid gap-2 text-sm">
-                      <div className="flex gap-2">
-                        <span className="text-muted-foreground min-w-[80px]">Meeting:</span>
-                        <span className="font-medium">{meeting.title}</span>
-                      </div>
-                      <div className="flex gap-2">
-                        <span className="text-muted-foreground min-w-[80px]">Date:</span>
-                        <span className="font-medium">{new Date(meeting.date).toLocaleDateString()}</span>
-                      </div>
-                      <div className="flex gap-2">
-                        <span className="text-muted-foreground min-w-[80px]">Time:</span>
-                        <span className="font-medium">{meeting.time}</span>
-                      </div>
-                      <div className="flex gap-2">
-                        <span className="text-muted-foreground min-w-[80px]">Location:</span>
-                        <span className="font-medium">{meeting.location}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="rounded-lg border bg-muted/30 p-4 space-y-3">
-                    <h3 className="text-sm font-semibold text-foreground">Agenda</h3>
-                    <p className="text-sm whitespace-pre-wrap">{meeting.agenda || "No agenda specified"}</p>
-                  </div>
-                </div>
-
-                {attendees.length > 0 && (
-                  <div className="rounded-lg border bg-muted/30 p-4 space-y-3">
-                    <h3 className="text-sm font-semibold text-foreground">People Involved</h3>
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>S.No</TableHead>
-                          <TableHead>Name</TableHead>
-                          <TableHead>Designation</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {attendees.map((attendee: any, index: number) => (
-                          <TableRow key={index} data-testid={`row-attendee-${index}`}>
-                            <TableCell>{index + 1}</TableCell>
-                            <TableCell className="font-medium">{attendee.name}</TableCell>
-                            <TableCell>{attendee.designation || "-"}</TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                )}
-
-                <div className="border-t pt-4" />
-              </>
-            )}
-
+          <CardContent className="space-y-4">
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
               <div className="space-y-2">
                 <Label>Discussion Point <span className="text-red-500">*</span></Label>
@@ -265,12 +272,13 @@ export default function MinutesOfMeeting() {
                 <TableHead>Decision</TableHead>
                 <TableHead>Action Item</TableHead>
                 <TableHead>Responsibility</TableHead>
+                {meeting && <TableHead>Meeting Details</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
               {points.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center text-muted-foreground h-24">
+                  <TableCell colSpan={meeting ? 6 : 5} className="text-center text-muted-foreground h-24">
                     No points recorded yet.
                   </TableCell>
                 </TableRow>
@@ -282,6 +290,19 @@ export default function MinutesOfMeeting() {
                     <TableCell>{point.decision || "-"}</TableCell>
                     <TableCell>{point.actionItem || "-"}</TableCell>
                     <TableCell>{point.responsibility || "-"}</TableCell>
+                    {meeting && (
+                      <TableCell>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-primary hover:text-primary/80"
+                          onClick={() => setDetailsOpen(true)}
+                          data-testid={`button-view-details-${index}`}
+                        >
+                          <Eye className="mr-1 h-3 w-3" /> View
+                        </Button>
+                      </TableCell>
+                    )}
                   </TableRow>
                 ))
               )}
@@ -289,6 +310,65 @@ export default function MinutesOfMeeting() {
           </Table>
         </div>
       </div>
+
+      {meeting && (
+        <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle>Meeting Details</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="grid gap-3 text-sm">
+                <div className="flex gap-2">
+                  <span className="text-muted-foreground min-w-[80px]">Title:</span>
+                  <span className="font-medium">{meeting.title}</span>
+                </div>
+                <div className="flex gap-2">
+                  <span className="text-muted-foreground min-w-[80px]">Date:</span>
+                  <span className="font-medium">{new Date(meeting.date).toLocaleDateString()}</span>
+                </div>
+                <div className="flex gap-2">
+                  <span className="text-muted-foreground min-w-[80px]">Time:</span>
+                  <span className="font-medium">{meeting.time}</span>
+                </div>
+                <div className="flex gap-2">
+                  <span className="text-muted-foreground min-w-[80px]">Location:</span>
+                  <span className="font-medium">{meeting.location}</span>
+                </div>
+              </div>
+
+              <div className="border-t pt-3">
+                <h4 className="text-sm font-semibold mb-2">Agenda</h4>
+                <p className="text-sm whitespace-pre-wrap text-muted-foreground">{meeting.agenda || "No agenda specified"}</p>
+              </div>
+
+              {attendees.length > 0 && (
+                <div className="border-t pt-3">
+                  <h4 className="text-sm font-semibold mb-2">People Involved</h4>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>S.No</TableHead>
+                        <TableHead>Name</TableHead>
+                        <TableHead>Designation</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {attendees.map((attendee: any, index: number) => (
+                        <TableRow key={index}>
+                          <TableCell>{index + 1}</TableCell>
+                          <TableCell className="font-medium">{attendee.name}</TableCell>
+                          <TableCell>{attendee.designation || "-"}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </DashboardLayout>
   );
 }

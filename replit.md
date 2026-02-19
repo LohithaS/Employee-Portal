@@ -7,6 +7,12 @@ A comprehensive employee portal built with React + Express + PostgreSQL. Feature
 Full-stack application with real database persistence and session-based authentication.
 
 ## Recent Changes
+- **Feb 19, 2026**: Email field added to registration; Change Password now functional
+  - Users schema: added email (text) field
+  - Registration form: email field with validation added between name and username
+  - Settings Change Password: calls POST /api/auth/change-password API
+  - Current password verified against stored hash; new password replaces old for future logins
+  - Added updateUserPassword storage method and changePassword auth function
 - **Feb 19, 2026**: MOM linked to specific meetings with agenda & attendees
   - Meetings schema: added agenda (text) and attendees (JSON) fields
   - Meeting Management form: captures agenda, dynamic attendees list (name + designation with add/remove)

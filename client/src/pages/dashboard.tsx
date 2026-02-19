@@ -23,7 +23,7 @@ import {
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { useQuery } from "@tanstack/react-query";
 import { getQueryFn } from "@/lib/queryClient";
-import type { Meeting, Client } from "@shared/schema";
+import type { Meeting } from "@shared/schema";
 
 const data = [
   { name: "Jan", total: 1200 },
@@ -54,11 +54,6 @@ function getInitials(title: string): string {
 export default function Dashboard() {
   const { data: meetings = [] } = useQuery<Meeting[]>({
     queryKey: ["/api/meetings"],
-    queryFn: getQueryFn({ on401: "returnNull" }),
-  });
-
-  const { data: clients = [] } = useQuery<Client[]>({
-    queryKey: ["/api/clients"],
     queryFn: getQueryFn({ on401: "returnNull" }),
   });
 
@@ -102,9 +97,9 @@ export default function Dashboard() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold" data-testid="text-active-clients-count">{clients.length}</div>
+            <div className="text-2xl font-bold">+2350</div>
             <p className="text-xs text-muted-foreground">
-              From CRM
+              +180.1% from last month
             </p>
           </CardContent>
         </Card>

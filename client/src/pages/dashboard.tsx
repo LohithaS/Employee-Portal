@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { 
   Card, 
   CardContent, 
@@ -9,6 +10,15 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { 
   ArrowUpRight, 
   Calendar, 
@@ -18,13 +28,18 @@ import {
   FileText, 
   MoreHorizontal, 
   TrendingUp, 
-  Users 
+  Users,
+  Check,
+  X,
+  ClipboardList
 } from "lucide-react";
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { useQuery } from "@tanstack/react-query";
-import { getQueryFn } from "@/lib/queryClient";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { getQueryFn, apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 import type { Meeting, Client, Reimbursement, Task } from "@shared/schema";
 import { useLocation } from "wouter";
+import { useAuth } from "@/hooks/use-auth";
 
 const data = [
   { name: "Jan", total: 1200 },
@@ -52,8 +67,51 @@ function getInitials(title: string): string {
   return title.split(/\s+/).map(w => w[0]).join("").toUpperCase().slice(0, 2);
 }
 
+type PendingApprovals = {
+  leaves: (any & { employeeName: string })[];
+  reimbursements: (any & { employeeName: string })[];
+};
+
 export default function Dashboard() {
   const [, setLocation] = useLocation();
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const isManager = user?.role === "Manager";
+  const [dashboardTab, setDashboardTab] = useState("overview");
+
+  const { data: approvals } = useQuery<PendingApprovals>({
+    queryKey: ["/api/pending-approvals"],
+    queryFn: getQueryFn({ on401: "returnNull" }),
+    enabled: isManager,
+  });
+
+  const approveRejectLeaveMutation = useMutation({
+    mutationFn: async ({ id, status }: { id: number; status: string }) => {
+      await apiRequest("PATCH", `/api/leave-requests/${id}`, { status });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/pending-approvals"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/leave-requests"] });
+      toast({ title: "Leave request updated" });
+    },
+    onError: (error: Error) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
+
+  const approveRejectReimbursementMutation = useMutation({
+    mutationFn: async ({ id, status }: { id: number; status: string }) => {
+      await apiRequest("PATCH", `/api/reimbursements/${id}`, { status });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/pending-approvals"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/reimbursements"] });
+      toast({ title: "Reimbursement claim updated" });
+    },
+    onError: (error: Error) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    },
+  });
 
   const { data: meetings = [] } = useQuery<Meeting[]>({
     queryKey: ["/api/meetings"],
@@ -84,6 +142,10 @@ export default function Dashboard() {
     .filter((m) => isTodayIST(m.date))
     .sort((a, b) => (a.time || "").localeCompare(b.time || ""));
 
+  const pendingLeaveCount = approvals?.leaves?.length || 0;
+  const pendingReimbursementCount = approvals?.reimbursements?.length || 0;
+  const totalPendingApprovals = pendingLeaveCount + pendingReimbursementCount;
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
@@ -97,6 +159,243 @@ export default function Dashboard() {
         </div>
       </div>
 
+      {isManager ? (
+        <Tabs value={dashboardTab} onValueChange={setDashboardTab}>
+          <TabsList>
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="approvals" className="flex items-center gap-2">
+              Approvals
+              {totalPendingApprovals > 0 && (
+                <Badge variant="destructive" className="h-5 min-w-5 px-1.5 text-[10px] rounded-full">
+                  {totalPendingApprovals}
+                </Badge>
+              )}
+            </TabsTrigger>
+          </TabsList>
+          <TabsContent value="overview" className="mt-4">
+            <DashboardOverview
+              meetings={meetings}
+              clients={clients}
+              reimbursements={reimbursements}
+              tasks={tasks}
+              todayMeetings={todayMeetings}
+              pendingTasks={pendingTasks}
+              completedTasks={completedTasks}
+              pendingReimbursements={pendingReimbursements}
+              setLocation={setLocation}
+            />
+          </TabsContent>
+          <TabsContent value="approvals" className="mt-4">
+            <ApprovalsTab
+              approvals={approvals}
+              onLeaveAction={(id, status) => approveRejectLeaveMutation.mutate({ id, status })}
+              onReimbursementAction={(id, status) => approveRejectReimbursementMutation.mutate({ id, status })}
+              isLeaveLoading={approveRejectLeaveMutation.isPending}
+              isReimbursementLoading={approveRejectReimbursementMutation.isPending}
+            />
+          </TabsContent>
+        </Tabs>
+      ) : (
+        <DashboardOverview
+          meetings={meetings}
+          clients={clients}
+          reimbursements={reimbursements}
+          tasks={tasks}
+          todayMeetings={todayMeetings}
+          pendingTasks={pendingTasks}
+          completedTasks={completedTasks}
+          pendingReimbursements={pendingReimbursements}
+          setLocation={setLocation}
+        />
+      )}
+    </div>
+  );
+}
+
+function ApprovalsTab({
+  approvals,
+  onLeaveAction,
+  onReimbursementAction,
+  isLeaveLoading,
+  isReimbursementLoading,
+}: {
+  approvals: PendingApprovals | undefined;
+  onLeaveAction: (id: number, status: string) => void;
+  onReimbursementAction: (id: number, status: string) => void;
+  isLeaveLoading: boolean;
+  isReimbursementLoading: boolean;
+}) {
+  const pendingLeaves = approvals?.leaves || [];
+  const pendingReimbursements = approvals?.reimbursements || [];
+
+  return (
+    <div className="flex flex-col gap-6">
+      <Card className="shadow-sm">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Calendar className="h-5 w-5 text-indigo-600" />
+            Leave Requests
+            {pendingLeaves.length > 0 && (
+              <Badge variant="secondary" className="text-xs">{pendingLeaves.length} pending</Badge>
+            )}
+          </CardTitle>
+          <CardDescription>Employee leave requests awaiting your approval.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {pendingLeaves.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <CheckCircle2 className="h-8 w-8 mx-auto mb-2 text-green-500" />
+              <p className="text-sm">No pending leave requests</p>
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Employee</TableHead>
+                  <TableHead>Leave Type</TableHead>
+                  <TableHead>From</TableHead>
+                  <TableHead>To</TableHead>
+                  <TableHead>Days</TableHead>
+                  <TableHead>Reason</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {pendingLeaves.map((leave: any) => (
+                  <TableRow key={leave.id} data-testid={`approval-leave-${leave.id}`}>
+                    <TableCell className="font-medium">{leave.employeeName}</TableCell>
+                    <TableCell>{leave.type}</TableCell>
+                    <TableCell>{leave.fromDate}</TableCell>
+                    <TableCell>{leave.toDate}</TableCell>
+                    <TableCell>{leave.days}</TableCell>
+                    <TableCell className="max-w-[200px] truncate">{leave.reason}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-7 text-xs bg-green-50 text-green-700 hover:bg-green-100 border-green-200"
+                          onClick={() => onLeaveAction(leave.id, "Approved")}
+                          disabled={isLeaveLoading}
+                          data-testid={`approve-leave-${leave.id}`}
+                        >
+                          <Check className="h-3 w-3 mr-1" /> Approve
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-7 text-xs bg-red-50 text-red-700 hover:bg-red-100 border-red-200"
+                          onClick={() => onLeaveAction(leave.id, "Rejected")}
+                          disabled={isLeaveLoading}
+                          data-testid={`reject-leave-${leave.id}`}
+                        >
+                          <X className="h-3 w-3 mr-1" /> Reject
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card className="shadow-sm">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <IndianRupee className="h-5 w-5 text-emerald-600" />
+            Reimbursement Claims
+            {pendingReimbursements.length > 0 && (
+              <Badge variant="secondary" className="text-xs">{pendingReimbursements.length} pending</Badge>
+            )}
+          </CardTitle>
+          <CardDescription>Employee reimbursement claims awaiting your approval.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {pendingReimbursements.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <CheckCircle2 className="h-8 w-8 mx-auto mb-2 text-green-500" />
+              <p className="text-sm">No pending reimbursement claims</p>
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Employee</TableHead>
+                  <TableHead>Expense Type</TableHead>
+                  <TableHead>Amount</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Description</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {pendingReimbursements.map((claim: any) => (
+                  <TableRow key={claim.id} data-testid={`approval-reimbursement-${claim.id}`}>
+                    <TableCell className="font-medium">{claim.employeeName}</TableCell>
+                    <TableCell>{claim.type}</TableCell>
+                    <TableCell>₹{Number(claim.amount || 0).toLocaleString("en-IN", { minimumFractionDigits: 2 })}</TableCell>
+                    <TableCell>{claim.date ? new Date(claim.date).toLocaleDateString("en-IN", { month: "short", day: "numeric", year: "numeric" }) : "—"}</TableCell>
+                    <TableCell className="max-w-[200px] truncate">{claim.description || "—"}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-7 text-xs bg-green-50 text-green-700 hover:bg-green-100 border-green-200"
+                          onClick={() => onReimbursementAction(claim.id, "Approved")}
+                          disabled={isReimbursementLoading}
+                          data-testid={`approve-reimbursement-${claim.id}`}
+                        >
+                          <Check className="h-3 w-3 mr-1" /> Approve
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-7 text-xs bg-red-50 text-red-700 hover:bg-red-100 border-red-200"
+                          onClick={() => onReimbursementAction(claim.id, "Rejected")}
+                          disabled={isReimbursementLoading}
+                          data-testid={`reject-reimbursement-${claim.id}`}
+                        >
+                          <X className="h-3 w-3 mr-1" /> Reject
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function DashboardOverview({
+  meetings,
+  clients,
+  reimbursements,
+  tasks,
+  todayMeetings,
+  pendingTasks,
+  completedTasks,
+  pendingReimbursements,
+  setLocation,
+}: {
+  meetings: Meeting[];
+  clients: Client[];
+  reimbursements: Reimbursement[];
+  tasks: Task[];
+  todayMeetings: Meeting[];
+  pendingTasks: Task[];
+  completedTasks: Task[];
+  pendingReimbursements: Reimbursement[];
+  setLocation: (path: string) => void;
+}) {
+  return (
+    <div className="flex flex-col gap-6">
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         <Card className="shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">

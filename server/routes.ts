@@ -297,6 +297,39 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/pending-approvals", requireAuth, async (req, res) => {
+    try {
+      const user = await storage.getUser(req.session.userId!);
+      if (!user || user.role !== "Manager") {
+        return res.status(403).json({ message: "Only managers can view approvals" });
+      }
+      const allLeaves = await storage.getLeaveRequests();
+      const allReimbursements = await storage.getReimbursements();
+      const pendingLeaves = allLeaves.filter(l => l.status === "Pending");
+      const pendingReimbursements = allReimbursements.filter(r => r.status === "Pending");
+
+      const userIds = new Set([
+        ...pendingLeaves.map(l => l.userId).filter(Boolean),
+        ...pendingReimbursements.map(r => r.userId).filter(Boolean),
+      ]);
+
+      const userMap: Record<number, string> = {};
+      for (const uid of userIds) {
+        if (uid) {
+          const u = await storage.getUser(uid);
+          if (u) userMap[uid] = u.name;
+        }
+      }
+
+      res.json({
+        leaves: pendingLeaves.map(l => ({ ...l, employeeName: l.userId ? userMap[l.userId] || "Unknown" : "Unknown" })),
+        reimbursements: pendingReimbursements.map(r => ({ ...r, employeeName: r.userId ? userMap[r.userId] || "Unknown" : "Unknown" })),
+      });
+    } catch (e: any) {
+      res.status(500).json({ message: e.message });
+    }
+  });
+
   app.get("/api/leave-requests", requireAuth, async (_req, res) => {
     const data = await storage.getLeaveRequests();
     res.json(data);

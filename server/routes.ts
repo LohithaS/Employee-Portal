@@ -116,14 +116,14 @@ export async function registerRoutes(
 
   app.post("/api/auth/reset-password", async (req, res) => {
     try {
-      const { email, newPassword } = req.body;
-      if (!email || !newPassword) {
-        return res.status(400).json({ message: "Email and new password are required" });
+      const { username, newPassword } = req.body;
+      if (!username || !newPassword) {
+        return res.status(400).json({ message: "Username and new password are required" });
       }
       if (newPassword.length < 6 || newPassword.length > 12) {
         return res.status(400).json({ message: "Password must be between 6 and 12 characters" });
       }
-      const result = await resetPassword(email, newPassword);
+      const result = await resetPassword(username, newPassword);
       res.json(result);
     } catch (e: any) {
       res.status(400).json({ message: e.message });

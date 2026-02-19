@@ -7,6 +7,11 @@ A comprehensive employee portal built with React + Express + PostgreSQL. Feature
 Full-stack application with real database persistence and session-based authentication.
 
 ## Recent Changes
+- **Feb 19, 2026**: Password Reset on login page using registered email
+  - "Reset it" link on login page opens a reset password form (email + new password + confirm)
+  - POST /api/auth/reset-password endpoint looks up user by email and updates password
+  - Added getUserByEmail storage method and resetPassword auth function
+  - Leave Management page: Apply for Leave / Leave History now in horizontal tabs
 - **Feb 19, 2026**: Email field added to registration; Change Password now functional
   - Users schema: added email (text) field
   - Registration form: email field with validation added between name and username

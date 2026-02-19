@@ -5,11 +5,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Building2, Lock, User, Shield, Users } from "lucide-react";
+import { Building2, Lock, User, Shield, Users, Mail, ArrowLeft } from "lucide-react";
 import loginBg from "@/assets/images/login-bg.jpg";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { apiRequest } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 import {
   Form,
   FormControl,
@@ -295,8 +297,138 @@ function RegisterForm({ isLoading, onSubmit }: { isLoading: boolean; onSubmit: (
   );
 }
 
+const resetPasswordSchema = z.object({
+  email: z.string().min(1, "Email is required").email("Please enter a valid email address"),
+  newPassword: z
+    .string()
+    .min(6, "Password must be at least 6 characters")
+    .max(12, "Password must be at most 12 characters"),
+  confirmPassword: z.string().min(1, "Please confirm your password"),
+}).refine((data) => data.newPassword === data.confirmPassword, {
+  message: "Passwords do not match",
+  path: ["confirmPassword"],
+});
+
+type ResetPasswordFormValues = z.infer<typeof resetPasswordSchema>;
+
+function ResetPasswordForm({ onBack }: { onBack: () => void }) {
+  const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const form = useForm<ResetPasswordFormValues>({
+    resolver: zodResolver(resetPasswordSchema),
+    defaultValues: { email: "", newPassword: "", confirmPassword: "" },
+  });
+
+  const handleSubmit = async (values: ResetPasswordFormValues) => {
+    setIsSubmitting(true);
+    try {
+      await apiRequest("POST", "/api/auth/reset-password", {
+        email: values.email,
+        newPassword: values.newPassword,
+      });
+      toast({ title: "Password has been reset successfully. You can now sign in with your new password." });
+      form.reset();
+      onBack();
+    } catch (e: any) {
+      toast({ title: "Error", description: e.message, variant: "destructive" });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      <button
+        type="button"
+        onClick={onBack}
+        className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+        data-testid="button-back-to-login"
+      >
+        <ArrowLeft className="h-4 w-4" /> Back to Sign In
+      </button>
+      <div className="flex items-center gap-2 mb-4 p-3 rounded-lg bg-indigo-50 dark:bg-indigo-950/30 text-indigo-700 dark:text-indigo-400 text-sm">
+        <Mail className="h-4 w-4 flex-shrink-0" />
+        <span>Enter your registered email to reset your password</span>
+      </div>
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+          <FormField
+            control={form.control}
+            name="email"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Registered Email <span className="text-red-500">*</span></FormLabel>
+                <FormControl>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      type="email"
+                      placeholder="john.doe@example.com"
+                      className="pl-9"
+                      data-testid="input-reset-email"
+                      {...field}
+                    />
+                  </div>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="newPassword"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>New Password <span className="text-red-500">*</span></FormLabel>
+                <FormControl>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      type="password"
+                      className="pl-9"
+                      data-testid="input-reset-new-password"
+                      {...field}
+                    />
+                  </div>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="confirmPassword"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Confirm Password <span className="text-red-500">*</span></FormLabel>
+                <FormControl>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      type="password"
+                      className="pl-9"
+                      data-testid="input-reset-confirm-password"
+                      {...field}
+                    />
+                  </div>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <Button type="submit" className="w-full" disabled={isSubmitting} data-testid="button-reset-password">
+            {isSubmitting ? "Resetting..." : "Reset Password"}
+          </Button>
+        </form>
+      </Form>
+    </div>
+  );
+}
+
 export default function AuthPage() {
   const { login, register, isLoading, loginError, clearLoginError } = useAuth();
+  const [showResetPassword, setShowResetPassword] = useState(false);
 
   const onEmployeeLogin = (values: LoginFormValues & { rememberMe: boolean }) => {
     login({ username: values.username, password: values.password, role: "Employee", rememberMe: values.rememberMe });
@@ -334,51 +466,73 @@ export default function AuthPage() {
       </div>
       <div className="flex items-center justify-center p-8 bg-background">
         <Card className="w-full max-w-md border-0 shadow-none sm:border sm:shadow-sm">
-          <Tabs defaultValue="employee-login">
-            <CardHeader className="space-y-1">
-              <CardTitle className="text-2xl font-bold tracking-tight">Welcome</CardTitle>
-              <CardDescription>
-                Sign in to access the employee portal
-              </CardDescription>
-              <TabsList className="grid w-full grid-cols-3 mt-2">
-                <TabsTrigger value="employee-login" data-testid="tab-employee-login" className="text-xs sm:text-sm">
-                  <Users className="h-3.5 w-3.5 mr-1 hidden sm:block" />
-                  Employee
-                </TabsTrigger>
-                <TabsTrigger value="manager-login" data-testid="tab-manager-login" className="text-xs sm:text-sm">
-                  <Shield className="h-3.5 w-3.5 mr-1 hidden sm:block" />
-                  Manager
-                </TabsTrigger>
-                <TabsTrigger value="register" data-testid="tab-register" className="text-xs sm:text-sm">
-                  Register
-                </TabsTrigger>
-              </TabsList>
-            </CardHeader>
-            <CardContent>
-              <TabsContent value="employee-login" className="mt-0">
-                <div className="flex items-center gap-2 mb-4 p-3 rounded-lg bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-400 text-sm">
-                  <Users className="h-4 w-4 flex-shrink-0" />
-                  <span>Employee Login Portal</span>
+          {showResetPassword ? (
+            <>
+              <CardHeader className="space-y-1">
+                <CardTitle className="text-2xl font-bold tracking-tight">Reset Password</CardTitle>
+                <CardDescription>
+                  Use your registered email to set a new password
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ResetPasswordForm onBack={() => setShowResetPassword(false)} />
+              </CardContent>
+            </>
+          ) : (
+            <Tabs defaultValue="employee-login">
+              <CardHeader className="space-y-1">
+                <CardTitle className="text-2xl font-bold tracking-tight">Welcome</CardTitle>
+                <CardDescription>
+                  Sign in to access the employee portal
+                </CardDescription>
+                <TabsList className="grid w-full grid-cols-3 mt-2">
+                  <TabsTrigger value="employee-login" data-testid="tab-employee-login" className="text-xs sm:text-sm">
+                    <Users className="h-3.5 w-3.5 mr-1 hidden sm:block" />
+                    Employee
+                  </TabsTrigger>
+                  <TabsTrigger value="manager-login" data-testid="tab-manager-login" className="text-xs sm:text-sm">
+                    <Shield className="h-3.5 w-3.5 mr-1 hidden sm:block" />
+                    Manager
+                  </TabsTrigger>
+                  <TabsTrigger value="register" data-testid="tab-register" className="text-xs sm:text-sm">
+                    Register
+                  </TabsTrigger>
+                </TabsList>
+              </CardHeader>
+              <CardContent>
+                <TabsContent value="employee-login" className="mt-0">
+                  <div className="flex items-center gap-2 mb-4 p-3 rounded-lg bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-400 text-sm">
+                    <Users className="h-4 w-4 flex-shrink-0" />
+                    <span>Employee Login Portal</span>
+                  </div>
+                  <LoginForm role="Employee" isLoading={isLoading} onSubmit={onEmployeeLogin} loginError={loginError} onClearError={clearLoginError} />
+                </TabsContent>
+                <TabsContent value="manager-login" className="mt-0">
+                  <div className="flex items-center gap-2 mb-4 p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 text-sm">
+                    <Shield className="h-4 w-4 flex-shrink-0" />
+                    <span>Manager Login Portal</span>
+                  </div>
+                  <LoginForm role="Manager" isLoading={isLoading} onSubmit={onManagerLogin} loginError={loginError} onClearError={clearLoginError} />
+                </TabsContent>
+                <TabsContent value="register" className="mt-0">
+                  <RegisterForm isLoading={isLoading} onSubmit={onRegister} />
+                </TabsContent>
+              </CardContent>
+              <CardFooter className="flex flex-col space-y-2 text-center text-sm text-muted-foreground">
+                <div>
+                  Forgot your password?{" "}
+                  <button
+                    type="button"
+                    onClick={() => setShowResetPassword(true)}
+                    className="underline hover:text-primary"
+                    data-testid="link-forgot-password"
+                  >
+                    Reset it
+                  </button>
                 </div>
-                <LoginForm role="Employee" isLoading={isLoading} onSubmit={onEmployeeLogin} loginError={loginError} onClearError={clearLoginError} />
-              </TabsContent>
-              <TabsContent value="manager-login" className="mt-0">
-                <div className="flex items-center gap-2 mb-4 p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 text-sm">
-                  <Shield className="h-4 w-4 flex-shrink-0" />
-                  <span>Manager Login Portal</span>
-                </div>
-                <LoginForm role="Manager" isLoading={isLoading} onSubmit={onManagerLogin} loginError={loginError} onClearError={clearLoginError} />
-              </TabsContent>
-              <TabsContent value="register" className="mt-0">
-                <RegisterForm isLoading={isLoading} onSubmit={onRegister} />
-              </TabsContent>
-            </CardContent>
-            <CardFooter className="flex flex-col space-y-2 text-center text-sm text-muted-foreground">
-              <div>
-                Forgot your password? <a href="#" className="underline hover:text-primary">Reset it</a>
-              </div>
-            </CardFooter>
-          </Tabs>
+              </CardFooter>
+            </Tabs>
+          )}
         </Card>
       </div>
     </div>

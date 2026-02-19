@@ -59,6 +59,16 @@ export async function changePassword(userId: number, currentPassword: string, ne
   return { message: "Password updated successfully" };
 }
 
+export async function resetPassword(email: string, newPassword: string) {
+  const user = await storage.getUserByEmail(email);
+  if (!user) {
+    throw new Error("No account found with this email address");
+  }
+  const hashedPassword = await bcrypt.hash(newPassword, 10);
+  await storage.updateUserPassword(user.id, hashedPassword);
+  return { message: "Password has been reset successfully" };
+}
+
 export async function loginUser(username: string, password: string, role: string) {
   const user = await storage.getUserByUsername(username);
   if (!user) {

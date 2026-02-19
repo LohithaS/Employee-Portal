@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { requireAuth, registerUser, loginUser, changePassword } from "./auth";
+import { requireAuth, registerUser, loginUser, changePassword, resetPassword } from "./auth";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -108,6 +108,22 @@ export async function registerRoutes(
         return res.status(400).json({ message: "Current and new passwords are required" });
       }
       const result = await changePassword(req.session.userId!, currentPassword, newPassword);
+      res.json(result);
+    } catch (e: any) {
+      res.status(400).json({ message: e.message });
+    }
+  });
+
+  app.post("/api/auth/reset-password", async (req, res) => {
+    try {
+      const { email, newPassword } = req.body;
+      if (!email || !newPassword) {
+        return res.status(400).json({ message: "Email and new password are required" });
+      }
+      if (newPassword.length < 6 || newPassword.length > 12) {
+        return res.status(400).json({ message: "Password must be between 6 and 12 characters" });
+      }
+      const result = await resetPassword(email, newPassword);
       res.json(result);
     } catch (e: any) {
       res.status(400).json({ message: e.message });

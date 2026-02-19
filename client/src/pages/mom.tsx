@@ -204,14 +204,11 @@ export default function MinutesOfMeeting() {
           </CardContent>
         </Card>
 
-        <div className="rounded-md border bg-card overflow-x-auto">
+        <div className="rounded-md border bg-card">
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>S.No</TableHead>
-                {meeting && <TableHead>Meeting Title</TableHead>}
-                {meeting && <TableHead>Date & Time</TableHead>}
-                {meeting && <TableHead>Attendees</TableHead>}
                 <TableHead>Discussion Point</TableHead>
                 <TableHead>Decision</TableHead>
                 <TableHead>Action Item</TableHead>
@@ -222,7 +219,7 @@ export default function MinutesOfMeeting() {
             <TableBody>
               {points.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={meeting ? 9 : 5} className="text-center text-muted-foreground h-24">
+                  <TableCell colSpan={meeting ? 6 : 5} className="text-center text-muted-foreground h-24">
                     No points recorded yet.
                   </TableCell>
                 </TableRow>
@@ -230,21 +227,6 @@ export default function MinutesOfMeeting() {
                 points.map((point: any, index: number) => (
                   <TableRow key={point.id || index} data-testid={`row-mom-point-${index}`}>
                     <TableCell>{index + 1}</TableCell>
-                    {meeting && (
-                      <TableCell className="font-medium">{meeting.title}</TableCell>
-                    )}
-                    {meeting && (
-                      <TableCell className="whitespace-nowrap text-sm">
-                        {new Date(meeting.date).toLocaleDateString()} at {meeting.time}
-                      </TableCell>
-                    )}
-                    {meeting && (
-                      <TableCell className="text-sm">
-                        {attendees.length > 0
-                          ? attendees.map((a: any) => a.name).join(", ")
-                          : "-"}
-                      </TableCell>
-                    )}
                     <TableCell>{point.discussion}</TableCell>
                     <TableCell>{point.decision || "-"}</TableCell>
                     <TableCell>{point.actionItem || "-"}</TableCell>

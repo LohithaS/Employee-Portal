@@ -20,26 +20,43 @@ import {
 } from "@/components/ui/table";
 
 export default function MinutesOfMeeting() {
-  const [location, setLocation] = useLocation();
+  const [, setLocation] = useLocation();
   const { toast } = useToast();
   
   const getQueryParams = () => {
     const search = window.location.search;
     const params = new URLSearchParams(search);
     return {
-      title: params.get("title") || "",
-      date: params.get("date") || "",
-      time: params.get("time") || "",
       meetingId: params.get("meetingId") || ""
     };
   };
 
-  const { title, date, time, meetingId } = getQueryParams();
-  const formattedDate = date ? new Date(date).toLocaleDateString() : "";
+  const { meetingId } = getQueryParams();
 
-  const pointsQuery = useQuery<any[]>({ queryKey: ["/api/mom-points"] });
-  const allPoints = pointsQuery.data ?? [];
-  const points = meetingId ? allPoints.filter((p: any) => String(p.meetingId) === meetingId) : allPoints;
+  const meetingQuery = useQuery<any>({
+    queryKey: ["/api/meetings", meetingId],
+    queryFn: async () => {
+      if (!meetingId) return null;
+      const res = await fetch(`/api/meetings/${meetingId}`, { credentials: "include" });
+      if (!res.ok) return null;
+      return res.json();
+    },
+    enabled: !!meetingId,
+  });
+
+  const meeting = meetingQuery.data;
+  const attendees = meeting?.attendees ? JSON.parse(meeting.attendees) : [];
+
+  const pointsQuery = useQuery<any[]>({
+    queryKey: ["/api/mom-points", meetingId],
+    queryFn: async () => {
+      const url = meetingId ? `/api/mom-points?meetingId=${meetingId}` : "/api/mom-points";
+      const res = await fetch(url, { credentials: "include" });
+      if (!res.ok) return [];
+      return res.json();
+    },
+  });
+  const points = pointsQuery.data ?? [];
 
   const [newPoint, setNewPoint] = useState({
     discussion: "",
@@ -48,34 +65,44 @@ export default function MinutesOfMeeting() {
     responsibility: ""
   });
 
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
   const addPointMutation = useMutation({
     mutationFn: async (pointData: any) => {
       await apiRequest("POST", "/api/mom-points", pointData);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/mom-points"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/mom-points", meetingId] });
       setNewPoint({ discussion: "", decision: "", actionItem: "", responsibility: "" });
+      setErrors({});
       toast({ title: "Point added successfully" });
     },
   });
 
+  const validatePoint = () => {
+    const newErrors: Record<string, string> = {};
+    if (!newPoint.discussion.trim()) newErrors.discussion = "Discussion point is required";
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleAddPoint = () => {
-    if (newPoint.discussion) {
-      addPointMutation.mutate({
-        meetingId: meetingId ? Number(meetingId) : null,
-        discussion: newPoint.discussion,
-        decision: newPoint.decision,
-        actionItem: newPoint.actionItem,
-        responsibility: newPoint.responsibility
-      });
-    }
+    if (!validatePoint()) return;
+    addPointMutation.mutate({
+      meetingId: meetingId ? Number(meetingId) : null,
+      discussion: newPoint.discussion,
+      decision: newPoint.decision,
+      actionItem: newPoint.actionItem,
+      responsibility: newPoint.responsibility
+    });
   };
 
   const handleSubmit = () => {
-    setLocation("/meeting-management");
+    toast({ title: "Minutes saved successfully" });
+    setLocation("/meetings");
   };
 
-  if (pointsQuery.isLoading) {
+  if (meetingQuery.isLoading || pointsQuery.isLoading) {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center h-64">
@@ -91,39 +118,96 @@ export default function MinutesOfMeeting() {
         <div className="flex items-center justify-between">
           <div className="space-y-1">
              <div className="flex items-center gap-2">
-               <Button variant="ghost" size="icon" onClick={() => setLocation("/meeting-management")}>
+               <Button variant="ghost" size="icon" onClick={() => setLocation("/meetings")} data-testid="button-back-meetings">
                  <ArrowLeft className="h-4 w-4" />
                </Button>
                <h1 className="text-3xl font-bold tracking-tight text-foreground">Minutes of Meeting</h1>
              </div>
-             {title && (
+             {meeting && (
                <p className="text-muted-foreground ml-10">
-                 Recording minutes for <span className="font-semibold text-primary">{title}</span> on {formattedDate} at {time}
+                 Recording minutes for <span className="font-semibold text-primary">{meeting.title}</span> on {new Date(meeting.date).toLocaleDateString()} at {meeting.time}
                </p>
              )}
           </div>
-          <Button onClick={handleSubmit}>
+          <Button onClick={handleSubmit} data-testid="button-save-mom">
             <Save className="mr-2 h-4 w-4" /> Save & Submit
           </Button>
         </div>
 
-        {title && (
+        {meeting && (
+          <div className="grid gap-4 md:grid-cols-2">
+            <Card className="bg-muted/30">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base font-medium">Meeting Details</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid gap-3 text-sm">
+                  <div className="flex gap-2">
+                    <span className="text-muted-foreground min-w-[80px]">Meeting:</span>
+                    <span className="font-medium">{meeting.title}</span>
+                  </div>
+                  <div className="flex gap-2">
+                    <span className="text-muted-foreground min-w-[80px]">Date:</span>
+                    <span className="font-medium">{new Date(meeting.date).toLocaleDateString()}</span>
+                  </div>
+                  <div className="flex gap-2">
+                    <span className="text-muted-foreground min-w-[80px]">Time:</span>
+                    <span className="font-medium">{meeting.time}</span>
+                  </div>
+                  <div className="flex gap-2">
+                    <span className="text-muted-foreground min-w-[80px]">Location:</span>
+                    <span className="font-medium">{meeting.location}</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-muted/30">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base font-medium">Agenda</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm whitespace-pre-wrap">{meeting.agenda || "No agenda specified"}</p>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {attendees.length > 0 && (
           <Card className="bg-muted/30">
             <CardHeader className="pb-3">
-              <CardTitle className="text-base font-medium">Meeting Details</CardTitle>
+              <CardTitle className="text-base font-medium">People Involved</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                <div>
-                  <span className="text-muted-foreground">Meeting:</span> <span className="font-medium">{title}</span>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">Date:</span> <span className="font-medium">{formattedDate}</span>
-                </div>
-                <div>
-                  <span className="text-muted-foreground">Time:</span> <span className="font-medium">{time}</span>
-                </div>
-              </div>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>S.No</TableHead>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Designation</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {attendees.map((attendee: any, index: number) => (
+                    <TableRow key={index} data-testid={`row-attendee-${index}`}>
+                      <TableCell>{index + 1}</TableCell>
+                      <TableCell className="font-medium">{attendee.name}</TableCell>
+                      <TableCell>{attendee.designation || "-"}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        )}
+
+        {!meeting && !meetingId && (
+          <Card className="bg-muted/30">
+            <CardContent className="py-8 text-center">
+              <p className="text-muted-foreground">No meeting selected. Please go to Meeting Management and click "Create MOM" for a specific meeting.</p>
+              <Button variant="outline" className="mt-4" onClick={() => setLocation("/meetings")} data-testid="button-go-to-meetings">
+                Go to Meeting Management
+              </Button>
             </CardContent>
           </Card>
         )}
@@ -136,16 +220,20 @@ export default function MinutesOfMeeting() {
           <CardContent className="space-y-4">
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
               <div className="space-y-2">
-                <Label>Discussion Point</Label>
+                <Label>Discussion Point <span className="text-red-500">*</span></Label>
                 <Textarea 
+                  data-testid="input-discussion"
                   value={newPoint.discussion}
                   onChange={(e) => setNewPoint({...newPoint, discussion: e.target.value})}
                   placeholder="Topic discussed..."
+                  className={errors.discussion ? "border-red-500" : ""}
                 />
+                {errors.discussion && <span className="text-xs text-red-500">{errors.discussion}</span>}
               </div>
               <div className="space-y-2">
                 <Label>Decision</Label>
                 <Textarea 
+                  data-testid="input-decision"
                   value={newPoint.decision}
                   onChange={(e) => setNewPoint({...newPoint, decision: e.target.value})}
                   placeholder="Decision made..."
@@ -154,6 +242,7 @@ export default function MinutesOfMeeting() {
               <div className="space-y-2">
                 <Label>Action Item</Label>
                 <Textarea 
+                  data-testid="input-action-item"
                   value={newPoint.actionItem}
                   onChange={(e) => setNewPoint({...newPoint, actionItem: e.target.value})}
                   placeholder="Action to be taken..."
@@ -162,11 +251,12 @@ export default function MinutesOfMeeting() {
               <div className="space-y-2">
                 <Label>Responsibility</Label>
                 <Input 
+                  data-testid="input-responsibility"
                   value={newPoint.responsibility}
                   onChange={(e) => setNewPoint({...newPoint, responsibility: e.target.value})}
                   placeholder="Assigned to..."
                 />
-                <Button className="w-full mt-2" onClick={handleAddPoint} disabled={addPointMutation.isPending}>
+                <Button className="w-full mt-2" onClick={handleAddPoint} disabled={addPointMutation.isPending} data-testid="button-add-point">
                   <Plus className="mr-2 h-4 w-4" /> Add Point
                 </Button>
               </div>
@@ -178,6 +268,7 @@ export default function MinutesOfMeeting() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead>S.No</TableHead>
                 <TableHead>Discussion Point</TableHead>
                 <TableHead>Decision</TableHead>
                 <TableHead>Action Item</TableHead>
@@ -187,17 +278,18 @@ export default function MinutesOfMeeting() {
             <TableBody>
               {points.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center text-muted-foreground h-24">
+                  <TableCell colSpan={5} className="text-center text-muted-foreground h-24">
                     No points recorded yet.
                   </TableCell>
                 </TableRow>
               ) : (
                 points.map((point: any, index: number) => (
-                  <TableRow key={point.id || index}>
+                  <TableRow key={point.id || index} data-testid={`row-mom-point-${index}`}>
+                    <TableCell>{index + 1}</TableCell>
                     <TableCell>{point.discussion}</TableCell>
-                    <TableCell>{point.decision}</TableCell>
-                    <TableCell>{point.actionItem}</TableCell>
-                    <TableCell>{point.responsibility}</TableCell>
+                    <TableCell>{point.decision || "-"}</TableCell>
+                    <TableCell>{point.actionItem || "-"}</TableCell>
+                    <TableCell>{point.responsibility || "-"}</TableCell>
                   </TableRow>
                 ))
               )}

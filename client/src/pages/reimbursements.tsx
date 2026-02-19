@@ -23,12 +23,15 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Upload } from "lucide-react";
+import { Plus, Upload, Check, X } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useAuth } from "@/hooks/use-auth";
 
 export default function Reimbursements() {
   const [isAddOpen, setIsAddOpen] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
+  const isManager = user?.role === "Manager";
 
   const [newClaim, setNewClaim] = useState({
     type: "",
@@ -63,6 +66,19 @@ export default function Reimbursements() {
       setBillFile(null);
       setErrors({});
       toast({ title: "Claim submitted successfully" });
+    },
+  });
+
+  const updateStatusMutation = useMutation({
+    mutationFn: async ({ id, status }: { id: number; status: string }) => {
+      await apiRequest("PATCH", `/api/reimbursements/${id}`, { status });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/reimbursements"] });
+      toast({ title: "Claim status updated" });
+    },
+    onError: (error: Error) => {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
     },
   });
 
@@ -224,6 +240,7 @@ export default function Reimbursements() {
                 <TableHead>Date</TableHead>
                 <TableHead>Amount</TableHead>
                 <TableHead>Status</TableHead>
+                {isManager && <TableHead>Actions</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -234,10 +251,38 @@ export default function Reimbursements() {
                   <TableCell>{claim.date}</TableCell>
                   <TableCell>₹{Number(claim.amount || 0).toFixed(2)}</TableCell>
                   <TableCell>
-                    <Badge variant={claim.status === "Approved" ? "secondary" : "outline"} className={claim.status === "Approved" ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"}>
+                    <Badge variant={claim.status === "Approved" ? "secondary" : "outline"} className={claim.status === "Approved" ? "bg-green-100 text-green-800" : claim.status === "Rejected" ? "bg-red-100 text-red-800" : "bg-yellow-100 text-yellow-800"}>
                         {claim.status}
                     </Badge>
                   </TableCell>
+                  {isManager && (
+                    <TableCell>
+                      {claim.status === "Pending" ? (
+                        <div className="flex items-center gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 text-xs bg-green-50 text-green-700 hover:bg-green-100 border-green-200"
+                            onClick={() => updateStatusMutation.mutate({ id: claim.id, status: "Approved" })}
+                            disabled={updateStatusMutation.isPending}
+                          >
+                            <Check className="h-3 w-3 mr-1" /> Approve
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 text-xs bg-red-50 text-red-700 hover:bg-red-100 border-red-200"
+                            onClick={() => updateStatusMutation.mutate({ id: claim.id, status: "Rejected" })}
+                            disabled={updateStatusMutation.isPending}
+                          >
+                            <X className="h-3 w-3 mr-1" /> Reject
+                          </Button>
+                        </div>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">—</span>
+                      )}
+                    </TableCell>
+                  )}
                 </TableRow>
               ))}
             </TableBody>

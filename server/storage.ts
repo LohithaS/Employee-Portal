@@ -55,6 +55,7 @@ export interface IStorage {
 
   getReimbursements(): Promise<Reimbursement[]>;
   createReimbursement(r: InsertReimbursement): Promise<Reimbursement>;
+  updateReimbursement(id: number, data: Partial<Reimbursement>): Promise<Reimbursement | undefined>;
 
   getLeaveRequests(): Promise<LeaveRequest[]>;
   createLeaveRequest(r: InsertLeaveRequest): Promise<LeaveRequest>;
@@ -208,6 +209,11 @@ export class DatabaseStorage implements IStorage {
   async createReimbursement(r: InsertReimbursement): Promise<Reimbursement> {
     const [created] = await db.insert(reimbursements).values(r).returning();
     return created;
+  }
+
+  async updateReimbursement(id: number, data: Partial<Reimbursement>): Promise<Reimbursement | undefined> {
+    const [updated] = await db.update(reimbursements).set(data).where(eq(reimbursements.id, id)).returning();
+    return updated;
   }
 
   async getLeaveRequests(): Promise<LeaveRequest[]> {

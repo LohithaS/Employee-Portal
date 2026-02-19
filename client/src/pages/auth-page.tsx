@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Building2, Lock, User, Shield, Users, ArrowLeft } from "lucide-react";
+import { Building2, Lock, User, Shield, Users, Mail, ArrowLeft } from "lucide-react";
 import loginBg from "@/assets/images/login-bg.jpg";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -298,11 +298,7 @@ function RegisterForm({ isLoading, onSubmit }: { isLoading: boolean; onSubmit: (
 }
 
 const resetPasswordSchema = z.object({
-  username: z
-    .string()
-    .min(3, "Username must be at least 3 characters")
-    .max(10, "Username must be at most 10 characters")
-    .regex(/^[a-zA-Z]+$/, "Username must only contain alphabets"),
+  email: z.string().min(1, "Email is required").email("Please enter a valid email address"),
   newPassword: z
     .string()
     .min(6, "Password must be at least 6 characters")
@@ -321,14 +317,14 @@ function ResetPasswordForm({ onBack }: { onBack: () => void }) {
 
   const form = useForm<ResetPasswordFormValues>({
     resolver: zodResolver(resetPasswordSchema),
-    defaultValues: { username: "", newPassword: "", confirmPassword: "" },
+    defaultValues: { email: "", newPassword: "", confirmPassword: "" },
   });
 
   const handleSubmit = async (values: ResetPasswordFormValues) => {
     setIsSubmitting(true);
     try {
       await apiRequest("POST", "/api/auth/reset-password", {
-        username: values.username,
+        email: values.email,
         newPassword: values.newPassword,
       });
       toast({ title: "Password has been reset successfully. You can now sign in with your new password." });
@@ -352,24 +348,25 @@ function ResetPasswordForm({ onBack }: { onBack: () => void }) {
         <ArrowLeft className="h-4 w-4" /> Back to Sign In
       </button>
       <div className="flex items-center gap-2 mb-4 p-3 rounded-lg bg-indigo-50 dark:bg-indigo-950/30 text-indigo-700 dark:text-indigo-400 text-sm">
-        <User className="h-4 w-4 flex-shrink-0" />
-        <span>Enter your username to reset your password</span>
+        <Mail className="h-4 w-4 flex-shrink-0" />
+        <span>Enter your registered email to reset your password</span>
       </div>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
           <FormField
             control={form.control}
-            name="username"
+            name="email"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Username <span className="text-red-500">*</span></FormLabel>
+                <FormLabel>Registered Email <span className="text-red-500">*</span></FormLabel>
                 <FormControl>
                   <div className="relative">
-                    <User className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Mail className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
-                      placeholder="jdoe"
+                      type="email"
+                      placeholder="john.doe@example.com"
                       className="pl-9"
-                      data-testid="input-reset-username"
+                      data-testid="input-reset-email"
                       {...field}
                     />
                   </div>

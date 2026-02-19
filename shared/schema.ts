@@ -167,6 +167,7 @@ export const reimbursements = pgTable("reimbursements", {
   date: text("date").notNull(),
   description: text("description"),
   status: text("status").notNull().default("Pending"),
+  rejectionReason: text("rejection_reason"),
   userId: integer("user_id"),
 });
 
@@ -182,6 +183,7 @@ export const leaveRequests = pgTable("leave_requests", {
   days: integer("days").notNull(),
   reason: text("reason"),
   status: text("status").notNull().default("Pending"),
+  rejectionReason: text("rejection_reason"),
   userId: integer("user_id"),
 });
 

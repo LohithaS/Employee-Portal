@@ -37,6 +37,7 @@ export default function Reimbursements() {
     description: ""
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [billFile, setBillFile] = useState<File | null>(null);
 
   const claimsQuery = useQuery<any[]>({ queryKey: ["/api/reimbursements"] });
   const claims = claimsQuery.data ?? [];
@@ -59,6 +60,7 @@ export default function Reimbursements() {
       queryClient.invalidateQueries({ queryKey: ["/api/reimbursements"] });
       setIsAddOpen(false);
       setNewClaim({ type: "", amount: "", date: "", description: "" });
+      setBillFile(null);
       setErrors({});
       toast({ title: "Claim submitted successfully" });
     },
@@ -74,6 +76,7 @@ export default function Reimbursements() {
       newErrors.date = "Date cannot be in the future";
     }
     if (!newClaim.description) newErrors.description = "Description is required";
+    if (!billFile) newErrors.billFile = "Please upload a bill";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -158,11 +161,24 @@ export default function Reimbursements() {
                   {errors.description && <span className="text-xs text-red-500">{errors.description}</span>}
                 </div>
                 <div className="grid gap-2">
-                  <Label>Upload Bills</Label>
-                  <div className="border-2 border-dashed rounded-md p-6 flex flex-col items-center justify-center text-muted-foreground hover:bg-muted/50 transition-colors">
+                  <Label>Upload Bills <span className="text-red-500">*</span></Label>
+                  <label className={`border-2 border-dashed rounded-md p-6 flex flex-col items-center justify-center text-muted-foreground hover:bg-muted/50 transition-colors cursor-pointer ${errors.billFile ? "border-red-500" : ""}`}>
                     <Upload className="h-8 w-8 mb-2" />
-                    <span className="text-sm">Click to upload or drag and drop</span>
-                  </div>
+                    <span className="text-sm">{billFile ? billFile.name : "Click to upload or drag and drop"}</span>
+                    <input
+                      type="file"
+                      className="hidden"
+                      accept=".pdf,.jpg,.jpeg,.png"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0] || null;
+                        setBillFile(file);
+                        if (file && errors.billFile) {
+                          setErrors((prev) => { const next = { ...prev }; delete next.billFile; return next; });
+                        }
+                      }}
+                    />
+                  </label>
+                  {errors.billFile && <span className="text-xs text-red-500">{errors.billFile}</span>}
                 </div>
               </div>
               <DialogFooter>

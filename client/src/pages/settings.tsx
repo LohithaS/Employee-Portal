@@ -46,6 +46,7 @@ export default function Settings() {
     phone: "",
     department: "",
     designation: "",
+    reportingTo: "",
   });
   const [profileErrors, setProfileErrors] = useState<Record<string, string>>({});
 
@@ -73,6 +74,7 @@ export default function Settings() {
     if (!profile.phone.trim()) errors.phone = "Phone is required";
     if (!profile.department.trim()) errors.department = "Department is required";
     if (!profile.designation.trim()) errors.designation = "Designation is required";
+    if (!profile.reportingTo.trim()) errors.reportingTo = "Reporting To is required";
     setProfileErrors(errors);
     if (Object.keys(errors).length > 0) return;
     toast({ title: "Profile updated successfully" });
@@ -209,6 +211,17 @@ export default function Settings() {
                                   data-testid="input-settings-designation"
                                 />
                                 {profileErrors.designation && <span className="text-xs text-red-500">{profileErrors.designation}</span>}
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Reporting To <span className="text-red-500">*</span></Label>
+                                <Input
+                                  value={profile.reportingTo}
+                                  onChange={(e) => setProfile({ ...profile, reportingTo: e.target.value })}
+                                  className={profileErrors.reportingTo ? "border-red-500" : ""}
+                                  placeholder="e.g. John Doe"
+                                  data-testid="input-settings-reporting-to"
+                                />
+                                {profileErrors.reportingTo && <span className="text-xs text-red-500">{profileErrors.reportingTo}</span>}
                             </div>
                         </div>
                         <div className="flex justify-end">

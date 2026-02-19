@@ -21,6 +21,7 @@ export interface IStorage {
   createUser(user: InsertUser): Promise<User>;
   updateUserPassword(id: number, hashedPassword: string): Promise<void>;
   updateUserProfile(id: number, data: { name: string; email: string; phone: string; department: string; designation: string; reportingTo: string }): Promise<User | undefined>;
+  getUsersReportingTo(managerName: string): Promise<User[]>;
 
   getTasks(): Promise<Task[]>;
   createTask(task: InsertTask): Promise<Task>;
@@ -89,6 +90,10 @@ export class DatabaseStorage implements IStorage {
       reportingTo: data.reportingTo,
     }).where(eq(users.id, id)).returning();
     return updated;
+  }
+
+  async getUsersReportingTo(managerName: string): Promise<User[]> {
+    return db.select().from(users).where(eq(users.reportingTo, managerName));
   }
 
   async getTasks(): Promise<Task[]> {

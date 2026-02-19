@@ -9,8 +9,17 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
-import { useMutation } from "@tanstack/react-query";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { apiRequest, queryClient, getQueryFn } from "@/lib/queryClient";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 import { useSearch } from "wouter";
 
 function getInitials(name?: string): string {
@@ -249,6 +258,17 @@ export default function Settings() {
                         </div>
                     </CardContent>
                 </Card>
+            {user?.role === "Manager" && (
+                <Card className="mt-6">
+                    <CardHeader>
+                        <CardTitle>Reporting Team</CardTitle>
+                        <CardDescription>Employees who report to you.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <ReportingTeamTable />
+                    </CardContent>
+                </Card>
+            )}
             </TabsContent>
 
             <TabsContent value="security">
@@ -382,5 +402,54 @@ export default function Settings() {
         </Tabs>
       </div>
     </DashboardLayout>
+  );
+}
+
+function ReportingTeamTable() {
+  const { data: team = [] } = useQuery<any[]>({
+    queryKey: ["/api/auth/reporting-team"],
+    queryFn: getQueryFn({ on401: "returnNull" }),
+  });
+
+  if (team.length === 0) {
+    return <p className="text-sm text-muted-foreground text-center py-4">No employees reporting to you yet.</p>;
+  }
+
+  return (
+    <div className="rounded-md border">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Name</TableHead>
+            <TableHead>Email</TableHead>
+            <TableHead>Department</TableHead>
+            <TableHead>Designation</TableHead>
+            <TableHead>Role</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {team.map((member: any) => (
+            <TableRow key={member.id}>
+              <TableCell className="font-medium">
+                <div className="flex items-center gap-2">
+                  <Avatar className="h-8 w-8">
+                    <AvatarFallback className="text-xs bg-primary/10 text-primary font-semibold">
+                      {getInitials(member.name)}
+                    </AvatarFallback>
+                  </Avatar>
+                  {member.name}
+                </div>
+              </TableCell>
+              <TableCell>{member.email || "—"}</TableCell>
+              <TableCell>{member.department || "—"}</TableCell>
+              <TableCell>{member.designation || "—"}</TableCell>
+              <TableCell>
+                <Badge variant="outline">{member.role}</Badge>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
   );
 }

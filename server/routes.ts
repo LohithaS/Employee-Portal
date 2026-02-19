@@ -56,6 +56,18 @@ export async function registerRoutes(
     res.json(safeUser);
   });
 
+  app.get("/api/auth/reporting-team", requireAuth, async (req, res) => {
+    try {
+      const user = await storage.getUser(req.session.userId!);
+      if (!user) return res.status(404).json({ message: "User not found" });
+      const team = await storage.getUsersReportingTo(user.name);
+      const safeTeam = team.map(({ password: _, ...u }) => u);
+      res.json(safeTeam);
+    } catch (e: any) {
+      res.status(400).json({ message: e.message });
+    }
+  });
+
   app.put("/api/auth/profile", requireAuth, async (req, res) => {
     try {
       const { firstName, lastName, email, phone, department, designation, reportingTo } = req.body;

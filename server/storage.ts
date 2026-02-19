@@ -40,6 +40,7 @@ export interface IStorage {
   updateTicket(id: number, data: Partial<Ticket>): Promise<Ticket | undefined>;
 
   getMeetings(): Promise<Meeting[]>;
+  getMeeting(id: number): Promise<Meeting | undefined>;
   createMeeting(meeting: InsertMeeting): Promise<Meeting>;
 
   getMomPoints(meetingId?: number): Promise<MomPoint[]>;
@@ -138,6 +139,11 @@ export class DatabaseStorage implements IStorage {
 
   async getMeetings(): Promise<Meeting[]> {
     return db.select().from(meetings);
+  }
+
+  async getMeeting(id: number): Promise<Meeting | undefined> {
+    const [meeting] = await db.select().from(meetings).where(eq(meetings.id, id));
+    return meeting;
   }
 
   async createMeeting(meeting: InsertMeeting): Promise<Meeting> {

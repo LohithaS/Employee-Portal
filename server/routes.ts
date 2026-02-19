@@ -159,6 +159,13 @@ export async function registerRoutes(
     res.json(data);
   });
 
+  app.get("/api/meetings/:id", requireAuth, async (req, res) => {
+    const id = parseInt(req.params.id);
+    const meeting = await storage.getMeeting(id);
+    if (!meeting) return res.status(404).json({ message: "Meeting not found" });
+    res.json(meeting);
+  });
+
   app.post("/api/meetings", requireAuth, async (req, res) => {
     try {
       const meeting = await storage.createMeeting({ ...req.body, userId: req.session.userId });

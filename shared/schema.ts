@@ -116,6 +116,8 @@ export const meetings = pgTable("meetings", {
   date: text("date").notNull(),
   time: text("time").notNull(),
   location: text("location").notNull(),
+  agenda: text("agenda"),
+  attendees: text("attendees"),
   userId: integer("user_id"),
 });
 

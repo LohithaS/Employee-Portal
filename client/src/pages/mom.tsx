@@ -166,6 +166,8 @@ export default function MinutesOfMeeting() {
     return null;
   };
 
+  const meetingHasExistingPoints = isSpecificMeeting && points.some((p: any) => p.meetingId === Number(meetingId));
+
   const isLoading = meetingQuery.isLoading || pointsQuery.isLoading || allMeetingsQuery.isLoading;
 
   if (isLoading) {
@@ -204,7 +206,7 @@ export default function MinutesOfMeeting() {
           )}
         </div>
 
-        {isSpecificMeeting && (
+        {isSpecificMeeting && !meetingHasExistingPoints && (
           <Card>
             <CardHeader>
               <CardTitle>Record Discussion Points</CardTitle>

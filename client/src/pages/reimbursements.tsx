@@ -126,7 +126,7 @@ export default function Reimbursements() {
                 <div className="grid gap-2">
                   <Label>Amount <span className="text-red-500">*</span></Label>
                   <Input
-                    placeholder="$0.00"
+                    placeholder="₹0.00"
                     value={newClaim.amount}
                     onChange={(e) => setNewClaim({...newClaim, amount: e.target.value})}
                     className={errors.amount ? "border-red-500" : ""}
@@ -173,7 +173,7 @@ export default function Reimbursements() {
                     <CardTitle className="text-sm font-medium">Total Pending</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">${totalPending.toFixed(2)}</div>
+                    <div className="text-2xl font-bold">₹{totalPending.toFixed(2)}</div>
                 </CardContent>
             </Card>
             <Card>
@@ -181,7 +181,7 @@ export default function Reimbursements() {
                     <CardTitle className="text-sm font-medium">Approved (This Month)</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold text-green-600">${totalApproved.toFixed(2)}</div>
+                    <div className="text-2xl font-bold text-green-600">₹{totalApproved.toFixed(2)}</div>
                 </CardContent>
             </Card>
             <Card>
@@ -189,7 +189,7 @@ export default function Reimbursements() {
                     <CardTitle className="text-sm font-medium">Rejected</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold text-red-600">${totalRejected.toFixed(2)}</div>
+                    <div className="text-2xl font-bold text-red-600">₹{totalRejected.toFixed(2)}</div>
                 </CardContent>
             </Card>
         </div>
@@ -211,7 +211,7 @@ export default function Reimbursements() {
                   <TableCell className="font-medium">{claim.type}</TableCell>
                   <TableCell>{claim.description}</TableCell>
                   <TableCell>{claim.date}</TableCell>
-                  <TableCell>${Number(claim.amount || 0).toFixed(2)}</TableCell>
+                  <TableCell>₹{Number(claim.amount || 0).toFixed(2)}</TableCell>
                   <TableCell>
                     <Badge variant={claim.status === "Approved" ? "secondary" : "outline"} className={claim.status === "Approved" ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"}>
                         {claim.status}

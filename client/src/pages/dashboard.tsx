@@ -23,7 +23,7 @@ import {
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { useQuery } from "@tanstack/react-query";
 import { getQueryFn } from "@/lib/queryClient";
-import type { Meeting, Client, Reimbursement } from "@shared/schema";
+import type { Meeting, Client, Reimbursement, Task } from "@shared/schema";
 import { useLocation } from "wouter";
 
 const data = [
@@ -69,6 +69,14 @@ export default function Dashboard() {
     queryKey: ["/api/reimbursements"],
     queryFn: getQueryFn({ on401: "returnNull" }),
   });
+
+  const { data: tasks = [] } = useQuery<Task[]>({
+    queryKey: ["/api/tasks"],
+    queryFn: getQueryFn({ on401: "returnNull" }),
+  });
+
+  const pendingTasks = tasks.filter((t) => t.status !== "Completed");
+  const completedTasks = tasks.filter((t) => t.status === "Completed");
 
   const pendingReimbursements = reimbursements.filter((r) => r.status === "Pending");
 
@@ -126,9 +134,9 @@ export default function Dashboard() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">12</div>
+            <div className="text-2xl font-bold">{pendingTasks.length}</div>
             <p className="text-xs text-muted-foreground">
-              -4 completed today
+              {completedTasks.length} completed
             </p>
           </CardContent>
         </Card>
@@ -237,50 +245,37 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              <div className="flex items-start space-x-3">
-                <Checkbox id="task1" className="mt-1" />
-                <div className="grid gap-1.5 leading-none">
-                  <label
-                    htmlFor="task1"
-                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                  >
-                    Review Q1 Financials
-                  </label>
-                  <p className="text-xs text-muted-foreground">
-                    Due today at 17:00 IST
-                  </p>
-                  <Badge variant="secondary" className="w-fit text-[10px] px-1 py-0 h-5">High Priority</Badge>
-                </div>
-              </div>
-              <div className="flex items-start space-x-3">
-                <Checkbox id="task2" className="mt-1" />
-                <div className="grid gap-1.5 leading-none">
-                  <label
-                    htmlFor="task2"
-                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                  >
-                    Update Client Pitch Deck
-                  </label>
-                  <p className="text-xs text-muted-foreground">
-                    Due tomorrow
-                  </p>
-                  <Badge variant="outline" className="w-fit text-[10px] px-1 py-0 h-5">Marketing</Badge>
-                </div>
-              </div>
-              <div className="flex items-start space-x-3">
-                <Checkbox id="task3" className="mt-1" checked />
-                <div className="grid gap-1.5 leading-none">
-                  <label
-                    htmlFor="task3"
-                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 line-through text-muted-foreground"
-                  >
-                    Email Team Updates
-                  </label>
-                  <p className="text-xs text-muted-foreground">
-                    Completed
-                  </p>
-                </div>
-              </div>
+              {tasks.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-4">No tasks yet</p>
+              ) : (
+                tasks.slice(0, 5).map((task) => (
+                  <div key={task.id} className="flex items-start space-x-3">
+                    <Checkbox
+                      id={`task-${task.id}`}
+                      className="mt-1"
+                      checked={task.status === "Completed"}
+                      disabled
+                    />
+                    <div className="grid gap-1.5 leading-none">
+                      <label
+                        htmlFor={`task-${task.id}`}
+                        className={`text-sm font-medium leading-none ${task.status === "Completed" ? "line-through text-muted-foreground" : ""}`}
+                      >
+                        {task.description}
+                      </label>
+                      <p className="text-xs text-muted-foreground">
+                        {task.status === "Completed" ? "Completed" : `Due ${task.deadline ? new Date(task.deadline).toLocaleDateString("en-IN", { month: "short", day: "numeric" }) : "N/A"}`}
+                      </p>
+                      <Badge
+                        variant={task.priority === "High" ? "secondary" : "outline"}
+                        className={`w-fit text-[10px] px-1 py-0 h-5 ${task.priority === "High" ? "bg-red-100 text-red-800" : task.priority === "Medium" ? "bg-amber-100 text-amber-800" : ""}`}
+                      >
+                        {task.priority} Priority
+                      </Badge>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </CardContent>
         </Card>

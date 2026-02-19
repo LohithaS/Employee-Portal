@@ -85,7 +85,11 @@ export default function Settings() {
     if (!profile.firstName.trim()) errors.firstName = "First name is required";
     if (!profile.lastName.trim()) errors.lastName = "Last name is required";
     if (!profile.email.trim()) errors.email = "Email is required";
-    if (!profile.phone.trim()) errors.phone = "Phone is required";
+    if (!profile.phone.trim()) {
+      errors.phone = "Phone is required";
+    } else if (!/^\+?\d[\d\s\-]{7,14}$/.test(profile.phone.trim())) {
+      errors.phone = "Enter a valid phone number (e.g. +91 98765 43210)";
+    }
     if (!profile.department.trim()) errors.department = "Department is required";
     if (!profile.designation.trim()) errors.designation = "Designation is required";
     if (!profile.reportingTo.trim()) errors.reportingTo = "Reporting To is required";

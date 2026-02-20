@@ -179,84 +179,80 @@ export default function Dashboard() {
                 <span className="font-medium">{calendarDate.toLocaleDateString("en-IN", { weekday: "short", month: "short", day: "numeric", year: "numeric" })}</span>
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-[520px] p-0 shadow-xl border-border/40 rounded-xl overflow-hidden" align="end" sideOffset={8}>
-              <div className="bg-gradient-to-br from-indigo-600 via-indigo-700 to-slate-800 px-5 py-4 text-white">
-                <div className="flex items-center justify-between">
+            <PopoverContent className="w-auto p-0 shadow-xl border-border/40 rounded-xl overflow-hidden" align="end" sideOffset={8}>
+              <div className="bg-gradient-to-br from-indigo-600 via-indigo-700 to-slate-800 px-4 py-3 text-white">
+                <div className="flex items-center justify-between gap-6">
                   <div>
                     <p className="text-[10px] font-medium text-indigo-200 uppercase tracking-wider">{calendarDate.toLocaleDateString("en-IN", { weekday: "long" })}</p>
-                    <p className="text-xl font-bold mt-0.5">{calendarDate.toLocaleDateString("en-IN", { month: "long", day: "numeric", year: "numeric" })}</p>
+                    <p className="text-lg font-bold mt-0.5">{calendarDate.toLocaleDateString("en-IN", { month: "long", day: "numeric", year: "numeric" })}</p>
                   </div>
-                  <div className="text-right">
-                    <div className="flex items-center gap-2 text-indigo-200 text-xs">
-                      <Clock className="h-3.5 w-3.5" />
-                      <span>{new Date().toLocaleTimeString("en-IN", { timeZone: "Asia/Kolkata", hour: "2-digit", minute: "2-digit", hour12: true })}</span>
-                      <span className="text-[10px] bg-white/15 px-1.5 py-0.5 rounded-full">IST</span>
-                    </div>
-                    {(() => { const dayMeetings = meetings?.filter((m: Meeting) => { const md = new Date(m.date); const cd = calendarDate; return md.getFullYear() === cd.getFullYear() && md.getMonth() === cd.getMonth() && md.getDate() === cd.getDate(); }) || []; return dayMeetings.length > 0 ? <Badge className="bg-white/20 text-white border-0 text-[10px] px-2 mt-1.5">{dayMeetings.length} meeting{dayMeetings.length > 1 ? "s" : ""}</Badge> : null; })()}
+                  <div className="flex items-center gap-2 text-indigo-200 text-xs">
+                    <Clock className="h-3.5 w-3.5" />
+                    <span>{new Date().toLocaleTimeString("en-IN", { timeZone: "Asia/Kolkata", hour: "2-digit", minute: "2-digit", hour12: true })}</span>
+                    <span className="text-[10px] bg-white/15 px-1.5 py-0.5 rounded-full">IST</span>
                   </div>
                 </div>
               </div>
 
-              <div className="grid grid-cols-[1fr_200px]">
-                <div className="p-3 border-r border-border/40 flex items-start justify-center">
-                  <CalendarWidget
-                    mode="single"
-                    selected={calendarDate}
-                    onSelect={(date) => date && setCalendarDate(date)}
-                    className="!p-0"
-                    modifiers={{
-                      hasMeeting: meetings?.map((m: Meeting) => new Date(m.date)) || [],
-                    }}
-                    modifiersClassNames={{
-                      hasMeeting: "!bg-indigo-100 !text-indigo-700 font-semibold ring-1 ring-indigo-300 ring-inset",
-                    }}
-                  />
-                </div>
+              <div className="p-3 bg-background">
+                <CalendarWidget
+                  mode="single"
+                  selected={calendarDate}
+                  onSelect={(date) => date && setCalendarDate(date)}
+                  className="!p-0"
+                  modifiers={{
+                    hasMeeting: meetings?.map((m: Meeting) => new Date(m.date)) || [],
+                  }}
+                  modifiersClassNames={{
+                    hasMeeting: "!bg-indigo-100 !text-indigo-700 font-semibold ring-1 ring-indigo-300 ring-inset",
+                  }}
+                />
+              </div>
 
-                <div className="flex flex-col bg-slate-50/80">
-                  <div className="px-3 py-2.5 border-b border-border/40 bg-white/60">
-                    <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-                      {calendarDate.toLocaleDateString("en-IN", { weekday: "short", month: "short", day: "numeric" })} — Schedule
-                    </p>
-                  </div>
-                  <div className="flex-1 overflow-y-auto px-3 py-2.5 max-h-[220px]">
-                    {(() => {
-                      const dayMeetings = meetings?.filter((m: Meeting) => {
-                        const md = new Date(m.date);
-                        const cd = calendarDate;
-                        return md.getFullYear() === cd.getFullYear() && md.getMonth() === cd.getMonth() && md.getDate() === cd.getDate();
-                      }) || [];
-                      if (dayMeetings.length === 0) return (
-                        <div className="flex flex-col items-center justify-center py-6 text-muted-foreground">
-                          <Calendar className="h-8 w-8 mb-2 opacity-20" />
-                          <p className="text-xs font-medium">No meetings</p>
-                          <p className="text-[10px] mt-0.5 text-muted-foreground/70">Select a date</p>
-                        </div>
-                      );
-                      return (
-                        <div className="space-y-2">
-                          {dayMeetings.map((m: Meeting) => (
-                            <div key={m.id} className="flex items-start gap-2 p-2.5 rounded-lg bg-white border border-border/50 shadow-sm">
-                              <div className="w-1 self-stretch rounded-full bg-indigo-500 shrink-0" />
-                              <div className="flex-1 min-w-0">
-                                <p className="text-xs font-semibold truncate">{m.title}</p>
-                                <div className="flex items-center gap-2 mt-1 text-[10px] text-muted-foreground">
-                                  <span className="flex items-center gap-0.5"><Clock className="h-2.5 w-2.5" />{m.time}</span>
-                                  <span className="flex items-center gap-0.5"><MapPin className="h-2.5 w-2.5" />{m.location}</span>
-                                </div>
+              <Separator />
+
+              <div className="bg-slate-50/80">
+                <div className="px-4 py-2 border-b border-border/30">
+                  <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
+                    {calendarDate.toLocaleDateString("en-IN", { weekday: "short", month: "short", day: "numeric" })} — Schedule
+                  </p>
+                </div>
+                <div className="overflow-y-auto px-4 py-2.5 max-h-[160px]">
+                  {(() => {
+                    const dayMeetings = meetings?.filter((m: Meeting) => {
+                      const md = new Date(m.date);
+                      const cd = calendarDate;
+                      return md.getFullYear() === cd.getFullYear() && md.getMonth() === cd.getMonth() && md.getDate() === cd.getDate();
+                    }) || [];
+                    if (dayMeetings.length === 0) return (
+                      <p className="text-xs text-muted-foreground italic py-2 text-center">No meetings scheduled</p>
+                    );
+                    return (
+                      <div className="space-y-2">
+                        {dayMeetings.map((m: Meeting) => (
+                          <div key={m.id} className="flex items-start gap-2.5 p-2.5 rounded-lg bg-white border border-border/50 shadow-sm">
+                            <div className="w-1 self-stretch rounded-full bg-indigo-500 shrink-0" />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-semibold truncate">{m.title}</p>
+                              <div className="flex items-center gap-2.5 mt-1 text-[10px] text-muted-foreground">
+                                <span className="flex items-center gap-0.5"><Clock className="h-2.5 w-2.5" />{m.time}</span>
+                                <span className="flex items-center gap-0.5"><MapPin className="h-2.5 w-2.5" />{m.location}</span>
                               </div>
                             </div>
-                          ))}
-                        </div>
-                      );
-                    })()}
-                  </div>
-                  <div className="px-3 py-2 border-t border-border/40 bg-white/60">
-                    <Button variant="outline" size="sm" className="text-[10px] h-6 w-full" onClick={() => setCalendarDate(new Date())} data-testid="button-calendar-today">
-                      Today
-                    </Button>
-                  </div>
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })()}
                 </div>
+              </div>
+
+              <Separator />
+
+              <div className="px-4 py-2 bg-background flex justify-center">
+                <Button variant="ghost" size="sm" className="text-xs h-7 text-muted-foreground hover:text-foreground" onClick={() => setCalendarDate(new Date())} data-testid="button-calendar-today">
+                  Today
+                </Button>
               </div>
             </PopoverContent>
           </Popover>

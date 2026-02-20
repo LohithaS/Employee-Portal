@@ -68,7 +68,7 @@ type Client = {
 const stages = [
   "inquiry", "RFQ", "quotation submission", "sample request",
   "sample submission", "sample testing", "sample approval",
-  "purchase order", "production"
+  "purchase order", "production", "sales"
 ];
 
 const departments = [

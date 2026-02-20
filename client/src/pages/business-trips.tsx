@@ -166,8 +166,14 @@ export default function BusinessTripReports() {
     setStakeholders(updated);
   };
 
-  const today = new Date().toISOString().split("T")[0];
-  const yesterday = new Date(Date.now() - 86400000).toISOString().split("T")[0];
+  const getISTDate = (offset = 0) => {
+    const now = new Date();
+    const istMs = now.getTime() + (330 * 60000);
+    const ist = new Date(istMs + offset * 86400000);
+    return ist.toISOString().split("T")[0];
+  };
+  const today = getISTDate();
+  const yesterday = getISTDate(-1);
 
   const isTripEditable = (trip: any) => {
     if (trip.status !== "Draft") return false;
@@ -176,10 +182,9 @@ export default function BusinessTripReports() {
   };
 
   const isEndDateWithinWindow = (endDate: string) => {
-    const endD = new Date(endDate);
-    const deadline = new Date(endD);
-    deadline.setDate(deadline.getDate() + 10);
-    const deadlineStr = deadline.toISOString().split("T")[0];
+    const endD = new Date(endDate + "T00:00:00");
+    endD.setDate(endD.getDate() + 10);
+    const deadlineStr = endD.toISOString().split("T")[0];
     return today <= deadlineStr;
   };
 

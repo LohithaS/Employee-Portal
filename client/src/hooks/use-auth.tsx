@@ -52,6 +52,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
     onSuccess: () => {
       setLoginError(null);
+      queryClient.clear();
       queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
       setLocation("/");
     },
@@ -76,7 +77,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await apiRequest("POST", "/api/auth/logout");
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
+      queryClient.clear();
       setLocation("/auth");
     },
   });

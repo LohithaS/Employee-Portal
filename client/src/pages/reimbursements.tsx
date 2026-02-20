@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
 import DashboardLayout from "@/components/layout/dashboard-layout";
 import {
   Table,
@@ -23,12 +24,13 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Upload } from "lucide-react";
+import { Plus, Upload, Download } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export default function Reimbursements() {
   const [isAddOpen, setIsAddOpen] = useState(false);
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const [newClaim, setNewClaim] = useState({
     type: "",
@@ -38,6 +40,22 @@ export default function Reimbursements() {
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [billFile, setBillFile] = useState<File | null>(null);
+  const [reimbursementForm, setReimbursementForm] = useState<File | null>(null);
+
+  const handleDownloadForm = () => {
+    const now = new Date();
+    const month = now.toLocaleString("en-US", { month: "short", timeZone: "Asia/Kolkata" }).toUpperCase();
+    const year = String(now.getFullYear()).slice(-2);
+    const employeeName = user?.name || "Employee";
+    const fileName = `Reimbursement-${employeeName}-${month}-${year}.xlsx`;
+
+    const link = document.createElement("a");
+    link.href = "/Reimbursement-Template.xlsx";
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   const claimsQuery = useQuery<any[]>({ queryKey: ["/api/reimbursements"] });
   const claims = claimsQuery.data ?? [];
@@ -61,6 +79,7 @@ export default function Reimbursements() {
       setIsAddOpen(false);
       setNewClaim({ type: "", amount: "", date: "", description: "" });
       setBillFile(null);
+      setReimbursementForm(null);
       setErrors({});
       toast({ title: "Claim submitted successfully" });
     },
@@ -76,6 +95,7 @@ export default function Reimbursements() {
       newErrors.date = "Date cannot be in the future";
     }
     if (!newClaim.description) newErrors.description = "Description is required";
+    if (!reimbursementForm) newErrors.reimbursementForm = "Please upload the filled reimbursement form";
     if (!billFile) newErrors.billFile = "Please upload a bill";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -108,12 +128,16 @@ export default function Reimbursements() {
       <div className="flex flex-col gap-6">
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold tracking-tight text-foreground">Reimbursements</h1>
-          <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="mr-2 h-4 w-4" /> New Claim
-              </Button>
-            </DialogTrigger>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={handleDownloadForm} data-testid="button-download-form">
+              <Download className="mr-2 h-4 w-4" /> Download Form
+            </Button>
+            <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
+              <DialogTrigger asChild>
+                <Button data-testid="button-new-claim">
+                  <Plus className="mr-2 h-4 w-4" /> New Claim
+                </Button>
+              </DialogTrigger>
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>Add New Claim</DialogTitle>
@@ -161,14 +185,36 @@ export default function Reimbursements() {
                   {errors.description && <span className="text-xs text-red-500">{errors.description}</span>}
                 </div>
                 <div className="grid gap-2">
+                  <Label>Upload Reimbursement Form <span className="text-red-500">*</span></Label>
+                  <label className={`border-2 border-dashed rounded-md p-4 flex flex-col items-center justify-center text-muted-foreground hover:bg-muted/50 transition-colors cursor-pointer ${errors.reimbursementForm ? "border-red-500" : ""}`}>
+                    <Upload className="h-6 w-6 mb-1" />
+                    <span className="text-sm">{reimbursementForm ? reimbursementForm.name : "Upload filled reimbursement form (.xlsx)"}</span>
+                    <input
+                      type="file"
+                      className="hidden"
+                      accept=".xlsx,.xls"
+                      data-testid="input-reimbursement-form"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0] || null;
+                        setReimbursementForm(file);
+                        if (file && errors.reimbursementForm) {
+                          setErrors((prev) => { const next = { ...prev }; delete next.reimbursementForm; return next; });
+                        }
+                      }}
+                    />
+                  </label>
+                  {errors.reimbursementForm && <span className="text-xs text-red-500">{errors.reimbursementForm}</span>}
+                </div>
+                <div className="grid gap-2">
                   <Label>Upload Bills <span className="text-red-500">*</span></Label>
-                  <label className={`border-2 border-dashed rounded-md p-6 flex flex-col items-center justify-center text-muted-foreground hover:bg-muted/50 transition-colors cursor-pointer ${errors.billFile ? "border-red-500" : ""}`}>
-                    <Upload className="h-8 w-8 mb-2" />
-                    <span className="text-sm">{billFile ? billFile.name : "Click to upload or drag and drop"}</span>
+                  <label className={`border-2 border-dashed rounded-md p-4 flex flex-col items-center justify-center text-muted-foreground hover:bg-muted/50 transition-colors cursor-pointer ${errors.billFile ? "border-red-500" : ""}`}>
+                    <Upload className="h-6 w-6 mb-1" />
+                    <span className="text-sm">{billFile ? billFile.name : "Upload supporting bills (.pdf, .jpg, .png)"}</span>
                     <input
                       type="file"
                       className="hidden"
                       accept=".pdf,.jpg,.jpeg,.png"
+                      data-testid="input-bill-file"
                       onChange={(e) => {
                         const file = e.target.files?.[0] || null;
                         setBillFile(file);

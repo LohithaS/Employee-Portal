@@ -1,6 +1,7 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { Calendar as CalendarWidget } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Separator } from "@/components/ui/separator";
 import { 
   Card, 
   CardContent, 
@@ -43,7 +44,10 @@ import {
   Users,
   Check,
   X,
-  ClipboardList
+  ClipboardList,
+  MapPin,
+  ChevronLeft,
+  ChevronRight
 } from "lucide-react";
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -169,18 +173,71 @@ export default function Dashboard() {
         <div className="flex items-center gap-2">
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="outline" size="sm" className="hidden sm:flex rounded-lg border-border/60 shadow-sm cursor-pointer" data-testid="button-date-calendar">
-                <Calendar className="mr-2 h-4 w-4 text-primary" />
-                {(calendarDate || new Date()).toLocaleDateString("en-IN", { weekday: "short", month: "short", day: "numeric", year: "numeric" })}
+              <Button variant="outline" size="sm" className="hidden sm:flex rounded-lg border-border/60 shadow-sm cursor-pointer hover:border-indigo-300 hover:bg-indigo-50/50 transition-colors" data-testid="button-date-calendar">
+                <Calendar className="mr-2 h-4 w-4 text-indigo-600" />
+                <span className="font-medium">{calendarDate.toLocaleDateString("en-IN", { weekday: "short", month: "short", day: "numeric", year: "numeric" })}</span>
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="end">
-              <CalendarWidget
-                mode="single"
-                selected={calendarDate}
-                onSelect={(date) => date && setCalendarDate(date)}
-                initialFocus
-              />
+            <PopoverContent className="w-[380px] p-0 shadow-xl border-border/40 rounded-xl overflow-hidden" align="end">
+              <div className="bg-gradient-to-br from-indigo-600 to-indigo-700 px-5 py-4 text-white">
+                <p className="text-xs font-medium text-indigo-200 uppercase tracking-wider">{calendarDate.toLocaleDateString("en-IN", { weekday: "long" })}</p>
+                <p className="text-2xl font-bold mt-0.5">{calendarDate.toLocaleDateString("en-IN", { month: "long", day: "numeric", year: "numeric" })}</p>
+                <div className="flex items-center gap-3 mt-2 text-indigo-200 text-xs">
+                  <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{new Date().toLocaleTimeString("en-IN", { timeZone: "Asia/Kolkata", hour: "2-digit", minute: "2-digit", hour12: true })}</span>
+                  <span>IST</span>
+                  {(() => { const dayMeetings = meetings?.filter((m: Meeting) => { const md = new Date(m.date); const cd = calendarDate; return md.getFullYear() === cd.getFullYear() && md.getMonth() === cd.getMonth() && md.getDate() === cd.getDate(); }) || []; return dayMeetings.length > 0 ? <Badge className="bg-white/20 text-white border-0 text-[10px] px-2">{dayMeetings.length} meeting{dayMeetings.length > 1 ? "s" : ""}</Badge> : null; })()}
+                </div>
+              </div>
+              <div className="p-3 bg-background">
+                <CalendarWidget
+                  mode="single"
+                  selected={calendarDate}
+                  onSelect={(date) => date && setCalendarDate(date)}
+                  className="!p-0"
+                  modifiers={{
+                    hasMeeting: meetings?.map((m: Meeting) => new Date(m.date)) || [],
+                  }}
+                  modifiersClassNames={{
+                    hasMeeting: "!bg-indigo-100 !text-indigo-700 font-semibold",
+                  }}
+                />
+              </div>
+              <Separator />
+              <div className="px-4 py-3 bg-muted/30 max-h-[180px] overflow-y-auto">
+                <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+                  {calendarDate.toLocaleDateString("en-IN", { month: "short", day: "numeric" })} — Schedule
+                </p>
+                {(() => {
+                  const dayMeetings = meetings?.filter((m: Meeting) => {
+                    const md = new Date(m.date);
+                    const cd = calendarDate;
+                    return md.getFullYear() === cd.getFullYear() && md.getMonth() === cd.getMonth() && md.getDate() === cd.getDate();
+                  }) || [];
+                  if (dayMeetings.length === 0) return <p className="text-xs text-muted-foreground italic py-2">No meetings scheduled</p>;
+                  return (
+                    <div className="space-y-2">
+                      {dayMeetings.map((m: Meeting) => (
+                        <div key={m.id} className="flex items-start gap-3 p-2.5 rounded-lg bg-background border border-border/50 shadow-sm hover:shadow transition-shadow">
+                          <div className="w-1 h-full min-h-[36px] rounded-full bg-indigo-500 shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium truncate">{m.title}</p>
+                            <div className="flex items-center gap-3 mt-1 text-[11px] text-muted-foreground">
+                              <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{m.time}</span>
+                              <span className="flex items-center gap-1"><MapPin className="h-3 w-3" />{m.location}</span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })()}
+              </div>
+              <Separator />
+              <div className="px-4 py-2.5 flex justify-between items-center bg-muted/20">
+                <Button variant="ghost" size="sm" className="text-xs h-7 text-muted-foreground hover:text-foreground" onClick={() => setCalendarDate(new Date())} data-testid="button-calendar-today">
+                  Today
+                </Button>
+              </div>
             </PopoverContent>
           </Popover>
           <Button size="sm" className="rounded-lg gradient-primary shadow-md shadow-primary/20 hover:shadow-lg hover:shadow-primary/30 transition-all">Download Report</Button>

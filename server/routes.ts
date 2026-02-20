@@ -293,9 +293,10 @@ export async function registerRoutes(
       if (endDate < startDate) {
         return res.status(400).json({ message: "End date cannot be before start date" });
       }
-      const endDateMs = new Date(endDate).getTime();
-      const deadlineMs = endDateMs + 10 * 86400000;
-      if (Date.now() > deadlineMs) {
+      const endD = new Date(endDate);
+      endD.setDate(endD.getDate() + 10);
+      const deadlineStr = endD.toISOString().split("T")[0];
+      if (today > deadlineStr) {
         return res.status(400).json({ message: "Filing window expired — must be within 10 days of trip end date" });
       }
       const trip = await storage.createTrip({ ...req.body, userId: req.session.userId });
@@ -320,9 +321,11 @@ export async function registerRoutes(
         return res.status(400).json({ message: "Only draft trips can be edited" });
       }
       if (tripRecord.endDate) {
-        const endDateMs = new Date(tripRecord.endDate).getTime();
-        const deadlineMs = endDateMs + 10 * 86400000;
-        if (Date.now() > deadlineMs) {
+        const today = new Date().toISOString().split("T")[0];
+        const endD = new Date(tripRecord.endDate);
+        endD.setDate(endD.getDate() + 10);
+        const deadlineStr = endD.toISOString().split("T")[0];
+        if (today > deadlineStr) {
           return res.status(400).json({ message: "Edit window expired — reports can only be edited within 10 days of the trip end date" });
         }
       }

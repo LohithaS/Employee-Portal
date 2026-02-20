@@ -172,15 +172,15 @@ export default function BusinessTripReports() {
   const isTripEditable = (trip: any) => {
     if (trip.status !== "Draft") return false;
     if (!trip.endDate) return true;
-    const endDateMs = new Date(trip.endDate).getTime();
-    const deadlineMs = endDateMs + 10 * 86400000;
-    return Date.now() <= deadlineMs;
+    return isEndDateWithinWindow(trip.endDate);
   };
 
   const isEndDateWithinWindow = (endDate: string) => {
-    const endDateMs = new Date(endDate).getTime();
-    const deadlineMs = endDateMs + 10 * 86400000;
-    return Date.now() <= deadlineMs;
+    const endD = new Date(endDate);
+    const deadline = new Date(endD);
+    deadline.setDate(deadline.getDate() + 10);
+    const deadlineStr = deadline.toISOString().split("T")[0];
+    return today <= deadlineStr;
   };
 
   const validateTrip = () => {

@@ -175,6 +175,7 @@ export const reimbursements = pgTable("reimbursements", {
   status: text("status").notNull().default("Pending"),
   rejectionReason: text("rejection_reason"),
   userId: integer("user_id"),
+  expenses: text("expenses"),
 });
 
 export const insertReimbursementSchema = createInsertSchema(reimbursements).omit({ id: true });

@@ -395,8 +395,8 @@ export async function registerRoutes(
       }
       const allLeaves = await storage.getLeaveRequests();
       const allReimbursements = await storage.getReimbursements();
-      const pendingLeaves = allLeaves.filter(l => l.status === "Pending");
-      const pendingReimbursements = allReimbursements.filter(r => r.status === "Pending");
+      const pendingLeaves = allLeaves.filter(l => l.status === "Pending" && l.userId !== req.session.userId);
+      const pendingReimbursements = allReimbursements.filter(r => r.status === "Pending" && r.userId !== req.session.userId);
 
       const userIds = new Set([
         ...pendingLeaves.map(l => l.userId).filter(Boolean),

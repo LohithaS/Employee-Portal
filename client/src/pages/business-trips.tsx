@@ -31,7 +31,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Paperclip, Trash2, PlusCircle, Eye } from "lucide-react";
+import { Plus, Paperclip, Trash2, PlusCircle, Eye, Pencil } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface Stakeholder {
@@ -41,6 +41,8 @@ interface Stakeholder {
 
 export default function BusinessTripReports() {
   const [isAddOpen, setIsAddOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [editingTrip, setEditingTrip] = useState<any>(null);
   const [viewTrip, setViewTrip] = useState<any>(null);
   const { toast } = useToast();
   
@@ -78,6 +80,64 @@ export default function BusinessTripReports() {
     },
   });
 
+  const updateTripMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: any }) => {
+      await apiRequest("PUT", `/api/trips/${id}`, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/trips"] });
+      setIsEditOpen(false);
+      setEditingTrip(null);
+      resetForm();
+      toast({ title: "Trip report updated successfully" });
+    },
+  });
+
+  const openEditDialog = (trip: any) => {
+    setEditingTrip(trip);
+    setNewTrip({
+      purpose: trip.purpose || "",
+      location: trip.location || "",
+      startDate: trip.startDate || "",
+      endDate: trip.endDate || "",
+      outcome: trip.outcome || "",
+      client: trip.client || "",
+      pointsDiscussed: trip.pointsDiscussed || "",
+      actionPoints: trip.actionPoints || "",
+      associate: trip.associate || "",
+    });
+    setStakeholders(parseStakeholders(trip.stakeholders).length > 0 ? parseStakeholders(trip.stakeholders) : [{ name: "", designation: "" }]);
+    setErrors({});
+    setIsEditOpen(true);
+  };
+
+  const handleUpdateTrip = (status: string) => {
+    if (status === "Pending" && !validateTrip(true)) return;
+    if (status === "Draft" && !newTrip.purpose) {
+      setErrors({ purpose: "Purpose is required to save" });
+      return;
+    }
+
+    const validStakeholders = stakeholders.filter(s => s.name.trim());
+
+    updateTripMutation.mutate({
+      id: editingTrip.id,
+      data: {
+        purpose: newTrip.purpose,
+        location: newTrip.location || "",
+        startDate: newTrip.startDate || "",
+        endDate: newTrip.endDate || "",
+        outcome: newTrip.outcome || "",
+        client: newTrip.client,
+        stakeholders: JSON.stringify(validStakeholders),
+        pointsDiscussed: newTrip.pointsDiscussed,
+        actionPoints: newTrip.actionPoints,
+        associate: newTrip.associate,
+        status,
+      },
+    });
+  };
+
   const resetForm = () => {
     setNewTrip({
       purpose: "",
@@ -109,7 +169,7 @@ export default function BusinessTripReports() {
     setStakeholders(updated);
   };
 
-  const validateTrip = () => {
+  const validateTrip = (allowPastDates = false) => {
     const newErrors: Record<string, string> = {};
     const today = new Date().toISOString().split("T")[0];
     if (!newTrip.purpose) newErrors.purpose = "Purpose is required";
@@ -117,7 +177,7 @@ export default function BusinessTripReports() {
     if (!newTrip.client) newErrors.client = "Client is required";
     if (!newTrip.startDate) {
       newErrors.startDate = "Start date is required";
-    } else if (newTrip.startDate <= today) {
+    } else if (!allowPastDates && newTrip.startDate <= today) {
       newErrors.startDate = "Start date must be a future date";
     }
     if (!newTrip.endDate) {
@@ -391,9 +451,16 @@ export default function BusinessTripReports() {
                       }>{trip.status}</Badge>
                     </TableCell>
                     <TableCell>
-                      <Button variant="ghost" size="sm" onClick={() => setViewTrip(trip)} data-testid={`button-view-trip-${trip.id}`}>
-                        <Eye className="h-4 w-4" />
-                      </Button>
+                      <div className="flex items-center gap-1">
+                        {trip.status === "Draft" && (
+                          <Button variant="ghost" size="sm" onClick={() => openEditDialog(trip)} data-testid={`button-edit-trip-${trip.id}`}>
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                        )}
+                        <Button variant="ghost" size="sm" onClick={() => setViewTrip(trip)} data-testid={`button-view-trip-${trip.id}`}>
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))
@@ -488,6 +555,174 @@ export default function BusinessTripReports() {
               </div>
             </ScrollArea>
           )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isEditOpen} onOpenChange={(open) => { if (!open) { setIsEditOpen(false); setEditingTrip(null); resetForm(); } }}>
+        <DialogContent className="max-w-2xl max-h-[90vh]">
+          <DialogHeader>
+            <DialogTitle>Edit Trip Report</DialogTitle>
+          </DialogHeader>
+          <ScrollArea className="max-h-[70vh] pr-4">
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label>Client <span className="text-red-500">*</span></Label>
+                <Select value={newTrip.client} onValueChange={(val) => setNewTrip({...newTrip, client: val})}>
+                  <SelectTrigger className={errors.client ? "border-red-500" : ""} data-testid="select-edit-trip-client">
+                    <SelectValue placeholder="Select a client" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {clientsList.map((c: any) => (
+                      <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {errors.client && <span className="text-xs text-red-500">{errors.client}</span>}
+              </div>
+
+              <div className="grid gap-2">
+                <Label>Purpose <span className="text-red-500">*</span></Label>
+                <Input 
+                  placeholder="Trip Purpose" 
+                  value={newTrip.purpose}
+                  onChange={(e) => setNewTrip({...newTrip, purpose: e.target.value})}
+                  className={errors.purpose ? "border-red-500" : ""}
+                  data-testid="input-edit-trip-purpose"
+                />
+                {errors.purpose && <span className="text-xs text-red-500">{errors.purpose}</span>}
+              </div>
+
+              <div className="grid gap-2">
+                <Label>Location <span className="text-red-500">*</span></Label>
+                <Input 
+                  placeholder="City, Country" 
+                  value={newTrip.location}
+                  onChange={(e) => setNewTrip({...newTrip, location: e.target.value})}
+                  className={errors.location ? "border-red-500" : ""}
+                  data-testid="input-edit-trip-location"
+                />
+                {errors.location && <span className="text-xs text-red-500">{errors.location}</span>}
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="grid gap-2">
+                  <Label>Start Date <span className="text-red-500">*</span></Label>
+                  <Input 
+                    type="date"
+                    value={newTrip.startDate}
+                    onChange={(e) => setNewTrip({...newTrip, startDate: e.target.value})}
+                    className={errors.startDate ? "border-red-500" : ""}
+                    data-testid="input-edit-trip-start-date"
+                  />
+                  {errors.startDate && <span className="text-xs text-red-500">{errors.startDate}</span>}
+                </div>
+                <div className="grid gap-2">
+                  <Label>End Date <span className="text-red-500">*</span></Label>
+                  <Input 
+                    type="date"
+                    min={newTrip.startDate || undefined}
+                    value={newTrip.endDate}
+                    onChange={(e) => setNewTrip({...newTrip, endDate: e.target.value})}
+                    className={errors.endDate ? "border-red-500" : ""}
+                    data-testid="input-edit-trip-end-date"
+                  />
+                  {errors.endDate && <span className="text-xs text-red-500">{errors.endDate}</span>}
+                </div>
+              </div>
+
+              <div className="grid gap-3">
+                <div className="flex items-center justify-between">
+                  <Label>Stakeholders</Label>
+                  <Button type="button" variant="outline" size="sm" onClick={addStakeholder} data-testid="button-edit-add-stakeholder">
+                    <PlusCircle className="mr-1 h-3.5 w-3.5" /> Add More
+                  </Button>
+                </div>
+                {stakeholders.map((sh, idx) => (
+                  <div key={idx} className="flex gap-2 items-start">
+                    <div className="flex-1">
+                      <Input
+                        placeholder="Stakeholder name"
+                        value={sh.name}
+                        onChange={(e) => updateStakeholder(idx, "name", e.target.value)}
+                        data-testid={`input-edit-stakeholder-name-${idx}`}
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <Input
+                        placeholder="Designation"
+                        value={sh.designation}
+                        onChange={(e) => updateStakeholder(idx, "designation", e.target.value)}
+                        data-testid={`input-edit-stakeholder-designation-${idx}`}
+                      />
+                    </div>
+                    {stakeholders.length > 1 && (
+                      <Button type="button" variant="ghost" size="icon" className="shrink-0 text-red-500 hover:text-red-600" onClick={() => removeStakeholder(idx)}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              <div className="grid gap-2">
+                <Label>Points Discussed</Label>
+                <Textarea 
+                  placeholder="Key points discussed during the trip..." 
+                  value={newTrip.pointsDiscussed}
+                  onChange={(e) => setNewTrip({...newTrip, pointsDiscussed: e.target.value})}
+                  rows={3}
+                  data-testid="input-edit-trip-points-discussed"
+                />
+              </div>
+
+              <div className="grid gap-2">
+                <Label>Action Points</Label>
+                <Textarea 
+                  placeholder="Action items from the trip..." 
+                  value={newTrip.actionPoints}
+                  onChange={(e) => setNewTrip({...newTrip, actionPoints: e.target.value})}
+                  rows={3}
+                  data-testid="input-edit-trip-action-points"
+                />
+              </div>
+
+              <div className="grid gap-2">
+                <Label>Associate</Label>
+                <Input 
+                  placeholder="Associate name" 
+                  value={newTrip.associate}
+                  onChange={(e) => setNewTrip({...newTrip, associate: e.target.value})}
+                  data-testid="input-edit-trip-associate"
+                />
+              </div>
+
+              <div className="grid gap-2">
+                <Label>Outcome <span className="text-red-500">*</span></Label>
+                <Textarea 
+                  placeholder="Key outcomes..." 
+                  value={newTrip.outcome}
+                  onChange={(e) => setNewTrip({...newTrip, outcome: e.target.value})}
+                  className={errors.outcome ? "border-red-500" : ""}
+                  rows={3}
+                  data-testid="input-edit-trip-outcome"
+                />
+                {errors.outcome && <span className="text-xs text-red-500">{errors.outcome}</span>}
+              </div>
+
+              <div className="grid gap-2">
+                <Label>Attachments</Label>
+                <Input type="file" data-testid="input-edit-trip-attachments" />
+              </div>
+            </div>
+          </ScrollArea>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => handleUpdateTrip("Draft")} disabled={updateTripMutation.isPending} data-testid="button-update-draft-trip">
+              Save as Draft
+            </Button>
+            <Button onClick={() => handleUpdateTrip("Pending")} disabled={updateTripMutation.isPending} data-testid="button-update-submit-trip">
+              Submit for Approval
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </DashboardLayout>

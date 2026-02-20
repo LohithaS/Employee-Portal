@@ -286,6 +286,27 @@ export async function registerRoutes(
     }
   });
 
+  app.put("/api/trips/:id", requireAuth, async (req, res) => {
+    try {
+      const tripId = Number(req.params.id);
+      const existing = await storage.getTrips();
+      const tripRecord = existing.find(t => t.id === tripId);
+      if (!tripRecord) {
+        return res.status(404).json({ message: "Trip not found" });
+      }
+      if (tripRecord.userId !== req.session.userId) {
+        return res.status(403).json({ message: "Not authorized to edit this trip" });
+      }
+      if (tripRecord.status !== "Draft") {
+        return res.status(400).json({ message: "Only draft trips can be edited" });
+      }
+      const trip = await storage.updateTrip(tripId, req.body);
+      res.json(trip);
+    } catch (e: any) {
+      res.status(400).json({ message: e.message });
+    }
+  });
+
   app.get("/api/reimbursements", requireAuth, async (req, res) => {
     const allData = await storage.getReimbursements();
     const data = allData.filter(r => r.userId === req.session.userId);

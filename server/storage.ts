@@ -53,6 +53,7 @@ export interface IStorage {
 
   getTrips(): Promise<Trip[]>;
   createTrip(trip: InsertTrip): Promise<Trip>;
+  updateTrip(id: number, trip: Partial<InsertTrip>): Promise<Trip>;
 
   getReimbursements(): Promise<Reimbursement[]>;
   createReimbursement(r: InsertReimbursement): Promise<Reimbursement>;
@@ -207,6 +208,11 @@ export class DatabaseStorage implements IStorage {
   async createTrip(trip: InsertTrip): Promise<Trip> {
     const [created] = await db.insert(trips).values(trip).returning();
     return created;
+  }
+
+  async updateTrip(id: number, trip: Partial<InsertTrip>): Promise<Trip> {
+    const [updated] = await db.update(trips).set(trip).where(eq(trips.id, id)).returning();
+    return updated;
   }
 
   async getReimbursements(): Promise<Reimbursement[]> {

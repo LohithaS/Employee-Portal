@@ -112,7 +112,7 @@ export default function BusinessTripReports() {
   };
 
   const handleUpdateTrip = (status: string) => {
-    if (status === "Pending" && !validateTrip(true)) return;
+    if (status === "Pending" && !validateTrip()) return;
     if (status === "Draft" && !validateDraftDates()) return;
 
     const validStakeholders = stakeholders.filter(s => s.name.trim());
@@ -166,7 +166,7 @@ export default function BusinessTripReports() {
     setStakeholders(updated);
   };
 
-  const tomorrow = new Date(Date.now() + 86400000).toISOString().split("T")[0];
+  const today = new Date().toISOString().split("T")[0];
 
   const isTripEditable = (trip: any) => {
     if (trip.status !== "Draft") return false;
@@ -176,23 +176,22 @@ export default function BusinessTripReports() {
     return Date.now() <= deadlineMs;
   };
 
-  const validateTrip = (isEdit = false) => {
+  const validateTrip = () => {
     const newErrors: Record<string, string> = {};
-    const today = new Date().toISOString().split("T")[0];
     if (!newTrip.purpose) newErrors.purpose = "Purpose is required";
     if (!newTrip.location) newErrors.location = "Location is required";
     if (!newTrip.client) newErrors.client = "Client is required";
     if (!newTrip.startDate) {
       newErrors.startDate = "Start date is required";
-    } else if (!isEdit && newTrip.startDate <= today) {
-      newErrors.startDate = "Start date must be a future date";
+    } else if (newTrip.startDate > today) {
+      newErrors.startDate = "Start date must be today or earlier";
     }
     if (!newTrip.endDate) {
       newErrors.endDate = "End date is required";
+    } else if (newTrip.endDate > today) {
+      newErrors.endDate = "End date must be today or earlier";
     } else if (newTrip.startDate && newTrip.endDate && newTrip.endDate < newTrip.startDate) {
       newErrors.endDate = "End date cannot be before start date";
-    } else if (!isEdit && newTrip.endDate <= today) {
-      newErrors.endDate = "End date must be a future date";
     }
     if (!newTrip.outcome) newErrors.outcome = "Outcome is required";
     
@@ -204,6 +203,12 @@ export default function BusinessTripReports() {
     const newErrors: Record<string, string> = {};
     if (!newTrip.startDate) newErrors.startDate = "Start date is required";
     if (!newTrip.endDate) newErrors.endDate = "End date is required";
+    if (newTrip.startDate && newTrip.startDate > today) {
+      newErrors.startDate = "Start date must be today or earlier";
+    }
+    if (newTrip.endDate && newTrip.endDate > today) {
+      newErrors.endDate = "End date must be today or earlier";
+    }
     if (newTrip.startDate && newTrip.endDate && newTrip.endDate < newTrip.startDate) {
       newErrors.endDate = "End date cannot be before start date";
     }
@@ -313,7 +318,7 @@ export default function BusinessTripReports() {
                       <Label>Start Date <span className="text-red-500">*</span></Label>
                       <Input 
                         type="date"
-                        min={tomorrow}
+                        max={newTrip.endDate || today}
                         value={newTrip.startDate}
                         onChange={(e) => setNewTrip({...newTrip, startDate: e.target.value})}
                         className={errors.startDate ? "border-red-500" : ""}
@@ -325,7 +330,8 @@ export default function BusinessTripReports() {
                       <Label>End Date <span className="text-red-500">*</span></Label>
                       <Input 
                         type="date"
-                        min={newTrip.startDate || tomorrow}
+                        min={newTrip.startDate || undefined}
+                        max={today}
                         value={newTrip.endDate}
                         onChange={(e) => setNewTrip({...newTrip, endDate: e.target.value})}
                         className={errors.endDate ? "border-red-500" : ""}

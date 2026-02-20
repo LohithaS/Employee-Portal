@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Building2, Lock, User, Shield, Users, Mail, ArrowLeft } from "lucide-react";
+import { Building2, Lock, User, Shield, Users, Mail, ArrowLeft, Sparkles } from "lucide-react";
 import loginBg from "@/assets/images/login-bg.jpg";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -133,7 +133,7 @@ function LoginForm({ role, isLoading, onSubmit, loginError, onClearError }: { ro
             Remember me
           </Label>
         </div>
-        <Button type="submit" className="w-full" disabled={isLoading} data-testid={`button-login-${role.toLowerCase()}`}>
+        <Button type="submit" className="w-full gradient-primary shadow-md shadow-primary/20 hover:shadow-lg hover:shadow-primary/30 transition-all" disabled={isLoading} data-testid={`button-login-${role.toLowerCase()}`}>
           {isLoading ? "Signing in..." : `Sign In as ${role}`}
         </Button>
       </form>
@@ -289,7 +289,7 @@ function RegisterForm({ isLoading, onSubmit }: { isLoading: boolean; onSubmit: (
             </button>
           </div>
         </div>
-        <Button type="submit" className="w-full" disabled={isLoading} data-testid="button-register">
+        <Button type="submit" className="w-full gradient-primary shadow-md shadow-primary/20 hover:shadow-lg hover:shadow-primary/30 transition-all" disabled={isLoading} data-testid="button-register">
           {isLoading ? "Creating account..." : "Create Account"}
         </Button>
       </form>
@@ -417,7 +417,7 @@ function ResetPasswordForm({ onBack }: { onBack: () => void }) {
               </FormItem>
             )}
           />
-          <Button type="submit" className="w-full" disabled={isSubmitting} data-testid="button-reset-password">
+          <Button type="submit" className="w-full gradient-primary shadow-md shadow-primary/20 hover:shadow-lg hover:shadow-primary/30 transition-all" disabled={isSubmitting} data-testid="button-reset-password">
             {isSubmitting ? "Resetting..." : "Reset Password"}
           </Button>
         </form>
@@ -444,28 +444,33 @@ export default function AuthPage() {
 
   return (
     <div className="min-h-screen grid grid-cols-1 lg:grid-cols-2">
-      <div className="hidden lg:flex flex-col relative bg-muted text-white p-10">
-        <div className="absolute inset-0 bg-zinc-900/20" />
+      <div className="hidden lg:flex flex-col relative text-white p-10 overflow-hidden">
+        <div className="absolute inset-0 gradient-primary" />
         <img
           src={loginBg}
           alt="Office"
-          className="absolute inset-0 w-full h-full object-cover mix-blend-overlay opacity-80"
+          className="absolute inset-0 w-full h-full object-cover mix-blend-overlay opacity-30"
         />
-        <div className="relative z-10 flex items-center text-lg font-medium">
-          <Building2 className="mr-2 h-6 w-6" />
+        <div className="absolute inset-0 bg-gradient-to-br from-indigo-600/90 via-purple-600/80 to-blue-700/90" />
+        <div className="relative z-10 flex items-center text-lg font-semibold">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-white/20 backdrop-blur-sm mr-3">
+            <Sparkles className="h-4 w-4 text-white" />
+          </div>
           Nexus Portal
         </div>
         <div className="relative z-10 mt-auto">
-          <blockquote className="space-y-2">
-            <p className="text-lg">
+          <blockquote className="space-y-3">
+            <p className="text-xl leading-relaxed font-light">
               "Efficiency is doing things right; effectiveness is doing the right things."
             </p>
-            <footer className="text-sm">Peter Drucker</footer>
+            <footer className="text-sm text-white/70">Peter Drucker</footer>
           </blockquote>
         </div>
+        <div className="absolute -bottom-32 -right-32 w-80 h-80 rounded-full bg-white/5 z-0" />
+        <div className="absolute -top-16 -left-16 w-48 h-48 rounded-full bg-white/5 z-0" />
       </div>
       <div className="flex items-center justify-center p-8 bg-background">
-        <Card className="w-full max-w-md border-0 shadow-none sm:border sm:shadow-sm">
+        <Card className="w-full max-w-md border-0 shadow-none sm:border sm:border-border/50 sm:shadow-xl sm:shadow-black/5 rounded-2xl">
           {showResetPassword ? (
             <>
               <CardHeader className="space-y-1">

@@ -16,7 +16,8 @@ import {
   Building, 
   Settings,
   PanelLeftClose,
-  PanelLeftOpen
+  PanelLeftOpen,
+  Sparkles
 } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAuth } from "@/hooks/use-auth";
@@ -61,39 +62,66 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
   return (
     <TooltipProvider delayDuration={0}>
       <div className={cn(
-        "hidden border-r bg-sidebar text-sidebar-foreground md:flex md:flex-col transition-all duration-300",
-        collapsed ? "md:w-16" : "md:w-64"
+        "hidden gradient-sidebar text-sidebar-foreground md:flex md:flex-col transition-all duration-300 relative",
+        collapsed ? "md:w-[68px]" : "md:w-64"
       )}>
-        <div className="flex h-16 items-center border-b border-sidebar-border px-3 justify-between">
-          <div className="flex items-center gap-2 font-semibold overflow-hidden">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-sidebar-primary text-sidebar-primary-foreground">
-              <Building className="h-4 w-4" />
+        <div className="absolute inset-0 bg-gradient-to-b from-white/[0.06] to-transparent pointer-events-none" />
+
+        <div className={cn(
+          "flex h-16 items-center border-b border-white/[0.08] relative z-10",
+          collapsed ? "px-3 justify-center" : "px-5 justify-between"
+        )}>
+          <div className="flex items-center gap-2.5 font-semibold overflow-hidden">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg gradient-primary shadow-lg shadow-indigo-500/20">
+              <Sparkles className="h-4 w-4 text-white" />
             </div>
-            {!collapsed && <span className="text-lg font-heading tracking-tight whitespace-nowrap">Nexus</span>}
+            {!collapsed && <span className="text-lg font-heading tracking-tight text-white whitespace-nowrap">Nexus</span>}
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7 shrink-0 text-sidebar-foreground/70 hover:text-sidebar-foreground"
-            onClick={onToggle}
-            data-testid="button-toggle-sidebar"
-          >
-            {collapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
-          </Button>
+          {!collapsed && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 shrink-0 text-white/50 hover:text-white hover:bg-white/10"
+              onClick={onToggle}
+              data-testid="button-toggle-sidebar"
+            >
+              <PanelLeftClose className="h-4 w-4" />
+            </Button>
+          )}
         </div>
-        <ScrollArea className="flex-1 py-4">
-          <nav className="grid gap-1 px-2">
+
+        {collapsed && (
+          <div className="flex justify-center py-3 border-b border-white/[0.08] relative z-10">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 text-white/50 hover:text-white hover:bg-white/10"
+              onClick={onToggle}
+              data-testid="button-toggle-sidebar"
+            >
+              <PanelLeftOpen className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
+
+        <ScrollArea className="flex-1 py-3 relative z-10">
+          <nav className="grid gap-0.5 px-2">
             {sidebarItems.map((item, index) => {
               const isActive = location === item.href;
               const linkContent = (
                 <Link key={index} href={item.href}>
                   <a className={cn(
-                    "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-                    isActive ? "bg-sidebar-accent text-sidebar-accent-foreground" : "text-sidebar-foreground/70",
+                    "flex items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] font-medium transition-all duration-200",
+                    isActive 
+                      ? "bg-white/[0.12] text-white shadow-sm shadow-black/10" 
+                      : "text-white/60 hover:text-white hover:bg-white/[0.07]",
                     collapsed && "justify-center px-2"
                   )}>
-                    <item.icon className="h-4 w-4 shrink-0" />
+                    <item.icon className={cn("h-[18px] w-[18px] shrink-0", isActive && "text-indigo-300")} />
                     {!collapsed && <span className="whitespace-nowrap">{item.label}</span>}
+                    {isActive && !collapsed && (
+                      <div className="ml-auto h-1.5 w-1.5 rounded-full bg-indigo-400" />
+                    )}
                   </a>
                 </Link>
               );
@@ -104,7 +132,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
                     <TooltipTrigger asChild>
                       {linkContent}
                     </TooltipTrigger>
-                    <TooltipContent side="right" sideOffset={8}>
+                    <TooltipContent side="right" sideOffset={12} className="font-medium">
                       {item.label}
                     </TooltipContent>
                   </Tooltip>
@@ -115,17 +143,18 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
             })}
           </nav>
         </ScrollArea>
-        <div className="border-t border-sidebar-border p-3">
+
+        <div className="border-t border-white/[0.08] p-3 relative z-10">
           {collapsed ? (
             <Tooltip>
               <TooltipTrigger asChild>
                 <div className="flex items-center justify-center">
-                  <div className="h-8 w-8 rounded-full bg-sidebar-primary/20 flex items-center justify-center">
-                    <span className="text-xs font-bold text-sidebar-primary">{getInitials(user?.name)}</span>
+                  <div className="h-9 w-9 rounded-full gradient-primary flex items-center justify-center shadow-md shadow-indigo-500/20">
+                    <span className="text-xs font-bold text-white">{getInitials(user?.name)}</span>
                   </div>
                 </div>
               </TooltipTrigger>
-              <TooltipContent side="right" sideOffset={8}>
+              <TooltipContent side="right" sideOffset={12}>
                 <div>
                   <div className="font-medium">{user?.name || "User"}</div>
                   <div className="text-xs text-muted-foreground">{user?.role || "Employee"}</div>
@@ -133,13 +162,13 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
               </TooltipContent>
             </Tooltip>
           ) : (
-            <div className="flex items-center gap-3 rounded-md bg-sidebar-accent/50 p-3">
-              <div className="h-8 w-8 rounded-full bg-sidebar-primary/20 flex items-center justify-center shrink-0">
-                <span className="text-xs font-bold text-sidebar-primary">{getInitials(user?.name)}</span>
+            <div className="flex items-center gap-3 rounded-lg bg-white/[0.06] p-3">
+              <div className="h-9 w-9 rounded-full gradient-primary flex items-center justify-center shrink-0 shadow-md shadow-indigo-500/20">
+                <span className="text-xs font-bold text-white">{getInitials(user?.name)}</span>
               </div>
               <div className="flex flex-col overflow-hidden">
-                <span className="text-sm font-medium truncate">{user?.name || "User"}</span>
-                <span className="text-xs text-sidebar-foreground/60">{user?.role || "Employee"}</span>
+                <span className="text-sm font-semibold truncate text-white">{user?.name || "User"}</span>
+                <span className="text-xs text-white/50">{user?.role || "Employee"}</span>
               </div>
             </div>
           )}

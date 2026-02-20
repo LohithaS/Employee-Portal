@@ -159,13 +159,16 @@ export default function Dashboard() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Welcome back, {user?.name?.split(" ")[0] || "User"}</h1>
+          <p className="text-sm text-muted-foreground mt-1">Here's what's happening with your workspace today.</p>
+        </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" className="hidden sm:flex">
-            <Calendar className="mr-2 h-4 w-4" />
-            {new Date().toLocaleDateString("en-IN", { month: "short", day: "numeric", year: "numeric" })}
+          <Button variant="outline" size="sm" className="hidden sm:flex rounded-lg border-border/60 shadow-sm">
+            <Calendar className="mr-2 h-4 w-4 text-primary" />
+            {new Date().toLocaleDateString("en-IN", { weekday: "short", month: "short", day: "numeric", year: "numeric" })}
           </Button>
-          <Button size="sm">Download Report</Button>
+          <Button size="sm" className="rounded-lg gradient-primary shadow-md shadow-primary/20 hover:shadow-lg hover:shadow-primary/30 transition-all">Download Report</Button>
         </div>
       </div>
 
@@ -452,69 +455,77 @@ function DashboardOverview({
 }) {
   return (
     <div className="flex flex-col gap-6">
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="shadow-sm">
+      <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
+        <Card className="card-hover shadow-sm border-border/50 overflow-hidden relative">
+          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-400 to-emerald-600" />
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-            <div className="p-2 bg-emerald-100 rounded-lg">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Total Revenue</CardTitle>
+            <div className="p-2.5 stat-gradient-emerald rounded-xl">
               <IndianRupee className="h-4 w-4 text-emerald-600" />
             </div>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">₹45,231.89</div>
-            <p className="text-xs text-muted-foreground">
-              +20.1% from last month
-            </p>
+            <div className="flex items-center gap-1 mt-1">
+              <span className="text-xs font-medium text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded">+20.1%</span>
+              <span className="text-xs text-muted-foreground">from last month</span>
+            </div>
           </CardContent>
         </Card>
-        <Card className="shadow-sm cursor-pointer hover:shadow-md transition-shadow" onClick={() => setLocation("/crm")}>
+        <Card className="card-hover shadow-sm border-border/50 cursor-pointer overflow-hidden relative" onClick={() => setLocation("/crm")}>
+          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-400 to-indigo-600" />
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Clients</CardTitle>
-            <div className="p-2 bg-blue-100 rounded-lg">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Active Clients</CardTitle>
+            <div className="p-2.5 stat-gradient-blue rounded-xl">
               <Users className="h-4 w-4 text-blue-600" />
             </div>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{clients.length}</div>
-            <p className="text-xs text-muted-foreground">
-              +180.1% from last month
-            </p>
+            <div className="flex items-center gap-1 mt-1">
+              <ArrowUpRight className="h-3 w-3 text-blue-600" />
+              <span className="text-xs text-muted-foreground">Click to manage</span>
+            </div>
           </CardContent>
         </Card>
-        <Card className="shadow-sm">
+        <Card className="card-hover shadow-sm border-border/50 overflow-hidden relative">
+          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-amber-400 to-orange-500" />
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending Tasks</CardTitle>
-            <div className="p-2 bg-amber-100 rounded-lg">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Pending Tasks</CardTitle>
+            <div className="p-2.5 stat-gradient-amber rounded-xl">
               <CheckCircle2 className="h-4 w-4 text-amber-600" />
             </div>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{pendingTasks.length}</div>
-            <p className="text-xs text-muted-foreground">
-              {completedTasks.length} completed
-            </p>
+            <div className="flex items-center gap-1 mt-1">
+              <span className="text-xs font-medium text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded">{completedTasks.length}</span>
+              <span className="text-xs text-muted-foreground">completed</span>
+            </div>
           </CardContent>
         </Card>
-        <Card className="shadow-sm">
+        <Card className="card-hover shadow-sm border-border/50 overflow-hidden relative">
+          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-purple-400 to-violet-600" />
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Target Reached</CardTitle>
-            <div className="p-2 bg-purple-100 rounded-lg">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Target Reached</CardTitle>
+            <div className="p-2.5 stat-gradient-purple rounded-xl">
               <TrendingUp className="h-4 w-4 text-purple-600" />
             </div>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">84%</div>
-            <p className="text-xs text-muted-foreground">
-              +4% from last week
-            </p>
+            <div className="flex items-center gap-1 mt-1">
+              <span className="text-xs font-medium text-purple-600 bg-purple-50 px-1.5 py-0.5 rounded">+4%</span>
+              <span className="text-xs text-muted-foreground">from last week</span>
+            </div>
           </CardContent>
         </Card>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
-        <Card className="col-span-4 shadow-sm">
+      <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-7">
+        <Card className="col-span-4 shadow-sm border-border/50">
           <CardHeader>
-            <CardTitle>Revenue Growth</CardTitle>
+            <CardTitle className="text-base">Revenue Growth</CardTitle>
             <CardDescription>
               Monthly revenue overview for the current fiscal year.
             </CardDescription>
@@ -558,9 +569,9 @@ function DashboardOverview({
           </CardContent>
         </Card>
 
-        <Card className="col-span-3 shadow-sm">
+        <Card className="col-span-3 shadow-sm border-border/50">
           <CardHeader>
-            <CardTitle>Upcoming Meetings</CardTitle>
+            <CardTitle className="text-base">Upcoming Meetings</CardTitle>
             <CardDescription>
               {todayMeetings.length > 0
                 ? `You have ${todayMeetings.length} meeting${todayMeetings.length > 1 ? "s" : ""} scheduled for today.`
@@ -592,10 +603,10 @@ function DashboardOverview({
         </Card>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <Card className="col-span-1 shadow-sm">
+      <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+        <Card className="col-span-1 shadow-sm border-border/50">
           <CardHeader>
-            <CardTitle>Task Management</CardTitle>
+            <CardTitle className="text-base">Task Management</CardTitle>
             <CardDescription>Tasks requiring your attention.</CardDescription>
           </CardHeader>
           <CardContent>
@@ -635,9 +646,9 @@ function DashboardOverview({
           </CardContent>
         </Card>
 
-        <Card className="col-span-1 shadow-sm">
+        <Card className="col-span-1 shadow-sm border-border/50">
           <CardHeader>
-            <CardTitle>Pending Reimbursements</CardTitle>
+            <CardTitle className="text-base">Pending Reimbursements</CardTitle>
             <CardDescription>Recent expense claims.</CardDescription>
           </CardHeader>
           <CardContent>
@@ -666,9 +677,9 @@ function DashboardOverview({
           </CardContent>
         </Card>
 
-        <Card className="col-span-1 shadow-sm">
+        <Card className="col-span-1 shadow-sm border-border/50">
           <CardHeader>
-            <CardTitle>Pending Reports</CardTitle>
+            <CardTitle className="text-base">Pending Reports</CardTitle>
             <CardDescription>Reports waiting for approval.</CardDescription>
           </CardHeader>
           <CardContent>

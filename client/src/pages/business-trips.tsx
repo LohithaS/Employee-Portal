@@ -253,16 +253,6 @@ export default function BusinessTripReports() {
                     </div>
                   </div>
 
-                  <div className="grid gap-2">
-                    <Label>Associate</Label>
-                    <Input 
-                      placeholder="Associate name" 
-                      value={newTrip.associate}
-                      onChange={(e) => setNewTrip({...newTrip, associate: e.target.value})}
-                      data-testid="input-trip-associate"
-                    />
-                  </div>
-
                   <div className="grid gap-3">
                     <div className="flex items-center justify-between">
                       <Label>Stakeholders</Label>
@@ -305,6 +295,16 @@ export default function BusinessTripReports() {
                       onChange={(e) => setNewTrip({...newTrip, pointsDiscussed: e.target.value})}
                       rows={3}
                       data-testid="input-trip-points-discussed"
+                    />
+                  </div>
+
+                  <div className="grid gap-2">
+                    <Label>Associate</Label>
+                    <Input 
+                      placeholder="Associate name" 
+                      value={newTrip.associate}
+                      onChange={(e) => setNewTrip({...newTrip, associate: e.target.value})}
+                      data-testid="input-trip-associate"
                     />
                   </div>
 

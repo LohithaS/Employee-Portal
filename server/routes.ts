@@ -293,6 +293,11 @@ export async function registerRoutes(
       if (endDate < startDate) {
         return res.status(400).json({ message: "End date cannot be before start date" });
       }
+      const endDateMs = new Date(endDate).getTime();
+      const deadlineMs = endDateMs + 10 * 86400000;
+      if (Date.now() > deadlineMs) {
+        return res.status(400).json({ message: "Filing window expired — must be within 10 days of trip end date" });
+      }
       const trip = await storage.createTrip({ ...req.body, userId: req.session.userId });
       res.json(trip);
     } catch (e: any) {

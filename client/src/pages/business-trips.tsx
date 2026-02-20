@@ -177,6 +177,12 @@ export default function BusinessTripReports() {
     return Date.now() <= deadlineMs;
   };
 
+  const isEndDateWithinWindow = (endDate: string) => {
+    const endDateMs = new Date(endDate).getTime();
+    const deadlineMs = endDateMs + 10 * 86400000;
+    return Date.now() <= deadlineMs;
+  };
+
   const validateTrip = () => {
     const newErrors: Record<string, string> = {};
     if (!newTrip.purpose) newErrors.purpose = "Purpose is required";
@@ -193,6 +199,8 @@ export default function BusinessTripReports() {
       newErrors.endDate = "End date must be before today";
     } else if (newTrip.startDate && newTrip.endDate && newTrip.endDate < newTrip.startDate) {
       newErrors.endDate = "End date cannot be before start date";
+    } else if (!isEndDateWithinWindow(newTrip.endDate)) {
+      newErrors.endDate = "Filing window expired — must be within 10 days of trip end date";
     }
     if (!newTrip.outcome) newErrors.outcome = "Outcome is required";
     
@@ -212,6 +220,9 @@ export default function BusinessTripReports() {
     }
     if (newTrip.startDate && newTrip.endDate && newTrip.endDate < newTrip.startDate) {
       newErrors.endDate = "End date cannot be before start date";
+    }
+    if (newTrip.endDate && !isEndDateWithinWindow(newTrip.endDate)) {
+      newErrors.endDate = "Filing window expired — must be within 10 days of trip end date";
     }
     if (!newTrip.purpose) newErrors.purpose = "Purpose is required to save";
     setErrors(newErrors);

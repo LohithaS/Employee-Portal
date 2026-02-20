@@ -266,8 +266,8 @@ export async function registerRoutes(
 
   app.patch("/api/mom-points/:id", requireAuth, async (req, res) => {
     const id = parseInt(req.params.id);
-    const { discussion, decision, actionItem, responsibility } = req.body;
-    const updated = await storage.updateMomPoint(id, { discussion, decision, actionItem, responsibility });
+    const { discussion, decision, actionItem, responsibility, remarks } = req.body;
+    const updated = await storage.updateMomPoint(id, { discussion, decision, actionItem, responsibility, remarks });
     if (!updated) return res.status(404).json({ message: "MOM point not found" });
     res.json(updated);
   });

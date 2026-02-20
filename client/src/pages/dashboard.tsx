@@ -53,7 +53,7 @@ import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "rec
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { getQueryFn, apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import type { Meeting, Client, Reimbursement, Task } from "@shared/schema";
+import type { Meeting, Client, Reimbursement, Task, Lead } from "@shared/schema";
 import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 
@@ -150,6 +150,20 @@ export default function Dashboard() {
     queryKey: ["/api/tasks"],
     queryFn: getQueryFn({ on401: "returnNull" }),
   });
+
+  const { data: leads = [] } = useQuery<Lead[]>({
+    queryKey: ["/api/leads"],
+    queryFn: getQueryFn({ on401: "returnNull" }),
+  });
+
+  const totalSalesRevenue = useMemo(() => {
+    return leads
+      .filter(l => l.stage === "sales")
+      .reduce((sum, l) => {
+        const val = parseFloat((l.valueInr || "0").replace(/[^0-9.]/g, ""));
+        return sum + (isNaN(val) ? 0 : val);
+      }, 0);
+  }, [leads]);
 
   const pendingTasks = tasks.filter((t) => t.status !== "Completed");
   const completedTasks = tasks.filter((t) => t.status === "Completed");
@@ -290,6 +304,7 @@ export default function Dashboard() {
               pendingTasks={pendingTasks}
               completedTasks={completedTasks}
               pendingReimbursements={pendingReimbursements}
+              totalSalesRevenue={totalSalesRevenue}
               setLocation={setLocation}
             />
           </TabsContent>
@@ -313,6 +328,7 @@ export default function Dashboard() {
           pendingTasks={pendingTasks}
           completedTasks={completedTasks}
           pendingReimbursements={pendingReimbursements}
+          totalSalesRevenue={totalSalesRevenue}
           setLocation={setLocation}
         />
       )}
@@ -591,6 +607,7 @@ function DashboardOverview({
   pendingTasks,
   completedTasks,
   pendingReimbursements,
+  totalSalesRevenue,
   setLocation,
 }: {
   meetings: Meeting[];
@@ -601,6 +618,7 @@ function DashboardOverview({
   pendingTasks: Task[];
   completedTasks: Task[];
   pendingReimbursements: Reimbursement[];
+  totalSalesRevenue: number;
   setLocation: (path: string) => void;
 }) {
   return (
@@ -615,10 +633,9 @@ function DashboardOverview({
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">₹45,231.89</div>
+            <div className="text-2xl font-bold" data-testid="text-total-revenue">₹{totalSalesRevenue.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
             <div className="flex items-center gap-1 mt-1">
-              <span className="text-xs font-medium text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded">+20.1%</span>
-              <span className="text-xs text-muted-foreground">from last month</span>
+              <span className="text-xs text-muted-foreground">from leads in sales stage</span>
             </div>
           </CardContent>
         </Card>

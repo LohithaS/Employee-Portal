@@ -460,5 +460,137 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/notifications", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.userId!;
+      const user = await storage.getUser(userId);
+      if (!user) return res.status(401).json({ message: "Not found" });
+
+      const notifications: { id: string; title: string; description: string; time: string; read: boolean; type: string; link?: string }[] = [];
+
+      const now = new Date();
+      const todayIST = new Date(now.toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
+      const todayStr = todayIST.toISOString().split("T")[0];
+
+      const allTasks = await storage.getTasks();
+      const myTasks = allTasks.filter(t => t.userId === userId);
+      myTasks.forEach(t => {
+        if (t.status === "New") {
+          notifications.push({
+            id: `task-new-${t.id}`, title: "New task assigned",
+            description: `"${t.description}" assigned by ${t.assignedBy || "Manager"}`,
+            time: t.deadline || "", read: false, type: "task", link: "/tasks"
+          });
+        }
+        if (t.deadline && t.status !== "Completed") {
+          const deadlineDate = new Date(t.deadline);
+          const diffDays = Math.ceil((deadlineDate.getTime() - todayIST.getTime()) / (1000 * 60 * 60 * 24));
+          if (diffDays >= 0 && diffDays <= 2) {
+            notifications.push({
+              id: `task-deadline-${t.id}`, title: "Task deadline approaching",
+              description: `"${t.description}" is due ${diffDays === 0 ? "today" : diffDays === 1 ? "tomorrow" : "in 2 days"}`,
+              time: t.deadline, read: false, type: "task", link: "/tasks"
+            });
+          }
+        }
+      });
+
+      const allMeetings = await storage.getMeetings();
+      const myMeetings = allMeetings.filter(m => {
+        if (m.userId === userId) return true;
+        if (m.attendees) {
+          try {
+            const attendeesList = JSON.parse(m.attendees);
+            if (Array.isArray(attendeesList)) {
+              return attendeesList.some((a: any) =>
+                (typeof a === "string" && a.toLowerCase() === user.name.toLowerCase()) ||
+                (a && typeof a === "object" && a.name && a.name.toLowerCase() === user.name.toLowerCase())
+              );
+            }
+          } catch {}
+        }
+        return false;
+      });
+      const todayMeetings = myMeetings.filter(m => m.date === todayStr);
+      todayMeetings.forEach(m => {
+        notifications.push({
+          id: `meeting-today-${m.id}`, title: "Meeting today",
+          description: `"${m.title}" at ${m.time} — ${m.location}`,
+          time: todayStr, read: false, type: "meeting", link: "/meetings"
+        });
+      });
+
+      const allLeaves = await storage.getLeaveRequests();
+      const myLeaves = allLeaves.filter(l => l.userId === userId);
+      myLeaves.forEach(l => {
+        if (l.status === "Approved") {
+          notifications.push({
+            id: `leave-approved-${l.id}`, title: "Leave request approved",
+            description: `Your ${l.type} from ${l.fromDate} to ${l.toDate} has been approved.`,
+            time: l.fromDate, read: true, type: "leave", link: "/leave-management"
+          });
+        } else if (l.status === "Rejected") {
+          notifications.push({
+            id: `leave-rejected-${l.id}`, title: "Leave request rejected",
+            description: `Your ${l.type} from ${l.fromDate} to ${l.toDate} was rejected.${l.rejectionReason ? " Reason: " + l.rejectionReason : ""}`,
+            time: l.fromDate, read: false, type: "leave", link: "/leave-management"
+          });
+        }
+      });
+
+      const allReimbursements = await storage.getReimbursements();
+      const myReimbursements = allReimbursements.filter(r => r.userId === userId);
+      myReimbursements.forEach(r => {
+        if (r.status === "Approved") {
+          notifications.push({
+            id: `reimb-approved-${r.id}`, title: "Reimbursement approved",
+            description: `Your ${r.type} claim of ₹${r.amount} has been approved.`,
+            time: r.date, read: true, type: "reimbursement", link: "/reimbursements"
+          });
+        } else if (r.status === "Rejected") {
+          notifications.push({
+            id: `reimb-rejected-${r.id}`, title: "Reimbursement rejected",
+            description: `Your ${r.type} claim of ₹${r.amount} was rejected.${r.rejectionReason ? " Reason: " + r.rejectionReason : ""}`,
+            time: r.date, read: false, type: "reimbursement", link: "/reimbursements"
+          });
+        } else if (r.status === "Pending") {
+          notifications.push({
+            id: `reimb-pending-${r.id}`, title: "Reimbursement pending",
+            description: `Your ${r.type} claim of ₹${r.amount} is awaiting approval.`,
+            time: r.date, read: true, type: "reimbursement", link: "/reimbursements"
+          });
+        }
+      });
+
+      if (user.role === "Manager") {
+        const pendingLeaves = allLeaves.filter(l => l.status === "Pending" && l.userId !== userId);
+        const pendingReimbs = allReimbursements.filter(r => r.status === "Pending" && r.userId !== userId);
+        if (pendingLeaves.length > 0) {
+          notifications.push({
+            id: `mgr-leaves-${pendingLeaves.length}`, title: "Pending leave approvals",
+            description: `${pendingLeaves.length} leave request${pendingLeaves.length > 1 ? "s" : ""} awaiting your approval.`,
+            time: todayStr, read: false, type: "approval", link: "/leave-management"
+          });
+        }
+        if (pendingReimbs.length > 0) {
+          notifications.push({
+            id: `mgr-reimbs-${pendingReimbs.length}`, title: "Pending reimbursement approvals",
+            description: `${pendingReimbs.length} reimbursement claim${pendingReimbs.length > 1 ? "s" : ""} awaiting your approval.`,
+            time: todayStr, read: false, type: "approval", link: "/reimbursements"
+          });
+        }
+      }
+
+      notifications.sort((a, b) => {
+        if (a.read !== b.read) return a.read ? 1 : -1;
+        return 0;
+      });
+
+      res.json(notifications);
+    } catch (e: any) {
+      res.status(500).json({ message: e.message });
+    }
+  });
+
   return httpServer;
 }

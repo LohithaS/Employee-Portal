@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { Bell, Menu, Search } from "lucide-react";
+import { Bell, Menu, CheckCircle, Clock, Calendar, AlertTriangle, FileText, Briefcase } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { useAuth } from "@/hooks/use-auth";
 import { useLocation } from "wouter";
+import { useQuery } from "@tanstack/react-query";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,14 +17,17 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
-const defaultNotifications = [
-  { id: 1, title: "Leave request approved", description: "Your casual leave for Mar 5 has been approved.", time: "2 hours ago", read: false },
-  { id: 2, title: "New task assigned", description: "You have been assigned a new task: Q1 Report.", time: "5 hours ago", read: false },
-  { id: 3, title: "Meeting scheduled", description: "Team sync meeting tomorrow at 10:00 AM.", time: "1 day ago", read: true },
-  { id: 4, title: "Reimbursement processed", description: "Your travel reimbursement of ₹3,500 has been processed.", time: "2 days ago", read: true },
-];
+interface Notification {
+  id: string;
+  title: string;
+  description: string;
+  time: string;
+  read: boolean;
+  type: string;
+  link?: string;
+}
 
 function getInitials(name?: string): string {
   if (!name) return "U";
@@ -35,18 +38,66 @@ function getInitials(name?: string): string {
   return parts[0][0].toUpperCase();
 }
 
+function formatTimeAgo(dateStr: string): string {
+  if (!dateStr) return "";
+  const date = new Date(dateStr);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  if (diffDays < 0) {
+    const futureDays = Math.abs(diffDays);
+    if (futureDays === 0) return "Today";
+    if (futureDays === 1) return "Tomorrow";
+    return `In ${futureDays} days`;
+  }
+  if (diffDays === 0) return "Today";
+  if (diffDays === 1) return "Yesterday";
+  if (diffDays < 7) return `${diffDays} days ago`;
+  if (diffDays < 30) return `${Math.floor(diffDays / 7)} week${Math.floor(diffDays / 7) > 1 ? "s" : ""} ago`;
+  return `${Math.floor(diffDays / 30)} month${Math.floor(diffDays / 30) > 1 ? "s" : ""} ago`;
+}
+
+function getNotificationIcon(type: string) {
+  switch (type) {
+    case "task": return <Clock className="h-3.5 w-3.5 text-blue-500" />;
+    case "meeting": return <Calendar className="h-3.5 w-3.5 text-purple-500" />;
+    case "leave": return <CheckCircle className="h-3.5 w-3.5 text-green-500" />;
+    case "reimbursement": return <FileText className="h-3.5 w-3.5 text-amber-500" />;
+    case "approval": return <AlertTriangle className="h-3.5 w-3.5 text-red-500" />;
+    default: return <Briefcase className="h-3.5 w-3.5 text-slate-500" />;
+  }
+}
+
 export function Header() {
   const { user, logout } = useAuth();
   const [, setLocation] = useLocation();
-  const [notifications, setNotifications] = useState(defaultNotifications);
-  const unreadCount = notifications.filter((n) => !n.read).length;
+  const [readIds, setReadIds] = useState<Set<string>>(new Set());
+
+  const { data: notifications = [] } = useQuery<Notification[]>({
+    queryKey: ["/api/notifications"],
+    refetchInterval: 30000,
+  });
+
+  const processedNotifications = notifications.map(n => ({
+    ...n,
+    read: n.read || readIds.has(n.id),
+  }));
+
+  const unreadCount = processedNotifications.filter((n) => !n.read).length;
 
   const markAllRead = () => {
-    setNotifications(notifications.map((n) => ({ ...n, read: true })));
+    setReadIds(new Set(notifications.map(n => n.id)));
   };
 
-  const markRead = (id: number) => {
-    setNotifications(notifications.map((n) => n.id === id ? { ...n, read: true } : n));
+  const markRead = (id: string) => {
+    setReadIds(prev => new Set(prev).add(id));
+  };
+
+  const handleNotificationClick = (n: Notification) => {
+    markRead(n.id);
+    if (n.link) {
+      setLocation(n.link);
+    }
   };
 
   const initials = getInitials(user?.name);
@@ -66,7 +117,7 @@ export function Header() {
               <Bell className="h-[18px] w-[18px]" />
               {unreadCount > 0 && (
                 <span className="absolute -top-0.5 -right-0.5 h-[18px] w-[18px] rounded-full bg-red-500 text-[10px] font-bold text-white flex items-center justify-center ring-2 ring-white">
-                  {unreadCount}
+                  {unreadCount > 9 ? "9+" : unreadCount}
                 </span>
               )}
             </Button>
@@ -81,28 +132,40 @@ export function Header() {
               )}
             </div>
             <div className="max-h-80 overflow-y-auto">
-              {notifications.length === 0 ? (
-                <div className="p-4 text-center text-sm text-muted-foreground">No notifications</div>
+              {processedNotifications.length === 0 ? (
+                <div className="p-6 text-center">
+                  <Bell className="h-8 w-8 text-muted-foreground/40 mx-auto mb-2" />
+                  <p className="text-sm text-muted-foreground">No notifications yet</p>
+                  <p className="text-xs text-muted-foreground/60 mt-1">You'll see updates here as they happen</p>
+                </div>
               ) : (
-                notifications.map((n) => (
+                processedNotifications.map((n) => (
                   <div
                     key={n.id}
                     className={`px-4 py-3 border-b last:border-0 cursor-pointer hover:bg-muted/50 transition-colors ${!n.read ? "bg-primary/[0.04]" : ""}`}
-                    onClick={() => markRead(n.id)}
+                    onClick={() => handleNotificationClick(n)}
                     data-testid={`notification-${n.id}`}
                   >
                     <div className="flex items-start gap-2.5">
                       {!n.read && <span className="mt-1.5 h-2 w-2 rounded-full bg-primary flex-shrink-0" />}
-                      <div className={!n.read ? "" : "ml-[18px]"}>
-                        <p className="text-sm font-medium">{n.title}</p>
-                        <p className="text-xs text-muted-foreground mt-0.5">{n.description}</p>
-                        <p className="text-[11px] text-muted-foreground/70 mt-1">{n.time}</p>
+                      <div className="flex items-start gap-2 flex-1">
+                        <span className="mt-0.5 flex-shrink-0">{getNotificationIcon(n.type)}</span>
+                        <div className={!n.read ? "" : "ml-0"}>
+                          <p className="text-sm font-medium">{n.title}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{n.description}</p>
+                          <p className="text-[11px] text-muted-foreground/70 mt-1">{formatTimeAgo(n.time)}</p>
+                        </div>
                       </div>
                     </div>
                   </div>
                 ))
               )}
             </div>
+            {processedNotifications.length > 0 && (
+              <div className="border-t px-4 py-2 text-center">
+                <span className="text-xs text-muted-foreground">{processedNotifications.length} notification{processedNotifications.length !== 1 ? "s" : ""}</span>
+              </div>
+            )}
           </PopoverContent>
         </Popover>
 

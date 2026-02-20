@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
+import { Calendar as CalendarWidget } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { 
   Card, 
   CardContent, 
@@ -88,6 +90,7 @@ export default function Dashboard() {
   const { toast } = useToast();
   const isManager = user?.role === "Manager";
   const [dashboardTab, setDashboardTab] = useState("overview");
+  const [calendarDate, setCalendarDate] = useState<Date>(new Date());
 
   const { data: approvals } = useQuery<PendingApprovals>({
     queryKey: ["/api/pending-approvals"],
@@ -164,10 +167,22 @@ export default function Dashboard() {
           <p className="text-sm text-muted-foreground mt-1">Here's what's happening with your workspace today.</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" className="hidden sm:flex rounded-lg border-border/60 shadow-sm">
-            <Calendar className="mr-2 h-4 w-4 text-primary" />
-            {new Date().toLocaleDateString("en-IN", { weekday: "short", month: "short", day: "numeric", year: "numeric" })}
-          </Button>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" size="sm" className="hidden sm:flex rounded-lg border-border/60 shadow-sm cursor-pointer" data-testid="button-date-calendar">
+                <Calendar className="mr-2 h-4 w-4 text-primary" />
+                {(calendarDate || new Date()).toLocaleDateString("en-IN", { weekday: "short", month: "short", day: "numeric", year: "numeric" })}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="end">
+              <CalendarWidget
+                mode="single"
+                selected={calendarDate}
+                onSelect={(date) => date && setCalendarDate(date)}
+                initialFocus
+              />
+            </PopoverContent>
+          </Popover>
           <Button size="sm" className="rounded-lg gradient-primary shadow-md shadow-primary/20 hover:shadow-lg hover:shadow-primary/30 transition-all">Download Report</Button>
         </div>
       </div>

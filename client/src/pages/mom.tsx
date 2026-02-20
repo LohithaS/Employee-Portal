@@ -327,7 +327,7 @@ export default function MinutesOfMeeting() {
                           variant="ghost"
                           size="sm"
                           className="text-primary hover:text-primary/80"
-                          onClick={() => { setSelectedPoint(point); setMomDetailsOpen(true); }}
+                          onClick={() => { setSelectedPoint({ ...point, _meeting: pointMeeting }); setMomDetailsOpen(true); }}
                           data-testid={`button-view-mom-details-${index}`}
                         >
                           <Eye className="mr-1 h-3 w-3" /> View
@@ -408,32 +408,91 @@ export default function MinutesOfMeeting() {
       </Dialog>
 
       <Dialog open={momDetailsOpen} onOpenChange={setMomDetailsOpen}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Meeting Details</DialogTitle>
           </DialogHeader>
-          {selectedPoint && (
-            <div className="space-y-4">
-              <div className="grid gap-3 text-sm">
-                <div className="flex gap-2">
-                  <span className="text-muted-foreground min-w-[120px]">Discussion Point:</span>
-                  <span className="font-medium">{selectedPoint.discussion}</span>
-                </div>
-                <div className="flex gap-2">
-                  <span className="text-muted-foreground min-w-[120px]">Decision:</span>
-                  <span className="font-medium">{selectedPoint.decision || "-"}</span>
-                </div>
-                <div className="flex gap-2">
-                  <span className="text-muted-foreground min-w-[120px]">Action Item:</span>
-                  <span className="font-medium">{selectedPoint.actionItem || "-"}</span>
-                </div>
-                <div className="flex gap-2">
-                  <span className="text-muted-foreground min-w-[120px]">Responsibility:</span>
-                  <span className="font-medium">{selectedPoint.responsibility || "-"}</span>
+          {selectedPoint && (() => {
+            const ptMeeting = selectedPoint._meeting;
+            const ptAttendees = ptMeeting?.attendees ? JSON.parse(ptMeeting.attendees) : [];
+            return (
+              <div className="space-y-4">
+                {ptMeeting && (
+                  <div className="grid gap-3 text-sm">
+                    <div className="flex gap-2">
+                      <span className="text-muted-foreground min-w-[100px]">Title:</span>
+                      <span className="font-medium">{ptMeeting.title}</span>
+                    </div>
+                    <div className="flex gap-2">
+                      <span className="text-muted-foreground min-w-[100px]">Date:</span>
+                      <span className="font-medium">{new Date(ptMeeting.date).toLocaleDateString()}</span>
+                    </div>
+                    <div className="flex gap-2">
+                      <span className="text-muted-foreground min-w-[100px]">Time:</span>
+                      <span className="font-medium">{ptMeeting.time}</span>
+                    </div>
+                    <div className="flex gap-2">
+                      <span className="text-muted-foreground min-w-[100px]">Location:</span>
+                      <span className="font-medium">{ptMeeting.location}</span>
+                    </div>
+                  </div>
+                )}
+
+                {ptMeeting?.agenda && (
+                  <div className="border-t pt-3">
+                    <h4 className="text-sm font-semibold mb-2">Agenda</h4>
+                    <p className="text-sm whitespace-pre-wrap text-muted-foreground">{ptMeeting.agenda}</p>
+                  </div>
+                )}
+
+                {ptAttendees.length > 0 && (
+                  <div className="border-t pt-3">
+                    <h4 className="text-sm font-semibold mb-2">People Involved</h4>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>S.No</TableHead>
+                          <TableHead>Name</TableHead>
+                          <TableHead>Designation</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {ptAttendees.map((attendee: any, idx: number) => (
+                          <TableRow key={idx}>
+                            <TableCell>{idx + 1}</TableCell>
+                            <TableCell className="font-medium">{attendee.name}</TableCell>
+                            <TableCell>{attendee.designation || "-"}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+
+                <div className="border-t pt-3">
+                  <h4 className="text-sm font-semibold mb-2">Discussion Points</h4>
+                  <div className="grid gap-3 text-sm">
+                    <div className="flex gap-2">
+                      <span className="text-muted-foreground min-w-[120px]">Discussion Point:</span>
+                      <span className="font-medium">{selectedPoint.discussion}</span>
+                    </div>
+                    <div className="flex gap-2">
+                      <span className="text-muted-foreground min-w-[120px]">Decision:</span>
+                      <span className="font-medium">{selectedPoint.decision || "-"}</span>
+                    </div>
+                    <div className="flex gap-2">
+                      <span className="text-muted-foreground min-w-[120px]">Action Item:</span>
+                      <span className="font-medium">{selectedPoint.actionItem || "-"}</span>
+                    </div>
+                    <div className="flex gap-2">
+                      <span className="text-muted-foreground min-w-[120px]">Responsibility:</span>
+                      <span className="font-medium">{selectedPoint.responsibility || "-"}</span>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
         </DialogContent>
       </Dialog>
       <Dialog open={editDialogOpen} onOpenChange={(open) => { if (!open) { setEditingId(null); } setEditDialogOpen(open); }}>

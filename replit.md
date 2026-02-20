@@ -7,6 +7,11 @@ A comprehensive employee portal built with React + Express + PostgreSQL. Feature
 Full-stack application with real database persistence and session-based authentication.
 
 ## Recent Changes
+- **Feb 20, 2026**: Business Trip Reports enhanced with new fields
+  - Trips schema: added client, stakeholders (JSON), pointsDiscussed, actionPoints, associate fields
+  - Create Trip form: Client dropdown populated from CRM clients, dynamic stakeholders (name + designation with add/remove), points discussed, action points, associate, outcome
+  - Trip table: shows Client, Associate columns; View button opens details dialog with stakeholders table
+  - UI enhancements: gradient accents on dashboard cards, glassmorphism header, polished sidebar and auth page
 - **Feb 19, 2026**: Password Reset on login page using registered email
   - "Reset it" link on login page opens a reset password form (email + new password + confirm)
   - POST /api/auth/reset-password endpoint looks up user by email and updates password

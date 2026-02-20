@@ -192,9 +192,6 @@ export default function Reimbursements() {
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold tracking-tight text-foreground">Reimbursements</h1>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={handleDownloadForm} data-testid="button-download-form">
-              <Download className="mr-2 h-4 w-4" /> Download Form
-            </Button>
             <Dialog open={isAddOpen} onOpenChange={(open) => { setIsAddOpen(open); if (!open) resetForm(); }}>
               <DialogTrigger asChild>
                 <Button data-testid="button-new-claim">

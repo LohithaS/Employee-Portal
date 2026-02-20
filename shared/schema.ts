@@ -153,6 +153,11 @@ export const trips = pgTable("trips", {
   startDate: text("start_date").notNull(),
   endDate: text("end_date").notNull(),
   outcome: text("outcome").notNull(),
+  client: text("client"),
+  stakeholders: text("stakeholders"),
+  pointsDiscussed: text("points_discussed"),
+  actionPoints: text("action_points"),
+  associate: text("associate"),
   status: text("status").notNull().default("Pending"),
   userId: integer("user_id"),
 });

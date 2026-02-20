@@ -232,6 +232,7 @@ export default function Reimbursements() {
               </DialogFooter>
             </DialogContent>
           </Dialog>
+          </div>
         </div>
 
         <div className="grid gap-6 md:grid-cols-3">

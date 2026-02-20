@@ -131,23 +131,27 @@ export default function BusinessTripReports() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleAddTrip = () => {
-    if (!validateTrip()) return;
+  const handleSaveTrip = (status: string) => {
+    if (status === "Pending" && !validateTrip()) return;
+    if (status === "Draft" && !newTrip.purpose) {
+      setErrors({ purpose: "Purpose is required to save" });
+      return;
+    }
 
     const validStakeholders = stakeholders.filter(s => s.name.trim());
 
     addTripMutation.mutate({
       purpose: newTrip.purpose,
-      location: newTrip.location,
-      startDate: newTrip.startDate,
-      endDate: newTrip.endDate,
-      outcome: newTrip.outcome,
+      location: newTrip.location || "",
+      startDate: newTrip.startDate || "",
+      endDate: newTrip.endDate || "",
+      outcome: newTrip.outcome || "",
       client: newTrip.client,
       stakeholders: JSON.stringify(validStakeholders),
       pointsDiscussed: newTrip.pointsDiscussed,
       actionPoints: newTrip.actionPoints,
       associate: newTrip.associate,
-      status: "Pending"
+      status,
     });
   };
 
@@ -338,8 +342,11 @@ export default function BusinessTripReports() {
                   </div>
                 </div>
               </ScrollArea>
-              <DialogFooter>
-                <Button onClick={handleAddTrip} disabled={addTripMutation.isPending} data-testid="button-submit-trip">
+              <DialogFooter className="gap-2 sm:gap-0">
+                <Button variant="outline" onClick={() => handleSaveTrip("Draft")} disabled={addTripMutation.isPending} data-testid="button-save-trip">
+                  Save as Draft
+                </Button>
+                <Button onClick={() => handleSaveTrip("Pending")} disabled={addTripMutation.isPending} data-testid="button-submit-trip">
                   Submit for Approval
                 </Button>
               </DialogFooter>
@@ -379,6 +386,7 @@ export default function BusinessTripReports() {
                       <Badge variant="outline" className={
                         trip.status === "Approved" ? "bg-green-50 text-green-700 border-green-200" :
                         trip.status === "Rejected" ? "bg-red-50 text-red-700 border-red-200" :
+                        trip.status === "Draft" ? "bg-slate-50 text-slate-600 border-slate-200" :
                         "bg-amber-50 text-amber-700 border-amber-200"
                       }>{trip.status}</Badge>
                     </TableCell>

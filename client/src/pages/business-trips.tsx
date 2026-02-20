@@ -112,7 +112,7 @@ export default function BusinessTripReports() {
   };
 
   const handleUpdateTrip = (status: string) => {
-    if (status === "Pending" && !validateTrip(true)) return;
+    if (status === "Pending" && !validateTrip()) return;
     if (status === "Draft" && !newTrip.purpose) {
       setErrors({ purpose: "Purpose is required to save" });
       return;
@@ -169,21 +169,26 @@ export default function BusinessTripReports() {
     setStakeholders(updated);
   };
 
-  const validateTrip = (allowPastDates = false) => {
+  const validateTrip = () => {
     const newErrors: Record<string, string> = {};
     const today = new Date().toISOString().split("T")[0];
+    const tenDaysAgo = new Date(Date.now() - 10 * 86400000).toISOString().split("T")[0];
     if (!newTrip.purpose) newErrors.purpose = "Purpose is required";
     if (!newTrip.location) newErrors.location = "Location is required";
     if (!newTrip.client) newErrors.client = "Client is required";
     if (!newTrip.startDate) {
       newErrors.startDate = "Start date is required";
-    } else if (!allowPastDates && newTrip.startDate <= today) {
-      newErrors.startDate = "Start date must be a future date";
+    } else if (newTrip.startDate > today) {
+      newErrors.startDate = "Start date cannot be a future date";
     }
     if (!newTrip.endDate) {
       newErrors.endDate = "End date is required";
+    } else if (newTrip.endDate > today) {
+      newErrors.endDate = "End date cannot be a future date";
     } else if (newTrip.startDate && newTrip.endDate && newTrip.endDate < newTrip.startDate) {
       newErrors.endDate = "End date cannot be before start date";
+    } else if (newTrip.endDate < tenDaysAgo) {
+      newErrors.endDate = "Filing window expired — reports must be filed within 10 days of trip end date";
     }
     if (!newTrip.outcome) newErrors.outcome = "Outcome is required";
     
@@ -295,7 +300,7 @@ export default function BusinessTripReports() {
                       <Label>Start Date <span className="text-red-500">*</span></Label>
                       <Input 
                         type="date"
-                        min={new Date(Date.now() + 86400000).toISOString().split("T")[0]}
+                        max={newTrip.endDate || new Date().toISOString().split("T")[0]}
                         value={newTrip.startDate}
                         onChange={(e) => setNewTrip({...newTrip, startDate: e.target.value})}
                         className={errors.startDate ? "border-red-500" : ""}
@@ -307,7 +312,8 @@ export default function BusinessTripReports() {
                       <Label>End Date <span className="text-red-500">*</span></Label>
                       <Input 
                         type="date"
-                        min={newTrip.startDate || new Date(Date.now() + 86400000).toISOString().split("T")[0]}
+                        min={newTrip.startDate || new Date(Date.now() - 10 * 86400000).toISOString().split("T")[0]}
+                        max={new Date().toISOString().split("T")[0]}
                         value={newTrip.endDate}
                         onChange={(e) => setNewTrip({...newTrip, endDate: e.target.value})}
                         className={errors.endDate ? "border-red-500" : ""}
@@ -316,6 +322,7 @@ export default function BusinessTripReports() {
                       {errors.endDate && <span className="text-xs text-red-500">{errors.endDate}</span>}
                     </div>
                   </div>
+                  <p className="text-xs text-muted-foreground -mt-2">Trip reports must be filed within 10 days of the trip end date.</p>
 
                   <div className="grid gap-3">
                     <div className="flex items-center justify-between">
@@ -609,6 +616,7 @@ export default function BusinessTripReports() {
                   <Label>Start Date <span className="text-red-500">*</span></Label>
                   <Input 
                     type="date"
+                    max={newTrip.endDate || new Date().toISOString().split("T")[0]}
                     value={newTrip.startDate}
                     onChange={(e) => setNewTrip({...newTrip, startDate: e.target.value})}
                     className={errors.startDate ? "border-red-500" : ""}
@@ -620,7 +628,8 @@ export default function BusinessTripReports() {
                   <Label>End Date <span className="text-red-500">*</span></Label>
                   <Input 
                     type="date"
-                    min={newTrip.startDate || undefined}
+                    min={newTrip.startDate || new Date(Date.now() - 10 * 86400000).toISOString().split("T")[0]}
+                    max={new Date().toISOString().split("T")[0]}
                     value={newTrip.endDate}
                     onChange={(e) => setNewTrip({...newTrip, endDate: e.target.value})}
                     className={errors.endDate ? "border-red-500" : ""}
@@ -629,6 +638,7 @@ export default function BusinessTripReports() {
                   {errors.endDate && <span className="text-xs text-red-500">{errors.endDate}</span>}
                 </div>
               </div>
+              <p className="text-xs text-muted-foreground -mt-2">Trip reports must be filed within 10 days of the trip end date.</p>
 
               <div className="grid gap-3">
                 <div className="flex items-center justify-between">

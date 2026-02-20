@@ -31,6 +31,8 @@ export default function MinutesOfMeeting() {
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [selectedMeeting, setSelectedMeeting] = useState<any>(null);
   const [selectedAttendees, setSelectedAttendees] = useState<any[]>([]);
+  const [momDetailsOpen, setMomDetailsOpen] = useState(false);
+  const [selectedPoint, setSelectedPoint] = useState<any>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editData, setEditData] = useState({ discussion: "", decision: "", actionItem: "", responsibility: "", remarks: "" });
   
@@ -110,9 +112,12 @@ export default function MinutesOfMeeting() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/mom-points"] });
       setEditingId(null);
+      setEditDialogOpen(false);
       toast({ title: "Point updated successfully" });
     },
   });
+
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
 
   const startEdit = (point: any) => {
     setEditingId(point.id);
@@ -123,6 +128,7 @@ export default function MinutesOfMeeting() {
       responsibility: point.responsibility || "",
       remarks: point.remarks || "",
     });
+    setEditDialogOpen(true);
   };
 
   const saveEdit = () => {
@@ -317,80 +323,22 @@ export default function MinutesOfMeeting() {
                         {pointMeeting ? new Date(pointMeeting.date).toLocaleDateString() : "-"}
                       </TableCell>
                       <TableCell>
-                        {isEditing ? (
-                          <div className="space-y-2">
-                            <div>
-                              <span className="text-xs font-semibold text-muted-foreground">Discussion Point</span>
-                              <Textarea
-                                value={editData.discussion}
-                                onChange={(e) => setEditData({ ...editData, discussion: e.target.value })}
-                                className="min-h-[50px] mt-1"
-                                data-testid="edit-discussion"
-                              />
-                            </div>
-                            <div>
-                              <span className="text-xs font-semibold text-muted-foreground">Decision</span>
-                              <Textarea
-                                value={editData.decision}
-                                onChange={(e) => setEditData({ ...editData, decision: e.target.value })}
-                                className="min-h-[50px] mt-1"
-                                data-testid="edit-decision"
-                              />
-                            </div>
-                            <div>
-                              <span className="text-xs font-semibold text-muted-foreground">Action Item</span>
-                              <Textarea
-                                value={editData.actionItem}
-                                onChange={(e) => setEditData({ ...editData, actionItem: e.target.value })}
-                                className="min-h-[50px] mt-1"
-                                data-testid="edit-action-item"
-                              />
-                            </div>
-                            <div>
-                              <span className="text-xs font-semibold text-muted-foreground">Responsibility</span>
-                              <Input
-                                value={editData.responsibility}
-                                onChange={(e) => setEditData({ ...editData, responsibility: e.target.value })}
-                                className="mt-1"
-                                data-testid="edit-responsibility"
-                              />
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="space-y-1 text-sm">
-                            <div><span className="font-semibold text-muted-foreground">Discussion Point:</span> {point.discussion}</div>
-                            <div><span className="font-semibold text-muted-foreground">Decision:</span> {point.decision || "-"}</div>
-                            <div><span className="font-semibold text-muted-foreground">Action Item:</span> {point.actionItem || "-"}</div>
-                            <div><span className="font-semibold text-muted-foreground">Responsibility:</span> {point.responsibility || "-"}</div>
-                          </div>
-                        )}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-primary hover:text-primary/80"
+                          onClick={() => { setSelectedPoint(point); setMomDetailsOpen(true); }}
+                          data-testid={`button-view-mom-details-${index}`}
+                        >
+                          <Eye className="mr-1 h-3 w-3" /> View
+                        </Button>
                       </TableCell>
                       <TableCell>
-                        {isEditing ? (
-                          <div className="flex gap-1">
-                            <Button variant="ghost" size="icon" onClick={saveEdit} disabled={updatePointMutation.isPending} data-testid={`button-save-edit-${index}`}>
-                              <Check className="h-4 w-4 text-green-600" />
-                            </Button>
-                            <Button variant="ghost" size="icon" onClick={() => setEditingId(null)} data-testid={`button-cancel-edit-${index}`}>
-                              <X className="h-4 w-4 text-red-500" />
-                            </Button>
-                          </div>
-                        ) : (
-                          <Button variant="ghost" size="icon" onClick={() => startEdit(point)} data-testid={`button-edit-point-${index}`}>
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                        )}
+                        <Button variant="ghost" size="icon" onClick={() => startEdit(point)} data-testid={`button-edit-point-${index}`}>
+                          <Pencil className="h-4 w-4" />
+                        </Button>
                       </TableCell>
-                      <TableCell>
-                        {isEditing ? (
-                          <Textarea
-                            value={editData.remarks}
-                            onChange={(e) => setEditData({ ...editData, remarks: e.target.value })}
-                            className="min-h-[50px]"
-                            data-testid="edit-remarks"
-                          />
-                        ) : (point.remarks || "-")}
-                      </TableCell>
+                      <TableCell>{point.remarks || "-"}</TableCell>
                     </TableRow>
                   );
                 })
@@ -456,6 +404,97 @@ export default function MinutesOfMeeting() {
               )}
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={momDetailsOpen} onOpenChange={setMomDetailsOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Meeting Details</DialogTitle>
+          </DialogHeader>
+          {selectedPoint && (
+            <div className="space-y-4">
+              <div className="grid gap-3 text-sm">
+                <div className="flex gap-2">
+                  <span className="text-muted-foreground min-w-[120px]">Discussion Point:</span>
+                  <span className="font-medium">{selectedPoint.discussion}</span>
+                </div>
+                <div className="flex gap-2">
+                  <span className="text-muted-foreground min-w-[120px]">Decision:</span>
+                  <span className="font-medium">{selectedPoint.decision || "-"}</span>
+                </div>
+                <div className="flex gap-2">
+                  <span className="text-muted-foreground min-w-[120px]">Action Item:</span>
+                  <span className="font-medium">{selectedPoint.actionItem || "-"}</span>
+                </div>
+                <div className="flex gap-2">
+                  <span className="text-muted-foreground min-w-[120px]">Responsibility:</span>
+                  <span className="font-medium">{selectedPoint.responsibility || "-"}</span>
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+      <Dialog open={editDialogOpen} onOpenChange={(open) => { if (!open) { setEditingId(null); } setEditDialogOpen(open); }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Edit MOM Point</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Discussion Point <span className="text-red-500">*</span></Label>
+              <Textarea
+                value={editData.discussion}
+                onChange={(e) => setEditData({ ...editData, discussion: e.target.value })}
+                className="min-h-[60px]"
+                data-testid="edit-discussion"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Decision</Label>
+              <Textarea
+                value={editData.decision}
+                onChange={(e) => setEditData({ ...editData, decision: e.target.value })}
+                className="min-h-[60px]"
+                data-testid="edit-decision"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Action Item</Label>
+              <Textarea
+                value={editData.actionItem}
+                onChange={(e) => setEditData({ ...editData, actionItem: e.target.value })}
+                className="min-h-[60px]"
+                data-testid="edit-action-item"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Responsibility</Label>
+              <Input
+                value={editData.responsibility}
+                onChange={(e) => setEditData({ ...editData, responsibility: e.target.value })}
+                data-testid="edit-responsibility"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Remarks</Label>
+              <Textarea
+                value={editData.remarks}
+                onChange={(e) => setEditData({ ...editData, remarks: e.target.value })}
+                className="min-h-[60px]"
+                data-testid="edit-remarks"
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => { setEditingId(null); setEditDialogOpen(false); }} data-testid="button-cancel-edit">
+                Cancel
+              </Button>
+              <Button onClick={saveEdit} disabled={updatePointMutation.isPending} data-testid="button-save-edit">
+                <Check className="mr-2 h-4 w-4" /> Save
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </DashboardLayout>

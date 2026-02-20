@@ -81,7 +81,10 @@ export default function MinutesOfMeeting() {
       return res.json();
     },
   });
-  const points = pointsQuery.data ?? [];
+  const allPoints = pointsQuery.data ?? [];
+  const points = isSpecificMeeting
+    ? allPoints.filter((p: any) => p.meetingId === Number(meetingId))
+    : allPoints;
 
   const [newPoint, setNewPoint] = useState({
     discussion: "",

@@ -339,28 +339,45 @@ export async function registerRoutes(
   });
 
   app.get("/api/reimbursements", requireAuth, async (req, res) => {
+    const user = await storage.getUser(req.session.userId!);
     const allData = await storage.getReimbursements();
-    const data = allData.filter(r => r.userId === req.session.userId);
-    res.json(data);
+    if (user && user.role === "Manager") {
+      const allUsers = await storage.getUsers();
+      const userMap: Record<number, string> = {};
+      allUsers.forEach(u => { userMap[u.id] = u.name; });
+      res.json(allData.map(r => ({ ...r, employeeName: r.userId ? userMap[r.userId] || "Unknown" : "Unknown" })));
+    } else {
+      const data = allData.filter(r => r.userId === req.session.userId);
+      res.json(data);
+    }
   });
 
   app.patch("/api/reimbursements/:id", requireAuth, async (req, res) => {
     try {
       const user = await storage.getUser(req.session.userId!);
       if (!user || user.role !== "Manager") {
-        return res.status(403).json({ message: "Only managers can approve or reject claims" });
+        return res.status(403).json({ message: "Only managers can update claims" });
       }
       const id = parseInt(req.params.id as string);
-      const { status, rejectionReason } = req.body;
-      if (!status || !["Approved", "Rejected"].includes(status)) {
-        return res.status(400).json({ message: "Invalid status" });
+      const { status, rejectionReason, managerComment } = req.body;
+      const updateData: any = {};
+      if (status) {
+        if (!["Approved", "Rejected"].includes(status)) {
+          return res.status(400).json({ message: "Invalid status" });
+        }
+        if (status === "Rejected" && (!rejectionReason || !rejectionReason.trim())) {
+          return res.status(400).json({ message: "Rejection reason is required" });
+        }
+        updateData.status = status;
+        if (status === "Rejected") {
+          updateData.rejectionReason = rejectionReason.trim();
+        }
       }
-      if (status === "Rejected" && (!rejectionReason || !rejectionReason.trim())) {
-        return res.status(400).json({ message: "Rejection reason is required" });
+      if (managerComment !== undefined) {
+        updateData.managerComment = managerComment.trim();
       }
-      const updateData: any = { status };
-      if (status === "Rejected") {
-        updateData.rejectionReason = rejectionReason.trim();
+      if (Object.keys(updateData).length === 0) {
+        return res.status(400).json({ message: "No update data provided" });
       }
       const updated = await storage.updateReimbursement(id, updateData);
       res.json(updated);

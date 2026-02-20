@@ -284,11 +284,11 @@ export async function registerRoutes(
         return res.status(400).json({ message: "Start date and end date are required" });
       }
       const today = new Date().toISOString().split("T")[0];
-      if (startDate > today) {
-        return res.status(400).json({ message: "Start date must be today or earlier" });
+      if (startDate >= today) {
+        return res.status(400).json({ message: "Start date must be before today" });
       }
-      if (endDate > today) {
-        return res.status(400).json({ message: "End date must be today or earlier" });
+      if (endDate >= today) {
+        return res.status(400).json({ message: "End date must be before today" });
       }
       if (endDate < startDate) {
         return res.status(400).json({ message: "End date cannot be before start date" });

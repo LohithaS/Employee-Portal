@@ -167,6 +167,7 @@ export default function BusinessTripReports() {
   };
 
   const today = new Date().toISOString().split("T")[0];
+  const yesterday = new Date(Date.now() - 86400000).toISOString().split("T")[0];
 
   const isTripEditable = (trip: any) => {
     if (trip.status !== "Draft") return false;
@@ -183,13 +184,13 @@ export default function BusinessTripReports() {
     if (!newTrip.client) newErrors.client = "Client is required";
     if (!newTrip.startDate) {
       newErrors.startDate = "Start date is required";
-    } else if (newTrip.startDate > today) {
-      newErrors.startDate = "Start date must be today or earlier";
+    } else if (newTrip.startDate >= today) {
+      newErrors.startDate = "Start date must be before today";
     }
     if (!newTrip.endDate) {
       newErrors.endDate = "End date is required";
-    } else if (newTrip.endDate > today) {
-      newErrors.endDate = "End date must be today or earlier";
+    } else if (newTrip.endDate >= today) {
+      newErrors.endDate = "End date must be before today";
     } else if (newTrip.startDate && newTrip.endDate && newTrip.endDate < newTrip.startDate) {
       newErrors.endDate = "End date cannot be before start date";
     }
@@ -203,11 +204,11 @@ export default function BusinessTripReports() {
     const newErrors: Record<string, string> = {};
     if (!newTrip.startDate) newErrors.startDate = "Start date is required";
     if (!newTrip.endDate) newErrors.endDate = "End date is required";
-    if (newTrip.startDate && newTrip.startDate > today) {
-      newErrors.startDate = "Start date must be today or earlier";
+    if (newTrip.startDate && newTrip.startDate >= today) {
+      newErrors.startDate = "Start date must be before today";
     }
-    if (newTrip.endDate && newTrip.endDate > today) {
-      newErrors.endDate = "End date must be today or earlier";
+    if (newTrip.endDate && newTrip.endDate >= today) {
+      newErrors.endDate = "End date must be before today";
     }
     if (newTrip.startDate && newTrip.endDate && newTrip.endDate < newTrip.startDate) {
       newErrors.endDate = "End date cannot be before start date";
@@ -318,7 +319,7 @@ export default function BusinessTripReports() {
                       <Label>Start Date <span className="text-red-500">*</span></Label>
                       <Input 
                         type="date"
-                        max={newTrip.endDate || today}
+                        max={newTrip.endDate || yesterday}
                         value={newTrip.startDate}
                         onChange={(e) => setNewTrip({...newTrip, startDate: e.target.value})}
                         className={errors.startDate ? "border-red-500" : ""}
@@ -331,7 +332,7 @@ export default function BusinessTripReports() {
                       <Input 
                         type="date"
                         min={newTrip.startDate || undefined}
-                        max={today}
+                        max={yesterday}
                         value={newTrip.endDate}
                         onChange={(e) => setNewTrip({...newTrip, endDate: e.target.value})}
                         className={errors.endDate ? "border-red-500" : ""}

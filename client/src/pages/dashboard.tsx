@@ -243,6 +243,19 @@ function ApprovalsTab({
   const [rejectDialog, setRejectDialog] = useState<{ type: "leave" | "reimbursement"; id: number; name: string } | null>(null);
   const [rejectionReason, setRejectionReason] = useState("");
   const [reasonError, setReasonError] = useState("");
+  const [commentDialog, setCommentDialog] = useState<{ id: number; name: string; existing: string } | null>(null);
+  const [commentText, setCommentText] = useState("");
+
+  const commentMutation = useMutation({
+    mutationFn: async ({ id, managerComment }: { id: number; managerComment: string }) => {
+      await apiRequest("PATCH", `/api/reimbursements/${id}`, { managerComment });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/pending-approvals"] });
+      setCommentDialog(null);
+      setCommentText("");
+    },
+  });
 
   const handleRejectConfirm = () => {
     if (!rejectionReason.trim()) {
@@ -285,6 +298,31 @@ function ApprovalsTab({
           <DialogFooter>
             <Button variant="outline" onClick={() => { setRejectDialog(null); setRejectionReason(""); setReasonError(""); }}>Cancel</Button>
             <Button variant="destructive" onClick={handleRejectConfirm} disabled={isLeaveLoading || isReimbursementLoading} data-testid="button-confirm-reject">Reject</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!commentDialog} onOpenChange={(open) => { if (!open) { setCommentDialog(null); setCommentText(""); } }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Manager Comment</DialogTitle>
+            <DialogDescription>
+              Add a comment for {commentDialog?.name}'s reimbursement claim.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label>Comment</Label>
+            <Textarea
+              placeholder="Write your comment here..."
+              value={commentText}
+              onChange={(e) => setCommentText(e.target.value)}
+              rows={4}
+              data-testid="input-manager-comment"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setCommentDialog(null); setCommentText(""); }}>Cancel</Button>
+            <Button onClick={() => { if (commentDialog) commentMutation.mutate({ id: commentDialog.id, managerComment: commentText }); }} disabled={commentMutation.isPending} data-testid="button-save-comment">Save Comment</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -387,6 +425,7 @@ function ApprovalsTab({
                   <TableHead>Date</TableHead>
                   <TableHead>Description</TableHead>
                   <TableHead>Actions</TableHead>
+                  <TableHead>Comments</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -419,7 +458,23 @@ function ApprovalsTab({
                         >
                           <X className="h-3 w-3 mr-1" /> Reject
                         </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-7 text-xs"
+                          onClick={() => { setCommentDialog({ id: claim.id, name: claim.employeeName, existing: claim.managerComment || "" }); setCommentText(claim.managerComment || ""); }}
+                          data-testid={`comment-reimbursement-${claim.id}`}
+                        >
+                          <ClipboardList className="h-3 w-3 mr-1" /> Comment
+                        </Button>
                       </div>
+                    </TableCell>
+                    <TableCell>
+                      {claim.managerComment ? (
+                        <span className="text-sm text-muted-foreground">{claim.managerComment}</span>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">—</span>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}

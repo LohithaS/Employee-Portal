@@ -339,17 +339,9 @@ export async function registerRoutes(
   });
 
   app.get("/api/reimbursements", requireAuth, async (req, res) => {
-    const user = await storage.getUser(req.session.userId!);
     const allData = await storage.getReimbursements();
-    if (user && user.role === "Manager") {
-      const allUsers = await storage.getUsers();
-      const userMap: Record<number, string> = {};
-      allUsers.forEach(u => { userMap[u.id] = u.name; });
-      res.json(allData.map(r => ({ ...r, employeeName: r.userId ? userMap[r.userId] || "Unknown" : "Unknown" })));
-    } else {
-      const data = allData.filter(r => r.userId === req.session.userId);
-      res.json(data);
-    }
+    const data = allData.filter(r => r.userId === req.session.userId);
+    res.json(data);
   });
 
   app.patch("/api/reimbursements/:id", requireAuth, async (req, res) => {

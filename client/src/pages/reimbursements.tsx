@@ -50,12 +50,8 @@ export default function Reimbursements() {
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [viewClaim, setViewClaim] = useState<any>(null);
-  const [isCommentOpen, setIsCommentOpen] = useState(false);
-  const [commentClaim, setCommentClaim] = useState<any>(null);
-  const [commentText, setCommentText] = useState("");
   const { toast } = useToast();
   const { user } = useAuth();
-  const isManager = user?.role === "Manager";
 
   const [expenses, setExpenses] = useState<ExpenseItem[]>([{ ...emptyExpense }]);
   const [expenseErrors, setExpenseErrors] = useState<Record<string, string>[]>([{}]);
@@ -100,24 +96,6 @@ export default function Reimbursements() {
       toast({ title: "Claim submitted successfully" });
     },
   });
-
-  const commentMutation = useMutation({
-    mutationFn: async ({ id, managerComment }: { id: number; managerComment: string }) => {
-      await apiRequest("PATCH", `/api/reimbursements/${id}`, { managerComment });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/reimbursements"] });
-      setIsCommentOpen(false);
-      setCommentClaim(null);
-      setCommentText("");
-      toast({ title: "Comment saved successfully" });
-    },
-  });
-
-  const handleSaveComment = () => {
-    if (!commentClaim) return;
-    commentMutation.mutate({ id: commentClaim.id, managerComment: commentText });
-  };
 
   const resetForm = () => {
     setExpenses([{ ...emptyExpense }]);
@@ -378,7 +356,6 @@ export default function Reimbursements() {
           <Table>
             <TableHeader>
               <TableRow>
-                {isManager && <TableHead>Employee</TableHead>}
                 <TableHead>Claim</TableHead>
                 <TableHead>Date</TableHead>
                 <TableHead>Expenses</TableHead>
@@ -393,7 +370,6 @@ export default function Reimbursements() {
                 const expList = parseExpenses(claim);
                 return (
                   <TableRow key={claim.id}>
-                    {isManager && <TableCell className="font-medium">{claim.employeeName || "—"}</TableCell>}
                     <TableCell className="font-medium">{claim.type}</TableCell>
                     <TableCell>{claim.date}</TableCell>
                     <TableCell>{expList.length > 0 ? `${expList.length} item(s)` : "1 item"}</TableCell>
@@ -404,18 +380,11 @@ export default function Reimbursements() {
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <div className="flex gap-1">
-                        {expList.length > 0 && (
-                          <Button variant="ghost" size="sm" onClick={() => { setViewClaim(claim); setIsViewOpen(true); }} data-testid={`button-view-claim-${claim.id}`}>
-                            <Eye className="h-4 w-4 mr-1" /> View
-                          </Button>
-                        )}
-                        {isManager && (
-                          <Button variant="ghost" size="sm" onClick={() => { setCommentClaim(claim); setCommentText(claim.managerComment || ""); setIsCommentOpen(true); }} data-testid={`button-comment-claim-${claim.id}`}>
-                            <MessageSquare className="h-4 w-4 mr-1" /> Comment
-                          </Button>
-                        )}
-                      </div>
+                      {expList.length > 0 && (
+                        <Button variant="ghost" size="sm" onClick={() => { setViewClaim(claim); setIsViewOpen(true); }} data-testid={`button-view-claim-${claim.id}`}>
+                          <Eye className="h-4 w-4 mr-1" /> View
+                        </Button>
+                      )}
                     </TableCell>
                     <TableCell>
                       {claim.managerComment ? (
@@ -474,29 +443,6 @@ export default function Reimbursements() {
           </DialogContent>
         </Dialog>
 
-        <Dialog open={isCommentOpen} onOpenChange={setIsCommentOpen}>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>Manager Comment</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-3 py-2">
-              <p className="text-sm text-muted-foreground">
-                Add a comment for: <span className="font-medium text-foreground">{commentClaim?.type}</span>
-              </p>
-              <Textarea
-                placeholder="Write your comment here..."
-                value={commentText}
-                onChange={(e) => setCommentText(e.target.value)}
-                rows={4}
-                data-testid="input-manager-comment"
-              />
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsCommentOpen(false)}>Cancel</Button>
-              <Button onClick={handleSaveComment} disabled={commentMutation.isPending} data-testid="button-save-comment">Save Comment</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
       </div>
     </DashboardLayout>
   );

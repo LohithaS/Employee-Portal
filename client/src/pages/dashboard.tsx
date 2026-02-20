@@ -624,65 +624,65 @@ function DashboardOverview({
   return (
     <div className="flex flex-col gap-6">
       <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="card-hover shadow-sm border-border/50 overflow-hidden relative">
-          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-400 to-emerald-600" />
+        <Card className="card-hover glow-emerald border-emerald-500/20 overflow-hidden relative" style={{ background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(16, 185, 129, 0.02))' }}>
+          <div className="absolute top-0 left-0 right-0 h-[2px]" style={{ background: 'linear-gradient(90deg, #10b981, #34d399, #10b981)' }} />
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Total Revenue</CardTitle>
             <div className="p-2.5 stat-gradient-emerald rounded-xl">
-              <IndianRupee className="h-4 w-4 text-emerald-600" />
+              <IndianRupee className="h-4 w-4 text-emerald-400" />
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold" data-testid="text-total-revenue">₹{totalSalesRevenue.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+            <div className="text-2xl font-bold text-emerald-50" data-testid="text-total-revenue">₹{totalSalesRevenue.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
             <div className="flex items-center gap-1 mt-1">
-              <span className="text-xs text-muted-foreground">from leads in sales stage</span>
+              <span className="text-xs text-emerald-400/70">from leads in sales stage</span>
             </div>
           </CardContent>
         </Card>
-        <Card className="card-hover shadow-sm border-border/50 cursor-pointer overflow-hidden relative" onClick={() => setLocation("/crm")}>
-          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-400 to-indigo-600" />
+        <Card className="card-hover glow-blue border-blue-500/20 cursor-pointer overflow-hidden relative" onClick={() => setLocation("/crm")} style={{ background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(59, 130, 246, 0.02))' }}>
+          <div className="absolute top-0 left-0 right-0 h-[2px]" style={{ background: 'linear-gradient(90deg, #3b82f6, #60a5fa, #3b82f6)' }} />
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Active Clients</CardTitle>
             <div className="p-2.5 stat-gradient-blue rounded-xl">
-              <Users className="h-4 w-4 text-blue-600" />
+              <Users className="h-4 w-4 text-blue-400" />
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{clients.length}</div>
+            <div className="text-2xl font-bold text-blue-50">{clients.length}</div>
             <div className="flex items-center gap-1 mt-1">
-              <ArrowUpRight className="h-3 w-3 text-blue-600" />
-              <span className="text-xs text-muted-foreground">Click to manage</span>
+              <ArrowUpRight className="h-3 w-3 text-blue-400" />
+              <span className="text-xs text-blue-400/70">Click to manage</span>
             </div>
           </CardContent>
         </Card>
-        <Card className="card-hover shadow-sm border-border/50 overflow-hidden relative">
-          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-amber-400 to-orange-500" />
+        <Card className="card-hover glow-amber border-amber-500/20 overflow-hidden relative" style={{ background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.08), rgba(245, 158, 11, 0.02))' }}>
+          <div className="absolute top-0 left-0 right-0 h-[2px]" style={{ background: 'linear-gradient(90deg, #f59e0b, #fbbf24, #f59e0b)' }} />
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Pending Tasks</CardTitle>
             <div className="p-2.5 stat-gradient-amber rounded-xl">
-              <CheckCircle2 className="h-4 w-4 text-amber-600" />
+              <CheckCircle2 className="h-4 w-4 text-amber-400" />
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{pendingTasks.length}</div>
+            <div className="text-2xl font-bold text-amber-50">{pendingTasks.length}</div>
             <div className="flex items-center gap-1 mt-1">
-              <span className="text-xs font-medium text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded">{completedTasks.length}</span>
+              <span className="text-xs font-medium text-emerald-400 bg-emerald-500/15 px-1.5 py-0.5 rounded">{completedTasks.length}</span>
               <span className="text-xs text-muted-foreground">completed</span>
             </div>
           </CardContent>
         </Card>
-        <Card className="card-hover shadow-sm border-border/50 overflow-hidden relative">
-          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-purple-400 to-violet-600" />
+        <Card className="card-hover glow-purple border-purple-500/20 overflow-hidden relative" style={{ background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.08), rgba(168, 85, 247, 0.02))' }}>
+          <div className="absolute top-0 left-0 right-0 h-[2px]" style={{ background: 'linear-gradient(90deg, #a855f7, #c084fc, #a855f7)' }} />
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Target Reached</CardTitle>
             <div className="p-2.5 stat-gradient-purple rounded-xl">
-              <TrendingUp className="h-4 w-4 text-purple-600" />
+              <TrendingUp className="h-4 w-4 text-purple-400" />
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">84%</div>
+            <div className="text-2xl font-bold text-purple-50">84%</div>
             <div className="flex items-center gap-1 mt-1">
-              <span className="text-xs font-medium text-purple-600 bg-purple-50 px-1.5 py-0.5 rounded">+4%</span>
+              <span className="text-xs font-medium text-purple-400 bg-purple-500/15 px-1.5 py-0.5 rounded">+4%</span>
               <span className="text-xs text-muted-foreground">from last week</span>
             </div>
           </CardContent>

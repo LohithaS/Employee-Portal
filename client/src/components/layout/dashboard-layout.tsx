@@ -8,20 +8,47 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return (
     <div className="flex min-h-screen w-full flex-col md:flex-row">
       <Sidebar collapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed(!sidebarCollapsed)} />
-      <div
-        className="flex flex-col flex-1 min-h-screen"
-        style={{
-          background: `
-            radial-gradient(ellipse 80% 60% at 0% 0%, rgba(30, 27, 75, 0.25), transparent 50%),
-            radial-gradient(ellipse 60% 50% at 100% 0%, rgba(88, 28, 135, 0.20), transparent 50%),
-            radial-gradient(ellipse 70% 50% at 50% 100%, rgba(15, 23, 42, 0.18), transparent 50%),
-            radial-gradient(ellipse 50% 40% at 80% 70%, rgba(67, 56, 202, 0.12), transparent 50%),
-            linear-gradient(135deg, #0f172a 0%, #1e1b4b 25%, #1a1a2e 50%, #16213e 75%, #0f172a 100%)
-          `,
-        }}
-      >
+      <div className="flex flex-col flex-1 min-h-screen relative overflow-hidden" style={{ background: '#080613' }}>
+        <div className="pointer-events-none absolute inset-0 z-0">
+          <div
+            className="absolute w-[600px] h-[600px] rounded-full opacity-30 blur-[120px]"
+            style={{
+              background: 'radial-gradient(circle, #7c3aed 0%, transparent 70%)',
+              top: '-10%',
+              left: '-5%',
+              animation: 'blob-float-1 18s ease-in-out infinite',
+            }}
+          />
+          <div
+            className="absolute w-[500px] h-[500px] rounded-full opacity-20 blur-[100px]"
+            style={{
+              background: 'radial-gradient(circle, #6366f1 0%, transparent 70%)',
+              top: '40%',
+              right: '-8%',
+              animation: 'blob-float-2 22s ease-in-out infinite',
+            }}
+          />
+          <div
+            className="absolute w-[400px] h-[400px] rounded-full opacity-15 blur-[80px]"
+            style={{
+              background: 'radial-gradient(circle, #ec4899 0%, transparent 70%)',
+              bottom: '-5%',
+              left: '30%',
+              animation: 'blob-float-3 20s ease-in-out infinite',
+            }}
+          />
+          <div
+            className="absolute w-[300px] h-[300px] rounded-full opacity-15 blur-[80px]"
+            style={{
+              background: 'radial-gradient(circle, #06b6d4 0%, transparent 70%)',
+              top: '20%',
+              left: '50%',
+              animation: 'blob-float-2 25s ease-in-out infinite',
+            }}
+          />
+        </div>
         <Header />
-        <main className="flex-1 p-4 md:p-6 lg:p-8">
+        <main className="flex-1 p-4 md:p-6 lg:p-8 relative z-[1]">
           {children}
         </main>
       </div>

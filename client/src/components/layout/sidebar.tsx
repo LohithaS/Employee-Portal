@@ -62,17 +62,22 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
   return (
     <TooltipProvider delayDuration={0}>
       <div className={cn(
-        "hidden gradient-sidebar text-sidebar-foreground md:flex md:flex-col transition-all duration-300 relative",
+        "hidden md:flex md:flex-col transition-all duration-300 relative",
         collapsed ? "md:w-[68px]" : "md:w-64"
-      )}>
-        <div className="absolute inset-0 bg-gradient-to-b from-white/[0.06] to-transparent pointer-events-none" />
+      )} style={{ background: 'linear-gradient(180deg, #0c0a1d 0%, #0e0b22 50%, #080613 100%)' }}>
+        <div className="absolute inset-0 pointer-events-none" style={{
+          background: 'linear-gradient(180deg, rgba(124, 58, 237, 0.06) 0%, transparent 30%, rgba(99, 102, 241, 0.03) 100%)'
+        }} />
+        <div className="absolute top-0 left-0 right-0 h-px" style={{
+          background: 'linear-gradient(90deg, transparent, rgba(139, 92, 246, 0.4), transparent)'
+        }} />
 
         <div className={cn(
-          "flex h-16 items-center border-b border-white/[0.08] relative z-10",
+          "flex h-16 items-center border-b border-white/[0.06] relative z-10",
           collapsed ? "px-3 justify-center" : "px-5 justify-between"
         )}>
           <div className="flex items-center gap-2.5 font-semibold overflow-hidden">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg gradient-primary shadow-lg shadow-indigo-500/20">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl gradient-primary shadow-lg" style={{ boxShadow: '0 4px 15px rgba(124, 58, 237, 0.4)' }}>
               <Sparkles className="h-4 w-4 text-white" />
             </div>
             {!collapsed && <span className="text-lg font-heading tracking-tight text-white whitespace-nowrap">Nexus</span>}
@@ -81,7 +86,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
             <Button
               variant="ghost"
               size="icon"
-              className="h-7 w-7 shrink-0 text-white/50 hover:text-white hover:bg-white/10"
+              className="h-7 w-7 shrink-0 text-white/40 hover:text-white hover:bg-white/10"
               onClick={onToggle}
               data-testid="button-toggle-sidebar"
             >
@@ -91,11 +96,11 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
         </div>
 
         {collapsed && (
-          <div className="flex justify-center py-3 border-b border-white/[0.08] relative z-10">
+          <div className="flex justify-center py-3 border-b border-white/[0.06] relative z-10">
             <Button
               variant="ghost"
               size="icon"
-              className="h-7 w-7 text-white/50 hover:text-white hover:bg-white/10"
+              className="h-7 w-7 text-white/40 hover:text-white hover:bg-white/10"
               onClick={onToggle}
               data-testid="button-toggle-sidebar"
             >
@@ -109,20 +114,22 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
             {sidebarItems.map((item, index) => {
               const isActive = location === item.href;
               const linkContent = (
-                <Link key={index} href={item.href}>
-                  <a className={cn(
-                    "flex items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] font-medium transition-all duration-200",
+                <Link key={index} href={item.href} className={cn(
+                    "flex items-center gap-3 rounded-xl px-3 py-2.5 text-[13px] font-medium transition-all duration-200 no-underline",
                     isActive 
-                      ? "bg-white/[0.12] text-white shadow-sm shadow-black/10" 
-                      : "text-white/60 hover:text-white hover:bg-white/[0.07]",
+                      ? "text-white" 
+                      : "text-white/45 hover:text-white/80 hover:bg-white/[0.05]",
                     collapsed && "justify-center px-2"
-                  )}>
-                    <item.icon className={cn("h-[18px] w-[18px] shrink-0", isActive && "text-indigo-300")} />
+                  )} style={isActive ? {
+                    background: 'linear-gradient(135deg, rgba(124, 58, 237, 0.25), rgba(99, 102, 241, 0.15))',
+                    boxShadow: '0 0 20px rgba(124, 58, 237, 0.12), inset 0 1px 0 rgba(255,255,255,0.06)',
+                    border: '1px solid rgba(139, 92, 246, 0.2)',
+                  } : undefined}>
+                    <item.icon className={cn("h-[18px] w-[18px] shrink-0", isActive && "text-violet-300")} />
                     {!collapsed && <span className="whitespace-nowrap">{item.label}</span>}
                     {isActive && !collapsed && (
-                      <div className="ml-auto h-1.5 w-1.5 rounded-full bg-indigo-400" />
+                      <div className="ml-auto h-1.5 w-1.5 rounded-full" style={{ background: '#a78bfa', boxShadow: '0 0 8px #a78bfa' }} />
                     )}
-                  </a>
                 </Link>
               );
 
@@ -144,12 +151,12 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
           </nav>
         </ScrollArea>
 
-        <div className="border-t border-white/[0.08] p-3 relative z-10">
+        <div className="border-t border-white/[0.06] p-3 relative z-10">
           {collapsed ? (
             <Tooltip>
               <TooltipTrigger asChild>
                 <div className="flex items-center justify-center">
-                  <div className="h-9 w-9 rounded-full gradient-primary flex items-center justify-center shadow-md shadow-indigo-500/20">
+                  <div className="h-9 w-9 rounded-full gradient-primary flex items-center justify-center" style={{ boxShadow: '0 4px 15px rgba(124, 58, 237, 0.3)' }}>
                     <span className="text-xs font-bold text-white">{getInitials(user?.name)}</span>
                   </div>
                 </div>
@@ -162,13 +169,16 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
               </TooltipContent>
             </Tooltip>
           ) : (
-            <div className="flex items-center gap-3 rounded-lg bg-white/[0.06] p-3">
-              <div className="h-9 w-9 rounded-full gradient-primary flex items-center justify-center shrink-0 shadow-md shadow-indigo-500/20">
+            <div className="flex items-center gap-3 rounded-xl p-3" style={{
+              background: 'linear-gradient(135deg, rgba(124, 58, 237, 0.08), rgba(99, 102, 241, 0.05))',
+              border: '1px solid rgba(139, 92, 246, 0.1)',
+            }}>
+              <div className="h-9 w-9 rounded-full gradient-primary flex items-center justify-center shrink-0" style={{ boxShadow: '0 4px 15px rgba(124, 58, 237, 0.3)' }}>
                 <span className="text-xs font-bold text-white">{getInitials(user?.name)}</span>
               </div>
               <div className="flex flex-col overflow-hidden">
                 <span className="text-sm font-semibold truncate text-white">{user?.name || "User"}</span>
-                <span className="text-xs text-white/50">{user?.role || "Employee"}</span>
+                <span className="text-xs text-violet-300/60">{user?.role || "Employee"}</span>
               </div>
             </div>
           )}

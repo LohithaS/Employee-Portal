@@ -267,7 +267,7 @@ function RegisterForm({ isLoading, onSubmit }: { isLoading: boolean; onSubmit: (
               data-testid="button-role-employee"
               className={`flex flex-col items-center gap-2 rounded-lg border-2 p-4 transition-all ${
                 selectedRole === "Employee"
-                  ? "border-indigo-600 bg-indigo-50 text-indigo-700 dark:bg-indigo-950/30 dark:text-indigo-400"
+                  ? "border-violet-500 bg-violet-500/10 text-violet-300"
                   : "border-muted hover:border-muted-foreground/30"
               }`}
             >
@@ -280,7 +280,7 @@ function RegisterForm({ isLoading, onSubmit }: { isLoading: boolean; onSubmit: (
               data-testid="button-role-manager"
               className={`flex flex-col items-center gap-2 rounded-lg border-2 p-4 transition-all ${
                 selectedRole === "Manager"
-                  ? "border-indigo-600 bg-indigo-50 text-indigo-700 dark:bg-indigo-950/30 dark:text-indigo-400"
+                  ? "border-violet-500 bg-violet-500/10 text-violet-300"
                   : "border-muted hover:border-muted-foreground/30"
               }`}
             >
@@ -347,7 +347,7 @@ function ResetPasswordForm({ onBack }: { onBack: () => void }) {
       >
         <ArrowLeft className="h-4 w-4" /> Back to Sign In
       </button>
-      <div className="flex items-center gap-2 mb-4 p-3 rounded-lg bg-indigo-50 dark:bg-indigo-950/30 text-indigo-700 dark:text-indigo-400 text-sm">
+      <div className="flex items-center gap-2 mb-4 p-3 rounded-lg bg-violet-500/10 text-violet-400 text-sm border border-violet-500/15">
         <Mail className="h-4 w-4 flex-shrink-0" />
         <span>Enter your registered email to reset your password</span>
       </div>
@@ -469,8 +469,8 @@ export default function AuthPage() {
         <div className="absolute -bottom-32 -right-32 w-80 h-80 rounded-full bg-white/5 z-0" />
         <div className="absolute -top-16 -left-16 w-48 h-48 rounded-full bg-white/5 z-0" />
       </div>
-      <div className="flex items-center justify-center p-8 bg-background">
-        <Card className="w-full max-w-md border-0 shadow-none sm:border sm:border-border/50 sm:shadow-xl sm:shadow-black/5 rounded-2xl">
+      <div className="flex items-center justify-center p-8" style={{ background: 'linear-gradient(135deg, #080613, #0e0b22, #080613)' }}>
+        <Card className="w-full max-w-md border-0 shadow-none sm:border sm:border-violet-500/15 sm:shadow-xl sm:shadow-violet-500/5 rounded-2xl" style={{ background: 'rgba(14, 11, 34, 0.8)' }}>
           {showResetPassword ? (
             <>
               <CardHeader className="space-y-1">
@@ -506,14 +506,14 @@ export default function AuthPage() {
               </CardHeader>
               <CardContent>
                 <TabsContent value="employee-login" className="mt-0">
-                  <div className="flex items-center gap-2 mb-4 p-3 rounded-lg bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-400 text-sm">
+                  <div className="flex items-center gap-2 mb-4 p-3 rounded-lg bg-blue-500/10 text-blue-400 text-sm border border-blue-500/15">
                     <Users className="h-4 w-4 flex-shrink-0" />
                     <span>Employee Login Portal</span>
                   </div>
                   <LoginForm role="Employee" isLoading={isLoading} onSubmit={onEmployeeLogin} loginError={loginError} onClearError={clearLoginError} />
                 </TabsContent>
                 <TabsContent value="manager-login" className="mt-0">
-                  <div className="flex items-center gap-2 mb-4 p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 text-sm">
+                  <div className="flex items-center gap-2 mb-4 p-3 rounded-lg bg-amber-500/10 text-amber-400 text-sm border border-amber-500/15">
                     <Shield className="h-4 w-4 flex-shrink-0" />
                     <span>Manager Login Portal</span>
                   </div>

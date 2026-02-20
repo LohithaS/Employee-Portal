@@ -138,6 +138,7 @@ export const momPoints = pgTable("mom_points", {
   decision: text("decision"),
   actionItem: text("action_item"),
   responsibility: text("responsibility"),
+  remarks: text("remarks"),
   userId: integer("user_id"),
 });
 

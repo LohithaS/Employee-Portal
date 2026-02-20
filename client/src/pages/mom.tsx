@@ -32,7 +32,7 @@ export default function MinutesOfMeeting() {
   const [selectedMeeting, setSelectedMeeting] = useState<any>(null);
   const [selectedAttendees, setSelectedAttendees] = useState<any[]>([]);
   const [editingId, setEditingId] = useState<number | null>(null);
-  const [editData, setEditData] = useState({ discussion: "", decision: "", actionItem: "", responsibility: "" });
+  const [editData, setEditData] = useState({ discussion: "", decision: "", actionItem: "", responsibility: "", remarks: "" });
   
   const getQueryParams = () => {
     const search = window.location.search;
@@ -85,7 +85,8 @@ export default function MinutesOfMeeting() {
     discussion: "",
     decision: "",
     actionItem: "",
-    responsibility: ""
+    responsibility: "",
+    remarks: ""
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -96,7 +97,7 @@ export default function MinutesOfMeeting() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/mom-points"] });
-      setNewPoint({ discussion: "", decision: "", actionItem: "", responsibility: "" });
+      setNewPoint({ discussion: "", decision: "", actionItem: "", responsibility: "", remarks: "" });
       setErrors({});
       toast({ title: "Point added successfully" });
     },
@@ -120,6 +121,7 @@ export default function MinutesOfMeeting() {
       decision: point.decision || "",
       actionItem: point.actionItem || "",
       responsibility: point.responsibility || "",
+      remarks: point.remarks || "",
     });
   };
 
@@ -145,7 +147,8 @@ export default function MinutesOfMeeting() {
       discussion: newPoint.discussion,
       decision: newPoint.decision,
       actionItem: newPoint.actionItem,
-      responsibility: newPoint.responsibility
+      responsibility: newPoint.responsibility,
+      remarks: newPoint.remarks
     });
   };
 
@@ -213,7 +216,7 @@ export default function MinutesOfMeeting() {
               <CardDescription>Add key discussion points, decisions made, and action items assigned.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 <div className="space-y-2">
                   <Label>Discussion Point <span className="text-red-500">*</span></Label>
                   <Textarea 
@@ -251,7 +254,18 @@ export default function MinutesOfMeeting() {
                     onChange={(e) => setNewPoint({...newPoint, responsibility: e.target.value})}
                     placeholder="Assigned to..."
                   />
-                  <Button className="w-full mt-2" onClick={handleAddPoint} disabled={addPointMutation.isPending} data-testid="button-add-point">
+                </div>
+                <div className="space-y-2">
+                  <Label>Remarks</Label>
+                  <Textarea 
+                    data-testid="input-remarks"
+                    value={newPoint.remarks}
+                    onChange={(e) => setNewPoint({...newPoint, remarks: e.target.value})}
+                    placeholder="Additional remarks..."
+                  />
+                </div>
+                <div className="flex items-end">
+                  <Button className="w-full" onClick={handleAddPoint} disabled={addPointMutation.isPending} data-testid="button-add-point">
                     <Plus className="mr-2 h-4 w-4" /> Add Point
                   </Button>
                 </div>
@@ -264,19 +278,18 @@ export default function MinutesOfMeeting() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>S.No</TableHead>
-                <TableHead>Discussion Point</TableHead>
-                <TableHead>Decision</TableHead>
-                <TableHead>Action Item</TableHead>
-                <TableHead>Responsibility</TableHead>
+                <TableHead className="w-[60px]">S.No</TableHead>
+                <TableHead>Title</TableHead>
+                <TableHead className="w-[100px]">Date</TableHead>
                 <TableHead>Meeting Details</TableHead>
-                <TableHead>Actions</TableHead>
+                <TableHead className="w-[100px]">Action</TableHead>
+                <TableHead>Remarks</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {points.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center text-muted-foreground h-24">
+                  <TableCell colSpan={6} className="text-center text-muted-foreground h-24">
                     No points recorded yet.
                   </TableCell>
                 </TableRow>
@@ -288,57 +301,68 @@ export default function MinutesOfMeeting() {
                     <TableRow key={point.id || index} data-testid={`row-mom-point-${index}`}>
                       <TableCell>{index + 1}</TableCell>
                       <TableCell>
-                        {isEditing ? (
-                          <Textarea
-                            value={editData.discussion}
-                            onChange={(e) => setEditData({ ...editData, discussion: e.target.value })}
-                            className="min-h-[60px]"
-                            data-testid="edit-discussion"
-                          />
-                        ) : point.discussion}
-                      </TableCell>
-                      <TableCell>
-                        {isEditing ? (
-                          <Textarea
-                            value={editData.decision}
-                            onChange={(e) => setEditData({ ...editData, decision: e.target.value })}
-                            className="min-h-[60px]"
-                            data-testid="edit-decision"
-                          />
-                        ) : (point.decision || "-")}
-                      </TableCell>
-                      <TableCell>
-                        {isEditing ? (
-                          <Textarea
-                            value={editData.actionItem}
-                            onChange={(e) => setEditData({ ...editData, actionItem: e.target.value })}
-                            className="min-h-[60px]"
-                            data-testid="edit-action-item"
-                          />
-                        ) : (point.actionItem || "-")}
-                      </TableCell>
-                      <TableCell>
-                        {isEditing ? (
-                          <Input
-                            value={editData.responsibility}
-                            onChange={(e) => setEditData({ ...editData, responsibility: e.target.value })}
-                            data-testid="edit-responsibility"
-                          />
-                        ) : (point.responsibility || "-")}
-                      </TableCell>
-                      <TableCell>
                         {pointMeeting ? (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="text-primary hover:text-primary/80"
+                          <button
+                            className="text-primary hover:underline font-medium text-left"
                             onClick={() => openMeetingDetails(pointMeeting)}
                             data-testid={`button-view-details-${index}`}
                           >
-                            <Eye className="mr-1 h-3 w-3" /> View
-                          </Button>
+                            {pointMeeting.title}
+                          </button>
                         ) : (
                           <span className="text-muted-foreground text-sm">-</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {pointMeeting ? new Date(pointMeeting.date).toLocaleDateString() : "-"}
+                      </TableCell>
+                      <TableCell>
+                        {isEditing ? (
+                          <div className="space-y-2">
+                            <div>
+                              <span className="text-xs font-semibold text-muted-foreground">Discussion Point</span>
+                              <Textarea
+                                value={editData.discussion}
+                                onChange={(e) => setEditData({ ...editData, discussion: e.target.value })}
+                                className="min-h-[50px] mt-1"
+                                data-testid="edit-discussion"
+                              />
+                            </div>
+                            <div>
+                              <span className="text-xs font-semibold text-muted-foreground">Decision</span>
+                              <Textarea
+                                value={editData.decision}
+                                onChange={(e) => setEditData({ ...editData, decision: e.target.value })}
+                                className="min-h-[50px] mt-1"
+                                data-testid="edit-decision"
+                              />
+                            </div>
+                            <div>
+                              <span className="text-xs font-semibold text-muted-foreground">Action Item</span>
+                              <Textarea
+                                value={editData.actionItem}
+                                onChange={(e) => setEditData({ ...editData, actionItem: e.target.value })}
+                                className="min-h-[50px] mt-1"
+                                data-testid="edit-action-item"
+                              />
+                            </div>
+                            <div>
+                              <span className="text-xs font-semibold text-muted-foreground">Responsibility</span>
+                              <Input
+                                value={editData.responsibility}
+                                onChange={(e) => setEditData({ ...editData, responsibility: e.target.value })}
+                                className="mt-1"
+                                data-testid="edit-responsibility"
+                              />
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="space-y-1 text-sm">
+                            <div><span className="font-semibold text-muted-foreground">Discussion Point:</span> {point.discussion}</div>
+                            <div><span className="font-semibold text-muted-foreground">Decision:</span> {point.decision || "-"}</div>
+                            <div><span className="font-semibold text-muted-foreground">Action Item:</span> {point.actionItem || "-"}</div>
+                            <div><span className="font-semibold text-muted-foreground">Responsibility:</span> {point.responsibility || "-"}</div>
+                          </div>
                         )}
                       </TableCell>
                       <TableCell>
@@ -356,6 +380,16 @@ export default function MinutesOfMeeting() {
                             <Pencil className="h-4 w-4" />
                           </Button>
                         )}
+                      </TableCell>
+                      <TableCell>
+                        {isEditing ? (
+                          <Textarea
+                            value={editData.remarks}
+                            onChange={(e) => setEditData({ ...editData, remarks: e.target.value })}
+                            className="min-h-[50px]"
+                            data-testid="edit-remarks"
+                          />
+                        ) : (point.remarks || "-")}
                       </TableCell>
                     </TableRow>
                   );

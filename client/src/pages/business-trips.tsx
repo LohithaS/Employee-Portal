@@ -299,16 +299,6 @@ export default function BusinessTripReports() {
                   </div>
 
                   <div className="grid gap-2">
-                    <Label>Associate</Label>
-                    <Input 
-                      placeholder="Associate name" 
-                      value={newTrip.associate}
-                      onChange={(e) => setNewTrip({...newTrip, associate: e.target.value})}
-                      data-testid="input-trip-associate"
-                    />
-                  </div>
-
-                  <div className="grid gap-2">
                     <Label>Action Points</Label>
                     <Textarea 
                       placeholder="Action items from the trip..." 
@@ -330,6 +320,16 @@ export default function BusinessTripReports() {
                       data-testid="input-trip-outcome"
                     />
                     {errors.outcome && <span className="text-xs text-red-500">{errors.outcome}</span>}
+                  </div>
+
+                  <div className="grid gap-2">
+                    <Label>Associate</Label>
+                    <Input 
+                      placeholder="Associate name" 
+                      value={newTrip.associate}
+                      onChange={(e) => setNewTrip({...newTrip, associate: e.target.value})}
+                      data-testid="input-trip-associate"
+                    />
                   </div>
 
                   <div className="grid gap-2">

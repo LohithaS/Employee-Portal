@@ -469,8 +469,8 @@ export default function AuthPage() {
         <div className="absolute -bottom-32 -right-32 w-80 h-80 rounded-full bg-white/5 z-0" />
         <div className="absolute -top-16 -left-16 w-48 h-48 rounded-full bg-white/5 z-0" />
       </div>
-      <div className="flex items-center justify-center p-8" style={{ background: 'linear-gradient(135deg, #080613, #0e0b22, #080613)' }}>
-        <Card className="w-full max-w-md border-0 shadow-none sm:border sm:border-violet-500/15 sm:shadow-xl sm:shadow-violet-500/5 rounded-2xl" style={{ background: 'rgba(14, 11, 34, 0.8)' }}>
+      <div className="flex items-center justify-center p-8 bg-background">
+        <Card className="w-full max-w-md border-0 shadow-none sm:border sm:border-violet-500/15 sm:shadow-xl sm:shadow-violet-500/5 rounded-2xl bg-card">
           {showResetPassword ? (
             <>
               <CardHeader className="space-y-1">

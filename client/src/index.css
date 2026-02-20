@@ -59,32 +59,32 @@
 }
 
 :root {
-  --background: 222 47% 8%;
+  --background: 230 25% 14%;
   --foreground: 210 40% 96%;
 
-  --card: 222 47% 11%;
+  --card: 230 25% 18%;
   --card-foreground: 210 40% 96%;
 
-  --popover: 222 47% 11%;
+  --popover: 230 25% 18%;
   --popover-foreground: 210 40% 96%;
 
   --primary: 250 100% 72%;
   --primary-foreground: 0 0% 100%;
 
-  --secondary: 222 40% 16%;
+  --secondary: 230 22% 22%;
   --secondary-foreground: 210 40% 96%;
 
-  --muted: 222 40% 16%;
-  --muted-foreground: 215 20% 60%;
+  --muted: 230 22% 22%;
+  --muted-foreground: 215 20% 65%;
 
-  --accent: 250 50% 22%;
+  --accent: 250 50% 28%;
   --accent-foreground: 250 100% 85%;
 
   --destructive: 0 72% 55%;
   --destructive-foreground: 0 0% 100%;
 
-  --border: 222 30% 18%;
-  --input: 222 30% 18%;
+  --border: 230 20% 24%;
+  --input: 230 20% 24%;
   --ring: 250 100% 72%;
 
   --radius: 0.625rem;
@@ -95,43 +95,43 @@
   --chart-4: 280 80% 65%;
   --chart-5: 340 80% 60%;
 
-  --sidebar: 230 50% 7%;
+  --sidebar: 230 30% 12%;
   --sidebar-foreground: 210 40% 96%;
   --sidebar-primary: 250 100% 72%;
   --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 230 40% 14%;
+  --sidebar-accent: 230 25% 20%;
   --sidebar-accent-foreground: 210 40% 96%;
-  --sidebar-border: 230 30% 14%;
+  --sidebar-border: 230 20% 20%;
   --sidebar-ring: 250 100% 72%;
 }
 
 .dark {
-  --background: 222 47% 5%;
+  --background: 230 25% 12%;
   --foreground: 210 40% 96%;
 
-  --card: 222 47% 8%;
+  --card: 230 25% 16%;
   --card-foreground: 210 40% 96%;
 
-  --popover: 222 47% 8%;
+  --popover: 230 25% 16%;
   --popover-foreground: 210 40% 96%;
 
   --primary: 250 100% 72%;
   --primary-foreground: 0 0% 100%;
 
-  --secondary: 222 50% 14%;
+  --secondary: 230 22% 20%;
   --secondary-foreground: 210 40% 96%;
 
-  --muted: 222 50% 14%;
-  --muted-foreground: 215 15% 60%;
+  --muted: 230 22% 20%;
+  --muted-foreground: 215 20% 65%;
 
-  --accent: 250 50% 20%;
+  --accent: 250 50% 25%;
   --accent-foreground: 250 100% 80%;
 
   --destructive: 0 63% 31%;
   --destructive-foreground: 0 0% 100%;
 
-  --border: 222 50% 14%;
-  --input: 222 50% 14%;
+  --border: 230 20% 22%;
+  --input: 230 20% 22%;
   --ring: 250 100% 72%;
 
   --chart-1: 250 100% 72%;
@@ -140,13 +140,13 @@
   --chart-4: 280 80% 65%;
   --chart-5: 340 80% 60%;
   
-  --sidebar: 222 47% 4%;
+  --sidebar: 230 30% 10%;
   --sidebar-foreground: 210 40% 96%;
   --sidebar-primary: 250 100% 72%;
   --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 222 50% 14%;
+  --sidebar-accent: 230 25% 18%;
   --sidebar-accent-foreground: 210 40% 96%;
-  --sidebar-border: 222 50% 14%;
+  --sidebar-border: 230 20% 18%;
   --sidebar-ring: 250 100% 72%;
 }
 
@@ -164,20 +164,20 @@
 
 @layer utilities {
   .glass-card {
-    background: rgba(15, 23, 42, 0.5);
+    background: hsla(230, 25%, 18%, 0.6);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
     border: 1px solid rgba(139, 92, 246, 0.12);
-    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.15);
   }
   .gradient-primary {
     background: linear-gradient(135deg, #7c3aed 0%, #6366f1 50%, #818cf8 100%);
   }
   .gradient-sidebar {
-    background: linear-gradient(180deg, #0c0a1d 0%, #110e25 50%, #0a0818 100%);
+    background: linear-gradient(180deg, hsl(230 30% 12%) 0%, hsl(230 28% 14%) 50%, hsl(230 30% 11%) 100%);
   }
   .gradient-header {
-    background: rgba(10, 8, 24, 0.75);
+    background: hsla(230, 25%, 16%, 0.85);
     backdrop-filter: blur(24px);
     -webkit-backdrop-filter: blur(24px);
     border-bottom: 1px solid rgba(139, 92, 246, 0.15);

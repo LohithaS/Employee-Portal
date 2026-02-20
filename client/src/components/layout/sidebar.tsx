@@ -64,7 +64,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
       <div className={cn(
         "hidden md:flex md:flex-col transition-all duration-300 relative",
         collapsed ? "md:w-[68px]" : "md:w-64"
-      )} style={{ background: 'linear-gradient(180deg, #0c0a1d 0%, #0e0b22 50%, #080613 100%)' }}>
+      )} style={{ background: 'linear-gradient(180deg, hsl(230 30% 12%) 0%, hsl(230 28% 14%) 50%, hsl(230 30% 11%) 100%)' }}>
         <div className="absolute inset-0 pointer-events-none" style={{
           background: 'linear-gradient(180deg, rgba(124, 58, 237, 0.06) 0%, transparent 30%, rgba(99, 102, 241, 0.03) 100%)'
         }} />

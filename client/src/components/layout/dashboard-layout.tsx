@@ -8,7 +8,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return (
     <div className="flex min-h-screen w-full flex-col md:flex-row">
       <Sidebar collapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed(!sidebarCollapsed)} />
-      <div className="flex flex-col flex-1 min-h-screen relative overflow-hidden" style={{ background: '#080613' }}>
+      <div className="flex flex-col flex-1 min-h-screen relative overflow-hidden bg-background">
         <div className="pointer-events-none absolute inset-0 z-0">
           <div
             className="absolute w-[600px] h-[600px] rounded-full opacity-30 blur-[120px]"

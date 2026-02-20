@@ -279,19 +279,19 @@ export async function registerRoutes(
 
   app.post("/api/trips", requireAuth, async (req, res) => {
     try {
-      const { startDate, endDate, status } = req.body;
-      if (status === "Pending") {
-        const today = new Date().toISOString().split("T")[0];
-        const tenDaysAgo = new Date(Date.now() - 10 * 86400000).toISOString().split("T")[0];
-        if (startDate && startDate > today) {
-          return res.status(400).json({ message: "Start date cannot be a future date" });
-        }
-        if (endDate && endDate > today) {
-          return res.status(400).json({ message: "End date cannot be a future date" });
-        }
-        if (endDate && endDate < tenDaysAgo) {
-          return res.status(400).json({ message: "Filing window expired — reports must be filed within 10 days of trip end date" });
-        }
+      const { startDate, endDate } = req.body;
+      if (!startDate || !endDate) {
+        return res.status(400).json({ message: "Start date and end date are required" });
+      }
+      const today = new Date().toISOString().split("T")[0];
+      if (startDate <= today) {
+        return res.status(400).json({ message: "Start date must be a future date" });
+      }
+      if (endDate <= today) {
+        return res.status(400).json({ message: "End date must be a future date" });
+      }
+      if (endDate < startDate) {
+        return res.status(400).json({ message: "End date cannot be before start date" });
       }
       const trip = await storage.createTrip({ ...req.body, userId: req.session.userId });
       res.json(trip);
@@ -314,18 +314,11 @@ export async function registerRoutes(
       if (tripRecord.status !== "Draft") {
         return res.status(400).json({ message: "Only draft trips can be edited" });
       }
-      const { startDate, endDate, status } = req.body;
-      if (status === "Pending") {
-        const today = new Date().toISOString().split("T")[0];
-        const tenDaysAgo = new Date(Date.now() - 10 * 86400000).toISOString().split("T")[0];
-        if (startDate && startDate > today) {
-          return res.status(400).json({ message: "Start date cannot be a future date" });
-        }
-        if (endDate && endDate > today) {
-          return res.status(400).json({ message: "End date cannot be a future date" });
-        }
-        if (endDate && endDate < tenDaysAgo) {
-          return res.status(400).json({ message: "Filing window expired — reports must be filed within 10 days of trip end date" });
+      if (tripRecord.endDate) {
+        const endDateMs = new Date(tripRecord.endDate).getTime();
+        const deadlineMs = endDateMs + 10 * 86400000;
+        if (Date.now() > deadlineMs) {
+          return res.status(400).json({ message: "Edit window expired — reports can only be edited within 10 days of the trip end date" });
         }
       }
       const trip = await storage.updateTrip(tripId, req.body);

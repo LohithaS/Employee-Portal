@@ -112,11 +112,8 @@ export default function BusinessTripReports() {
   };
 
   const handleUpdateTrip = (status: string) => {
-    if (status === "Pending" && !validateTrip()) return;
-    if (status === "Draft" && !newTrip.purpose) {
-      setErrors({ purpose: "Purpose is required to save" });
-      return;
-    }
+    if (status === "Pending" && !validateTrip(true)) return;
+    if (status === "Draft" && !validateDraftDates()) return;
 
     const validStakeholders = stakeholders.filter(s => s.name.trim());
 
@@ -169,26 +166,33 @@ export default function BusinessTripReports() {
     setStakeholders(updated);
   };
 
-  const validateTrip = () => {
+  const tomorrow = new Date(Date.now() + 86400000).toISOString().split("T")[0];
+
+  const isTripEditable = (trip: any) => {
+    if (trip.status !== "Draft") return false;
+    if (!trip.endDate) return true;
+    const endDateMs = new Date(trip.endDate).getTime();
+    const deadlineMs = endDateMs + 10 * 86400000;
+    return Date.now() <= deadlineMs;
+  };
+
+  const validateTrip = (isEdit = false) => {
     const newErrors: Record<string, string> = {};
     const today = new Date().toISOString().split("T")[0];
-    const tenDaysAgo = new Date(Date.now() - 10 * 86400000).toISOString().split("T")[0];
     if (!newTrip.purpose) newErrors.purpose = "Purpose is required";
     if (!newTrip.location) newErrors.location = "Location is required";
     if (!newTrip.client) newErrors.client = "Client is required";
     if (!newTrip.startDate) {
       newErrors.startDate = "Start date is required";
-    } else if (newTrip.startDate > today) {
-      newErrors.startDate = "Start date cannot be a future date";
+    } else if (!isEdit && newTrip.startDate <= today) {
+      newErrors.startDate = "Start date must be a future date";
     }
     if (!newTrip.endDate) {
       newErrors.endDate = "End date is required";
-    } else if (newTrip.endDate > today) {
-      newErrors.endDate = "End date cannot be a future date";
     } else if (newTrip.startDate && newTrip.endDate && newTrip.endDate < newTrip.startDate) {
       newErrors.endDate = "End date cannot be before start date";
-    } else if (newTrip.endDate < tenDaysAgo) {
-      newErrors.endDate = "Filing window expired — reports must be filed within 10 days of trip end date";
+    } else if (!isEdit && newTrip.endDate <= today) {
+      newErrors.endDate = "End date must be a future date";
     }
     if (!newTrip.outcome) newErrors.outcome = "Outcome is required";
     
@@ -196,12 +200,21 @@ export default function BusinessTripReports() {
     return Object.keys(newErrors).length === 0;
   };
 
+  const validateDraftDates = () => {
+    const newErrors: Record<string, string> = {};
+    if (!newTrip.startDate) newErrors.startDate = "Start date is required";
+    if (!newTrip.endDate) newErrors.endDate = "End date is required";
+    if (newTrip.startDate && newTrip.endDate && newTrip.endDate < newTrip.startDate) {
+      newErrors.endDate = "End date cannot be before start date";
+    }
+    if (!newTrip.purpose) newErrors.purpose = "Purpose is required to save";
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleSaveTrip = (status: string) => {
     if (status === "Pending" && !validateTrip()) return;
-    if (status === "Draft" && !newTrip.purpose) {
-      setErrors({ purpose: "Purpose is required to save" });
-      return;
-    }
+    if (status === "Draft" && !validateDraftDates()) return;
 
     const validStakeholders = stakeholders.filter(s => s.name.trim());
 
@@ -300,7 +313,7 @@ export default function BusinessTripReports() {
                       <Label>Start Date <span className="text-red-500">*</span></Label>
                       <Input 
                         type="date"
-                        max={newTrip.endDate || new Date().toISOString().split("T")[0]}
+                        min={tomorrow}
                         value={newTrip.startDate}
                         onChange={(e) => setNewTrip({...newTrip, startDate: e.target.value})}
                         className={errors.startDate ? "border-red-500" : ""}
@@ -312,8 +325,7 @@ export default function BusinessTripReports() {
                       <Label>End Date <span className="text-red-500">*</span></Label>
                       <Input 
                         type="date"
-                        min={newTrip.startDate || new Date(Date.now() - 10 * 86400000).toISOString().split("T")[0]}
-                        max={new Date().toISOString().split("T")[0]}
+                        min={newTrip.startDate || tomorrow}
                         value={newTrip.endDate}
                         onChange={(e) => setNewTrip({...newTrip, endDate: e.target.value})}
                         className={errors.endDate ? "border-red-500" : ""}
@@ -322,7 +334,7 @@ export default function BusinessTripReports() {
                       {errors.endDate && <span className="text-xs text-red-500">{errors.endDate}</span>}
                     </div>
                   </div>
-                  <p className="text-xs text-muted-foreground -mt-2">Trip reports must be filed within 10 days of the trip end date.</p>
+                  <p className="text-xs text-muted-foreground -mt-2">You can edit the report within 10 days after the trip ends.</p>
 
                   <div className="grid gap-3">
                     <div className="flex items-center justify-between">
@@ -459,7 +471,7 @@ export default function BusinessTripReports() {
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1">
-                        {trip.status === "Draft" && (
+                        {isTripEditable(trip) && (
                           <Button variant="ghost" size="sm" onClick={() => openEditDialog(trip)} data-testid={`button-edit-trip-${trip.id}`}>
                             <Pencil className="h-4 w-4" />
                           </Button>
@@ -616,7 +628,6 @@ export default function BusinessTripReports() {
                   <Label>Start Date <span className="text-red-500">*</span></Label>
                   <Input 
                     type="date"
-                    max={newTrip.endDate || new Date().toISOString().split("T")[0]}
                     value={newTrip.startDate}
                     onChange={(e) => setNewTrip({...newTrip, startDate: e.target.value})}
                     className={errors.startDate ? "border-red-500" : ""}
@@ -628,8 +639,7 @@ export default function BusinessTripReports() {
                   <Label>End Date <span className="text-red-500">*</span></Label>
                   <Input 
                     type="date"
-                    min={newTrip.startDate || new Date(Date.now() - 10 * 86400000).toISOString().split("T")[0]}
-                    max={new Date().toISOString().split("T")[0]}
+                    min={newTrip.startDate || undefined}
                     value={newTrip.endDate}
                     onChange={(e) => setNewTrip({...newTrip, endDate: e.target.value})}
                     className={errors.endDate ? "border-red-500" : ""}
@@ -638,7 +648,11 @@ export default function BusinessTripReports() {
                   {errors.endDate && <span className="text-xs text-red-500">{errors.endDate}</span>}
                 </div>
               </div>
-              <p className="text-xs text-muted-foreground -mt-2">Trip reports must be filed within 10 days of the trip end date.</p>
+              {editingTrip?.endDate && (
+                <p className="text-xs text-muted-foreground -mt-2">
+                  Edit window closes on {new Date(new Date(editingTrip.endDate).getTime() + 10 * 86400000).toLocaleDateString()}.
+                </p>
+              )}
 
               <div className="grid gap-3">
                 <div className="flex items-center justify-between">

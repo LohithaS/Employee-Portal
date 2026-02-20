@@ -29,7 +29,6 @@ import { useAuth } from "@/hooks/use-auth";
 
 const leaveTypes = [
   { id: "sl", name: "Sick Leave", total: 5 },
-  { id: "cl", name: "Casual Leave", total: 8 },
   { id: "el", name: "Earned Leave", total: 12 },
   { id: "ml", name: "Maternity Leave", total: 180 },
   { id: "co", name: "Compensatory Off", total: 2 },

@@ -360,7 +360,6 @@ export default function Reimbursements() {
                 <TableHead>Expenses</TableHead>
                 <TableHead>Total Amount</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Rejection Reason</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -377,13 +376,6 @@ export default function Reimbursements() {
                       <Badge variant={claim.status === "Approved" ? "secondary" : "outline"} className={claim.status === "Approved" ? "bg-green-100 text-green-800" : claim.status === "Rejected" ? "bg-red-100 text-red-800" : "bg-yellow-100 text-yellow-800"}>
                         {claim.status}
                       </Badge>
-                    </TableCell>
-                    <TableCell>
-                      {claim.status === "Rejected" && claim.rejectionReason ? (
-                        <span className="text-sm text-red-600">{claim.rejectionReason}</span>
-                      ) : (
-                        <span className="text-xs text-muted-foreground">—</span>
-                      )}
                     </TableCell>
                     <TableCell>
                       {expList.length > 0 && (

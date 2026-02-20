@@ -168,9 +168,10 @@ export default function BusinessTripReports() {
 
   const getISTDate = (offset = 0) => {
     const now = new Date();
-    const istMs = now.getTime() + (330 * 60000);
-    const ist = new Date(istMs + offset * 86400000);
-    return ist.toISOString().split("T")[0];
+    if (offset !== 0) {
+      now.setDate(now.getDate() + offset);
+    }
+    return now.toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
   };
   const today = getISTDate();
   const yesterday = getISTDate(-1);
@@ -182,9 +183,10 @@ export default function BusinessTripReports() {
   };
 
   const isEndDateWithinWindow = (endDate: string) => {
-    const endD = new Date(endDate + "T00:00:00");
+    const parts = endDate.split("-");
+    const endD = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
     endD.setDate(endD.getDate() + 10);
-    const deadlineStr = endD.toISOString().split("T")[0];
+    const deadlineStr = `${endD.getFullYear()}-${String(endD.getMonth() + 1).padStart(2, "0")}-${String(endD.getDate()).padStart(2, "0")}`;
     return today <= deadlineStr;
   };
 

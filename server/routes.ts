@@ -283,8 +283,7 @@ export async function registerRoutes(
       if (!startDate || !endDate) {
         return res.status(400).json({ message: "Start date and end date are required" });
       }
-      const now = new Date();
-      const istToday = new Date(now.getTime() + 330 * 60000).toISOString().split("T")[0];
+      const istToday = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
       if (startDate >= istToday) {
         return res.status(400).json({ message: "Start date must be before today" });
       }
@@ -294,9 +293,10 @@ export async function registerRoutes(
       if (endDate < startDate) {
         return res.status(400).json({ message: "End date cannot be before start date" });
       }
-      const endD = new Date(endDate + "T00:00:00");
+      const parts = endDate.split("-");
+      const endD = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
       endD.setDate(endD.getDate() + 10);
-      const deadlineStr = endD.toISOString().split("T")[0];
+      const deadlineStr = `${endD.getFullYear()}-${String(endD.getMonth() + 1).padStart(2, "0")}-${String(endD.getDate()).padStart(2, "0")}`;
       if (istToday > deadlineStr) {
         return res.status(400).json({ message: "Filing window expired — must be within 10 days of trip end date" });
       }
@@ -322,11 +322,11 @@ export async function registerRoutes(
         return res.status(400).json({ message: "Only draft trips can be edited" });
       }
       if (tripRecord.endDate) {
-        const now = new Date();
-        const istToday = new Date(now.getTime() + 330 * 60000).toISOString().split("T")[0];
-        const endD = new Date(tripRecord.endDate + "T00:00:00");
+        const istToday = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+        const parts = tripRecord.endDate.split("-");
+        const endD = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
         endD.setDate(endD.getDate() + 10);
-        const deadlineStr = endD.toISOString().split("T")[0];
+        const deadlineStr = `${endD.getFullYear()}-${String(endD.getMonth() + 1).padStart(2, "0")}-${String(endD.getDate()).padStart(2, "0")}`;
         if (istToday > deadlineStr) {
           return res.status(400).json({ message: "Edit window expired — reports can only be edited within 10 days of the trip end date" });
         }

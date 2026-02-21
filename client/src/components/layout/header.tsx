@@ -68,7 +68,11 @@ function getNotificationIcon(type: string) {
   }
 }
 
-export function Header() {
+interface HeaderProps {
+  onMobileMenuToggle?: () => void;
+}
+
+export function Header({ onMobileMenuToggle }: HeaderProps) {
   const { user, logout } = useAuth();
   const [, setLocation] = useLocation();
   const [readIds, setReadIds] = useState<Set<string>>(new Set());
@@ -104,7 +108,7 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-border/50 gradient-header px-6">
-      <Button variant="ghost" size="icon" className="md:hidden">
+      <Button variant="ghost" size="icon" className="md:hidden" onClick={onMobileMenuToggle} data-testid="button-mobile-menu">
         <Menu className="h-5 w-5" />
       </Button>
 

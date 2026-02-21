@@ -1,13 +1,15 @@
 import { useState } from "react";
-import { Sidebar } from "./sidebar";
+import { Sidebar, MobileSidebar } from "./sidebar";
 import { Header } from "./header";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
     <div className="flex min-h-screen w-full flex-col md:flex-row">
       <Sidebar collapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed(!sidebarCollapsed)} />
+      <MobileSidebar open={mobileOpen} onClose={() => setMobileOpen(false)} />
       <div className="flex flex-col flex-1 min-h-screen relative overflow-hidden bg-background">
         <div className="pointer-events-none absolute inset-0 z-0">
           <div
@@ -47,7 +49,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             }}
           />
         </div>
-        <Header />
+        <Header onMobileMenuToggle={() => setMobileOpen(true)} />
         <main className="flex-1 p-4 md:p-6 lg:p-8 relative z-[1]">
           {children}
         </main>

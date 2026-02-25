@@ -1,4 +1,4 @@
-# Nexus Portal - Employee Portal Application
+# Nexus Portal - Employee Portal Application 
 
 ## Overview
 A comprehensive employee portal built with React + Express + PostgreSQL. Features authentication, dashboard with interactive widgets, and multiple business modules.

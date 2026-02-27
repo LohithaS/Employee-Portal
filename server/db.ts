@@ -2,8 +2,11 @@ import { drizzle } from "drizzle-orm/node-postgres";
 import pg from "pg";
 import * as schema from "@shared/schema";
 
+const defaultDatabaseUrl =
+  "postgresql://postgres:password@helium/heliumdb?sslmode=disable";
+
 if (!process.env.DATABASE_URL) {
-  throw new Error("DATABASE_URL must be set");
+  process.env.DATABASE_URL = defaultDatabaseUrl;
 }
 
 export const pool = new pg.Pool({

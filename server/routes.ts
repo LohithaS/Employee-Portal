@@ -145,7 +145,7 @@ export async function registerRoutes(
   });
 
   app.patch("/api/tasks/:id", requireAuth, async (req, res) => {
-    const id = parseInt(req.params.id);
+    const id = parseInt(req.params.id as string);
     const updated = await storage.updateTask(id, req.body);
     if (!updated) return res.status(404).json({ message: "Task not found" });
     res.json(updated);
@@ -157,7 +157,7 @@ export async function registerRoutes(
   });
 
   app.get("/api/clients/:id", requireAuth, async (req, res) => {
-    const id = parseInt(req.params.id);
+    const id = parseInt(req.params.id as string);
     const client = await storage.getClient(id);
     if (!client) return res.status(404).json({ message: "Client not found" });
     res.json(client);
@@ -187,7 +187,7 @@ export async function registerRoutes(
   });
 
   app.patch("/api/leads/:id", requireAuth, async (req, res) => {
-    const id = parseInt(req.params.id);
+    const id = parseInt(req.params.id as string);
     const updated = await storage.updateLead(id, req.body);
     if (!updated) return res.status(404).json({ message: "Lead not found" });
     res.json(updated);
@@ -222,7 +222,7 @@ export async function registerRoutes(
   });
 
   app.patch("/api/tickets/:id", requireAuth, async (req, res) => {
-    const id = parseInt(req.params.id);
+    const id = parseInt(req.params.id as string);
     const updated = await storage.updateTicket(id, req.body);
     if (!updated) return res.status(404).json({ message: "Ticket not found" });
     res.json(updated);
@@ -234,7 +234,7 @@ export async function registerRoutes(
   });
 
   app.get("/api/meetings/:id", requireAuth, async (req, res) => {
-    const id = parseInt(req.params.id);
+    const id = parseInt(req.params.id as string);
     const meeting = await storage.getMeeting(id);
     if (!meeting) return res.status(404).json({ message: "Meeting not found" });
     res.json(meeting);
@@ -265,7 +265,7 @@ export async function registerRoutes(
   });
 
   app.patch("/api/mom-points/:id", requireAuth, async (req, res) => {
-    const id = parseInt(req.params.id);
+    const id = parseInt(req.params.id as string);
     const { discussion, decision, actionItem, responsibility, remarks } = req.body;
     const updated = await storage.updateMomPoint(id, { discussion, decision, actionItem, responsibility, remarks });
     if (!updated) return res.status(404).json({ message: "MOM point not found" });
@@ -404,7 +404,7 @@ export async function registerRoutes(
       ]);
 
       const userMap: Record<number, string> = {};
-      for (const uid of userIds) {
+      for (const uid of Array.from(userIds)) {
         if (uid) {
           const u = await storage.getUser(uid);
           if (u) userMap[uid] = u.name;
